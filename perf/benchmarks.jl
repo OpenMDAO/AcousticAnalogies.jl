@@ -152,8 +152,7 @@ function run_cf1a(num_blades, v, omega, radii, dradii, cs_area, fn, fc, obs_time
     return apth_total.t, apth_total.p_m, apth_total.p_d
 end
 
-# function compare(; load_params=true, save_params=false, save_results=false)
-function compare(; load_params=true, save_params=false, save_results=false)
+function compare_old(; load_params=true, save_params=false, save_results=false)
     suite, results_new = run_current(load_params=load_params, save_params=save_params)
 
     results_old = BenchmarkTools.load(resultsfile)[1]
@@ -196,5 +195,5 @@ function compare(; load_params=true, save_params=false, save_results=false)
 end
 
 if !isinteractive()
-    compare(; load_params=true, save_params=false, save_results=false)
+    compare_old(; load_params=true, save_params=false, save_results=false)
 end
