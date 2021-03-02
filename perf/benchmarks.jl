@@ -60,7 +60,6 @@ function run_current(; load_params=true, save_params=false)
     obs_moving = ConstVelocityAcousticObserver(t0, SVector{3}(x0), SVector{3}(v0_hub))
 
     apth = Array{AcousticPressure{Float64, Float64, Float64}, 3}(undef, num_src_times, num_radial, num_blades)
-    cache = create_cache(apth)
     apth_total = AcousticPressure(zeros(Float64, num_obs_times), zeros(Float64, num_obs_times), zeros(Float64, num_obs_times))
 
     linear_interpolations_jl(t_cp, p_cp, t) = interpolate((t_cp,), p_cp, Gridded(Linear())).(t)
@@ -68,14 +67,14 @@ function run_current(; load_params=true, save_params=false)
     suite = BenchmarkGroup()
 
     s_s = suite["stationary"] = BenchmarkGroup()
-    s_s["linear"] = @benchmarkable run_cf1a($num_blades, $v, $omega, $radii, $dradii, $cs_area, $fn, $fc, $obs_time_range, $obs_stationary, $apth, $apth_total, $cache, $linear)
-    s_s["akima"] = @benchmarkable run_cf1a($num_blades, $v, $omega, $radii, $dradii, $cs_area, $fn, $fc, $obs_time_range, $obs_stationary, $apth, $apth_total, $cache, $akima)
-    s_s["linear_interpolations_jl"] = @benchmarkable run_cf1a($num_blades, $v, $omega, $radii, $dradii, $cs_area, $fn, $fc, $obs_time_range, $obs_stationary, $apth, $apth_total, $cache, $linear_interpolations_jl)
+    s_s["linear"] = @benchmarkable run_cf1a($num_blades, $v, $omega, $radii, $dradii, $cs_area, $fn, $fc, $obs_time_range, $obs_stationary, $apth, $apth_total, $linear)
+    s_s["akima"] = @benchmarkable run_cf1a($num_blades, $v, $omega, $radii, $dradii, $cs_area, $fn, $fc, $obs_time_range, $obs_stationary, $apth, $apth_total, $akima)
+    s_s["linear_interpolations_jl"] = @benchmarkable run_cf1a($num_blades, $v, $omega, $radii, $dradii, $cs_area, $fn, $fc, $obs_time_range, $obs_stationary, $apth, $apth_total, $linear_interpolations_jl)
 
     s_m = suite["moving"] = BenchmarkGroup()
-    s_m["linear"] = @benchmarkable run_cf1a($num_blades, $v, $omega, $radii, $dradii, $cs_area, $fn, $fc, $obs_time_range, $obs_moving, $apth, $apth_total, $cache, $linear)
-    s_m["akima"] = @benchmarkable run_cf1a($num_blades, $v, $omega, $radii, $dradii, $cs_area, $fn, $fc, $obs_time_range, $obs_moving, $apth, $apth_total, $cache, $akima)
-    s_m["linear_interpolations_jl"] = @benchmarkable run_cf1a($num_blades, $v, $omega, $radii, $dradii, $cs_area, $fn, $fc, $obs_time_range, $obs_moving, $apth, $apth_total, $cache, $linear_interpolations_jl)
+    s_m["linear"] = @benchmarkable run_cf1a($num_blades, $v, $omega, $radii, $dradii, $cs_area, $fn, $fc, $obs_time_range, $obs_moving, $apth, $apth_total, $linear)
+    s_m["akima"] = @benchmarkable run_cf1a($num_blades, $v, $omega, $radii, $dradii, $cs_area, $fn, $fc, $obs_time_range, $obs_moving, $apth, $apth_total, $akima)
+    s_m["linear_interpolations_jl"] = @benchmarkable run_cf1a($num_blades, $v, $omega, $radii, $dradii, $cs_area, $fn, $fc, $obs_time_range, $obs_moving, $apth, $apth_total, $linear_interpolations_jl)
 
     if load_params && isfile(paramsfile)
         # Load the benchmark parameters.
@@ -99,7 +98,7 @@ function run_current(; load_params=true, save_params=false)
     return suite, results
 end
 
-function run_cf1a(num_blades, v, omega, radii, dradii, cs_area, fn, fc, obs_time_range, obs, apth, apth_total, cache, f_interp)
+function run_cf1a(num_blades, v, omega, radii, dradii, cs_area, fn, fc, obs_time_range, obs, apth, apth_total, f_interp)
     # This is the same as kinematic_trans_pipe, except the un-transformed SourceElement2
     # objects are never assigned to an intermediate variable.
     t0 = 0.0
@@ -147,7 +146,7 @@ function run_cf1a(num_blades, v, omega, radii, dradii, cs_area, fn, fc, obs_time
     common_obs_time!(apth_total.t, apth, obs_time_range, 1)
 
     # Combine all the sources into one acoustic pressure time history.
-    combine!(apth_total, apth, 1; cache=cache, f_interp=f_interp)
+    combine!(apth_total, apth, 1; f_interp=f_interp)
 
     return apth_total.t, apth_total.p_m, apth_total.p_d
 end

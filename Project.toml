@@ -8,6 +8,7 @@ ConcreteStructs = "2569d6c7-a4a2-43d3-a901-331e8e4be471"
 FLOWMath = "6cb5d3fb-0fe8-4cc2-bd89-9fe0b19a99d3"
 KinematicCoordinateTransformations = "730d3219-0a85-48f9-b699-9f31f8913d09"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+SingleFieldStructArrays = "5dd5ea32-d67d-426d-b4ce-2ad113187929"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [extras]
