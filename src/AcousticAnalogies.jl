@@ -1,16 +1,17 @@
 module AcousticAnalogies
 
 using ConcreteStructs: @concrete
-using FLOWMath: akima, linear
+using FLOWMath: akima, linear, ksmax
 using KinematicCoordinateTransformations
 using LinearAlgebra: cross, norm, mul!
+using SingleFieldStructArrays
 using StaticArrays
 
 export CompactSourceElement
 export AcousticObserver, StationaryAcousticObserver, ConstVelocityAcousticObserver
 export AcousticPressure
 export adv_time
-export create_cache, f1a
+export f1a
 export common_obs_time!, common_obs_time
 export combine!, combine
 
@@ -124,14 +125,6 @@ end
     p_d
 end
 
-function create_cache(apth::AbstractArray{AcousticPressure{T1,T2,T3}, N}) where {T1,T2,T3,N}
-    sz = size(apth)
-    t = Array{T1}(undef, sz)
-    p_m = Array{T2}(undef, sz)
-    p_d = Array{T3}(undef, sz)
-    return AcousticPressure(t, p_m, p_d)
-end
-
 function f1a(se::CompactSourceElement, obs, t_obs)
     x_obs = obs(t_obs)
 
@@ -191,40 +184,19 @@ function f1a(se::CompactSourceElement, obs::T) where {T<:AcousticObserver}
     return f1a(se, obs, t_obs)
 end
 
-function common_obs_time!(t_common, t_obs, period, axis=1)
-    n = length(t_common)
+function common_obs_time!(t_common, apth::AbstractArray{<:AcousticPressure}, period, axis=1)
+    # Make a single field struct array that behaves like a time array. 4%-6%
+    # faster than creating the array with getproperty.
+    t_obs = SingleFieldStructArray(apth, :t)
 
     # Get the first time for all the sources (returns a view ♥).
     t_starts = selectdim(t_obs, axis, 1)
 
-    # Get one of the start times for shifting (makes the smooth_max function's
-    # numerical behavior better).
-    t0 = t_starts[1]
-
     # Find the latest first time.
-    t_common_start = smooth_max(t_starts .- t0, k=30.0/period) + t0
+    t_common_start = ksmax(t_starts, 30/period)
 
     # Get the common observer time.
-    dt = period/n
-    t_common .= t_common_start .+ (0:n-1)*dt
-
-    return nothing
-end
-
-function common_obs_time!(t_common, apth::AbstractArray{<:AcousticPressure}, period, axis=1)
     n = length(t_common)
-
-    # Get the first acoustic pressure for all the sources (returns a view ♥).
-    apth_starts = selectdim(apth, axis, 1)
-
-    # Get one of the start times for shifting (makes the smooth_max function's
-    # numerical behavior better).
-    t0 = apth_starts[1].t
-
-    # Find the latest first time.
-    t_common_start = smooth_max_time(apth_starts, 30.0/period, t0) + t0
-
-    # Get the common observer time.
     dt = period/n
     t_common .= t_common_start .+ (0:n-1)*dt
 
@@ -240,19 +212,15 @@ function common_obs_time(apth, period, n, axis=1)
     return t_common
 end
 
-function combine!(apth_out, apth, axis::Integer=1; f_interp=akima, cache=create_cache(apth))
-
-    # Set the values for the cache.
-    for I in eachindex(apth)
-        cache.t[I] = apth[I].t
-        cache.p_m[I] = apth[I].p_m
-        cache.p_d[I] = apth[I].p_d
-    end
-
-    # Unpack the cache for clarity.
-    t_obs = cache.t
-    p_m = cache.p_m
-    p_d = cache.p_d
+function combine!(apth_out, apth, axis; f_interp=akima)
+    # This makes no difference compared to passing in a cache (an object with
+    # working arrays that I'd copy stuff to) to this function (sometimes a
+    # speedup of <1%, sometimes a slowdown of <1%). I'm sure it'd be worse if I
+    # didn't pass in the cache. But it's nice to not have to worry about passing
+    # it in.
+    t_obs = SingleFieldStructArray(apth, :t)
+    p_m = SingleFieldStructArray(apth, :p_m)
+    p_d = SingleFieldStructArray(apth, :p_d)
 
     # Unpack the output arrays for clarity.
     t_common = apth_out.t
@@ -312,4 +280,5 @@ function combine(apth, period::AbstractFloat, n::Integer, axis::Integer=1; f_int
     t_common = common_obs_time(apth, period, n, axis)
     return combine(apth, t_common, axis; f_interp=f_interp)
 end
+
 end # module
