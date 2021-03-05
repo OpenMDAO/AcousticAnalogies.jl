@@ -8,6 +8,6 @@ julia:
 notifications:
   email: true
 script:
-    # - julia -e "using Pkg; Pkg.build(verbose=true);"
+    - julia -e "using Pkg; Pkg.build(verbose=true);"
     - julia -e 'using Pkg; Pkg.Registry.add(RegistrySpec(url="git@github.com:dingraha/DanielIngrahamRegistry.git"))'
     - julia --project --check-bounds=yes -e 'using Pkg; Pkg.instantiate(); Pkg.build(); Pkg.test()'
