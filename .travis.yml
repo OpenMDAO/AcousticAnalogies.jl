@@ -8,7 +8,6 @@ julia:
 notifications:
   email: true
 jobs:
-    before_install:
-        - julia --project -e 'using Pkg; Pkg.Registry.add(RegistrySpec(url="git@github.com:dingraha/DanielIngrahamRegistry.git"))'
     script:
+        - julia --project -e 'using Pkg; Pkg.Registry.add(RegistrySpec(url="git@github.com:dingraha/DanielIngrahamRegistry.git"))'
         - julia --project --check-bounds=yes -e 'using Pkg; Pkg.instantiate(); Pkg.build(); Pkg.test()'
