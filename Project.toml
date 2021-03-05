@@ -1,7 +1,7 @@
 name = "AcousticAnalogies"
 uuid = "e71b3392-1e0c-4536-b366-2bd1fce6fba0"
 authors = ["Ingraham, Daniel James (GRC-LTV0) <daniel.j.ingraham@nasa.gov>"]
-version = "0.1.0"
+version = "0.2.0"
 
 [deps]
 ConcreteStructs = "2569d6c7-a4a2-43d3-a901-331e8e4be471"
