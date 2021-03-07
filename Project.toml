@@ -4,6 +4,7 @@ authors = ["Ingraham, Daniel James (GRC-LTV0) <daniel.j.ingraham@nasa.gov>"]
 version = "0.2.0"
 
 [deps]
+CCBlade = "e1828068-15df-11e9-03e4-ef195ea46fa4"
 ConcreteStructs = "2569d6c7-a4a2-43d3-a901-331e8e4be471"
 FLOWMath = "6cb5d3fb-0fe8-4cc2-bd89-9fe0b19a99d3"
 KinematicCoordinateTransformations = "730d3219-0a85-48f9-b699-9f31f8913d09"

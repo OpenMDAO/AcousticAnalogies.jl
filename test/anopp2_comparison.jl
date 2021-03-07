@@ -11,34 +11,19 @@ if DO_PLOTS
 end
 using Printf: @sprintf
 
+include("gen_test_data/gen_ccblade_data/constants.jl")
+using .CCBladeTestCaseConstants
+ccbc = CCBladeTestCaseConstants
+
 Test.@testset "ANOPP2 Comparison" begin
-    include("gen_test_data/gen_ccblade_data/constants.jl")
-
-    """
-        get_dradii(radii, Rhub, Rtip)
-
-    Compute the spacing between blade elements given the radial locations of the
-    element midpoints in `radii` and the hub and tip radius in `Rhub` and `Rtip`,
-    respectively.
-    """
-    function get_dradii(radii, Rhub, Rtip)
-        # How do I get the radial spacing? Well, for the inner elements, I'll just
-        # assume that the interfaces are midway in between the centers.
-        r_interface = 0.5.*(radii[1:end-1] .+ radii[2:end])
-        # Then just say that the blade begins at Rhub, and ends at Rtip.
-        r_interface = vcat([Rhub], r_interface, [Rtip])
-        # And now the distance between interfaces is the spacing.
-        dradii = r_interface[2:end] .- r_interface[1:end-1]
-        return dradii
-    end
 
     function omega_sweep_with_acoustics(; stationary_observer, theta, f_interp)
 		apth_ylims_xrotor = [
 			(-0.0001, 0.0001), (-0.0005, 0.0005), (-0.0020, 0.0020),
 			(-0.005, 0.005), (-0.010, 0.010), (-0.020, 0.020), (-0.05, 0.05),
 			(-0.10, 0.10), (-0.20, 0.20), (-0.5, 0.5), (-1.0, 1.0)]
-        dradii = get_dradii(radii, Rhub, Rtip)
-        cs_area =  area_over_chord_squared .* chord.^2
+        dradii = AcousticAnalogies.get_dradii(ccbc.radii, ccbc.Rhub, ccbc.Rtip)
+        cs_area =  ccbc.area_over_chord_squared .* ccbc.chord.^2
 
         rpm = 200.0:200.0:2200.0  # rev/min
 
@@ -51,10 +36,10 @@ Test.@testset "ANOPP2 Comparison" begin
             fc = data[:, 2]
 
             # Blade passing period.
-            bpp = 2*pi/omega/num_blades
+            bpp = 2*pi/omega/ccbc.num_blades
             
             # Calculate the noise with AcousticAnalogies.jl.
-            obs_time, p_thickness, p_loading = cf1a_noise(num_blades, v, omega, radii, dradii, cs_area, fn, fc, stationary_observer, theta, f_interp)
+            obs_time, p_thickness, p_loading = cf1a_noise(ccbc.num_blades, ccbc.v, omega, ccbc.radii, dradii, cs_area, fn, fc, stationary_observer, theta, f_interp)
             t0 = obs_time[1]
 
             # Nondimensionalize the observer time with the blade passing period.
@@ -180,14 +165,11 @@ Test.@testset "ANOPP2 Comparison" begin
         num_src_times = 256
         num_obs_times = 2*num_src_times
 
-        num_radial = length(radii)
-
         # Blade Passing Period.
         bpp = 2*pi/omega/num_blades
         src_time_range = 5.0*bpp
         obs_time_range = 4.0*bpp
 
-        num_sources = num_blades*num_radial
         if stationary_observer
             obs = AcousticAnalogies.StationaryAcousticObserver(x0)
         else
@@ -204,19 +186,19 @@ Test.@testset "ANOPP2 Comparison" begin
         dt = src_time_range/(num_src_times - 1)
         src_times = t0 .+ (0:num_src_times-1).*dt
 
-        θs = reshape(θs, 1, 1, num_blades)
-        radii = reshape(radii, 1, num_radial, 1)
-        dradii = reshape(dradii, 1, num_radial, 1)
-        cs_area = reshape(cs_area, 1, num_radial, 1)
-        fn = reshape(fn, 1, num_radial, 1)
-        fc = reshape(fc, 1, num_radial, 1)
-        src_times = reshape(src_times, num_src_times, 1, 1)  # This isn't really necessary.
+        θs = reshape(θs, 1, 1, :)
+        radii = reshape(radii, 1, :, 1)
+        dradii = reshape(dradii, 1, :, 1)
+        cs_area = reshape(cs_area, 1, :, 1)
+        fn = reshape(fn, 1, :, 1)
+        fc = reshape(fc, 1, :, 1)
+        src_times = reshape(src_times, :, 1, 1)  # This isn't really necessary.
 
         # Get all the transformations!
         trans = compose.(src_times, Ref(const_vel_trans), compose.(src_times, Ref(global_trans), Ref(rot_trans)))
 
         # Transform the source elements.
-        ses = AcousticAnalogies.CompactSourceElement.(rho, c0, radii, θs, dradii, cs_area, fn, fc, src_times) .|> trans
+        ses = AcousticAnalogies.CompactSourceElement.(ccbc.rho, ccbc.c0, radii, θs, dradii, cs_area, fn, fc, src_times) .|> trans
 
         # Do the acoustics.
         apth = AcousticAnalogies.f1a.(ses, Ref(obs))

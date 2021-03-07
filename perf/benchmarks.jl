@@ -154,43 +154,45 @@ end
 function compare_old(; load_params=true, save_params=false, save_results=false)
     suite, results_new = run_current(load_params=load_params, save_params=save_params)
 
-    results_old = BenchmarkTools.load(resultsfile)[1]
+    if isfile(resultsfile)
+        results_old = BenchmarkTools.load(resultsfile)[1]
 
-    println("Stationary observer, FLOWMath linear interpolation:")
-    rold = results_old["stationary"]["linear"]
-    rnew = results_new["stationary"]["linear"]
-    display(judge(median(rnew), median(rold)))
+        println("Stationary observer, FLOWMath linear interpolation:")
+        rold = results_old["stationary"]["linear"]
+        rnew = results_new["stationary"]["linear"]
+        display(judge(median(rnew), median(rold)))
 
-    println("Stationary observer, FLOWMath Akima spline interpolation:")
-    rold = results_old["stationary"]["akima"]
-    rnew = results_new["stationary"]["akima"]
-    display(judge(median(rnew), median(rold)))
+        println("Stationary observer, FLOWMath Akima spline interpolation:")
+        rold = results_old["stationary"]["akima"]
+        rnew = results_new["stationary"]["akima"]
+        display(judge(median(rnew), median(rold)))
 
-    println("Stationary observer, Interpolations.jl linear interpolation:")
-    rold = results_old["stationary"]["linear_interpolations_jl"]
-    rnew = results_new["stationary"]["linear_interpolations_jl"]
-    display(judge(median(rnew), median(rold)))
+        println("Stationary observer, Interpolations.jl linear interpolation:")
+        rold = results_old["stationary"]["linear_interpolations_jl"]
+        rnew = results_new["stationary"]["linear_interpolations_jl"]
+        display(judge(median(rnew), median(rold)))
 
-    println("Moving observer, FLOWMath linear interpolation:")
-    rold = results_old["moving"]["linear"]
-    rnew = results_new["moving"]["linear"]
-    display(judge(median(rnew), median(rold)))
+        println("Moving observer, FLOWMath linear interpolation:")
+        rold = results_old["moving"]["linear"]
+        rnew = results_new["moving"]["linear"]
+        display(judge(median(rnew), median(rold)))
 
-    println("Moving observer, FLOWMath Akima spline interpolation:")
-    rold = results_old["moving"]["akima"]
-    rnew = results_new["moving"]["akima"]
-    display(judge(median(rnew), median(rold)))
+        println("Moving observer, FLOWMath Akima spline interpolation:")
+        rold = results_old["moving"]["akima"]
+        rnew = results_new["moving"]["akima"]
+        display(judge(median(rnew), median(rold)))
 
-    println("Moving observer, Interpolations.jl linear interpolation:")
-    rold = results_old["moving"]["linear_interpolations_jl"]
-    rnew = results_new["moving"]["linear_interpolations_jl"]
-    display(judge(median(rnew), median(rold)))
+        println("Moving observer, Interpolations.jl linear interpolation:")
+        rold = results_old["moving"]["linear_interpolations_jl"]
+        rnew = results_new["moving"]["linear_interpolations_jl"]
+        display(judge(median(rnew), median(rold)))
+    end
 
     if save_results
         BenchmarkTools.save(resultsfile, results_new)
     end
 
-    return suite, results_old, results_new
+    return suite, results_new
 end
 
 if !isinteractive()

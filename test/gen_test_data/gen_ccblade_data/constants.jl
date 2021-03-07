@@ -1,4 +1,6 @@
-#' ## Chris' CROTOR blade design.
+module CCBladeTestCaseConstants
+
+# Christopher J Miller's (GRC-LTV) CROTOR blade design.
 const gam = 1.4
 const R = 287.058  # J/(kg*K)
 const rho = 1.226  # kg/m^3
@@ -36,3 +38,5 @@ const num_blades = 2
 const v = 5.0  # m/s
 const area_over_chord_squared = 0.064
 const pitch = 0.0 # rad
+
+end # module
