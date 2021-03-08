@@ -15,17 +15,12 @@ ccbc = CCBladeTestCaseConstants
 
     Δr = (ccbc.Rtip - ccbc.Rhub)/10
     r = (ccbc.Rhub+0.5*Δr):Δr:(ccbc.Rtip-0.5*Δr)
-    Vinf = ccbc.v
-    omega = 2.0
     precone = 3*pi/180
     rotor = Rotor(ccbc.Rhub, ccbc.Rtip, ccbc.num_blades; precone=precone, turbine=false)
-    ops = simple_op.(Vinf, omega, r, ccbc.rho; precone=precone)
 
     dummy = similar(r)
     sections = Section.(r, dummy, dummy, dummy)
 
-    @test AcousticAnalogies.get_ccblade_omega(rotor, sections, ops) ≈ omega
-    @test AcousticAnalogies.get_ccblade_Vinf(rotor, sections, ops) ≈ Vinf
     @test all(AcousticAnalogies.get_ccblade_dradii(rotor, sections) .≈ Δr)
 end
 
@@ -45,10 +40,15 @@ end
     dummies = fill(0.0, 13)
     outs = Outputs.(fn, fc, dummies...)
 
-    # Finally get all the source elements.
+    # Set the source time stuff.
     num_blade_passes = 3
     steps_per_blade_pass = 8
-    ses_helper = source_elements_ccblade(rotor, sections, ops, outs, ccbc.area_over_chord_squared, num_blade_passes, steps_per_blade_pass)
+    num_src_times = num_blade_passes*steps_per_blade_pass
+    bpp = 2*pi/omega/ccbc.num_blades
+    src_time_range = num_blade_passes*bpp
+
+    # Finally get all the source elements.
+    ses_helper = source_elements_ccblade(rotor, sections, ops, outs, ccbc.area_over_chord_squared, src_time_range, num_src_times)
 
     # Now need to get the source elements the "normal" way. First get the
     # transformation objects.
@@ -61,10 +61,6 @@ end
     const_vel_trans = ConstantVelocityTransformation(t0, y0_hub, v0_hub)
 
     # Need the source times.
-    # Blade passing period (amount of time for one blade pass).
-    bpp = 2*pi/omega/ccbc.num_blades
-    src_time_range = num_blade_passes*bpp
-    num_src_times = num_blade_passes*steps_per_blade_pass
     dt = src_time_range/(num_src_times - 1)
     src_times = t0 .+ (0:num_src_times-1).*dt
 
