@@ -87,7 +87,7 @@ end
     trans = compose.(src_times, Ref(const_vel_trans), Ref(rot_trans))
 
     # Transform the source elements.
-    ses = CompactSourceElement.(ccbc.rho, ccbc.c0, radii, θs, dradii, cs_area, fn, fc, src_times) .|> trans
+    ses = CompactSourceElement.(ccbc.rho, ccbc.c0, radii, θs, dradii, cs_area, -fn, 0.0, fc, src_times) .|> trans
 
     for field in fieldnames(CompactSourceElement)
         @test all(getproperty.(ses_helper, field) .≈ getproperty.(ses, field))

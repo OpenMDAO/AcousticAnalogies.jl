@@ -198,7 +198,7 @@ Test.@testset "ANOPP2 Comparison" begin
         trans = compose.(src_times, Ref(const_vel_trans), compose.(src_times, Ref(global_trans), Ref(rot_trans)))
 
         # Transform the source elements.
-        ses = AcousticAnalogies.CompactSourceElement.(ccbc.rho, ccbc.c0, radii, θs, dradii, cs_area, fn, fc, src_times) .|> trans
+        ses = AcousticAnalogies.CompactSourceElement.(ccbc.rho, ccbc.c0, radii, θs, dradii, cs_area, -fn, 0.0, fc, src_times) .|> trans
 
         # Do the acoustics.
         apth = AcousticAnalogies.f1a.(ses, Ref(obs))

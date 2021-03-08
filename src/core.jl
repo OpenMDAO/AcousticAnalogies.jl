@@ -21,24 +21,41 @@
     τ
 end
 
-function CompactSourceElement(ρ0, c0, r, θ, Δr, Λ, fn, fc, τ)
-    T = typeof(r)
-    y0dot = @SVector [zero(T), r*cos(θ), r*sin(θ)]
+"""
+    CompactSourceElement(ρ0, c0, r, θ, Δr, Λ, fn, fc, τ)
+
+Construct a source element to be used with the compact form of Farassat's formulation 1A.
+
+# Arguments
+- ρ0: Ambient air density (kg/m^3)
+- c0: Ambient speed of sound (m/s)
+- r: radial coordinate of the element in the blade-fixed coordinate system (m)
+- θ: angular offest of the element in the blade-fixed coordinate system (rad)
+- Δr: length of the element (m)
+- Λ: cross-sectional area of the element (m^2)
+- fn: normal load per unit span *on the fluid* (N/m)
+- fr: radial load *on the fluid* (N/m)
+- fc: circumferential load *on the fluid* (N/m)
+- τ: source time (s)
+"""
+function CompactSourceElement(ρ0, c0, r, θ, Δr, Λ, fn, fr, fc, τ)
+    y0dot = @SVector [0, r*cos(θ), r*sin(θ)]
+    T = eltype(y0dot)
     y1dot = @SVector zeros(T, 3)
     y2dot = @SVector zeros(T, 3)
     y3dot = @SVector zeros(T, 3)
-    T = typeof(fn)
-    f0dot = @SVector [-fn, -sin(θ)*fc, cos(θ)*fc]
+    f0dot = @SVector [fn, cos(θ)*fr - sin(θ)*fc, sin(θ)*fr + cos(θ)*fc]
+    T = eltype(f0dot)
     f1dot = @SVector zeros(T, 3)
 
     return CompactSourceElement(ρ0, c0, Δr, Λ, y0dot, y1dot, y2dot, y3dot, f0dot, f1dot, τ)
 end
 
-function CompactSourceElement(ρ0, c0, r, Δr, Λ, fn, fc, τ)
-    θ = zero(r)
-    return CompactSourceElement(ρ0, c0, r, θ, Δr, Λ, fn, fc, τ)
-end
+"""
+    (trans::KinematicTransformation)(se::CompactSourceElement)
 
+Transform the position and forces of a source element according to the coordinate system transformation `trans`.
+"""
 function (trans::KinematicTransformation)(se::CompactSourceElement)
     linear_only = false
     y0dot, y1dot, y2dot, y3dot = trans(se.τ, se.y0dot, se.y1dot, se.y2dot, se.y3dot, linear_only)
@@ -48,17 +65,41 @@ function (trans::KinematicTransformation)(se::CompactSourceElement)
     return CompactSourceElement(se.ρ0, se.c0, se.Δr, se.Λ, y0dot, y1dot, y2dot, y3dot, f0dot, f1dot, se.τ)
 end
 
+"""
+    AcousticObserver
+
+Supertype for an object that recieves a noise prediction when combined with an
+acoustic analogy source; computational equivalent of a microphone.
+"""
 abstract type AcousticObserver end
 
+"""
+    StationaryAcousticObserver(x)
+
+Construct an acoustic observer that does not move with position `x` (m).
+"""
 @concrete struct StationaryAcousticObserver <: AcousticObserver
     x
 end
 
+"""
+    ConstVelocityAcousticObserver(t0, x0, v)
+
+Construct an acoustic observer moving with a constant velocity `v`, located at
+`x0` at time `t0`.
+"""
 @concrete struct ConstVelocityAcousticObserver <: AcousticObserver
     t0 
     x0
     v
 end
+
+"""
+    obs::AcousticObserver(t)
+
+Calculate the position of the acoustic observer at time `t`.
+"""
+(obs::AcousticObserver)(t)
 
 function (obs::StationaryAcousticObserver)(t)
     return obs.x
@@ -68,8 +109,16 @@ function (obs::ConstVelocityAcousticObserver)(t)
     return obs.x0 .+ (t - obs.t0).*obs.v
 end
 
+"""
+    adv_time(se::CompactSourceElement, obs::AcousticObserver)
+
+Calculate the time an acoustic wave emmited by source `se` at time `se.τ` is
+recieved by observer `obs`.
+"""
+adv_time(se::CompactSourceElement, obs::AcousticObserver)
+
 function adv_time(se::CompactSourceElement, obs::StationaryAcousticObserver)
-    rv = obs.x .- se.y0dot
+    rv = obs(se.τ) .- se.y0dot
     r = norm_cs_safe(rv)
     t = se.τ + r/se.c0
     return t
@@ -100,13 +149,25 @@ function adv_time(se::CompactSourceElement, obs::ConstVelocityAcousticObserver)
     return t
 end
 
+"""
+Acoustic pressure value at time `t`, broken into monopole component `p_m` and
+dipole component `p_d`.
+"""
 @concrete struct AcousticPressure
     t
     p_m
     p_d
 end
 
-function f1a(se::CompactSourceElement, obs, t_obs)
+"""
+    f1a(se::CompactSourceElement, obs::AcousticObserver, t_obs)
+
+Calculate the acoustic pressure emitted by source element `se` and recieved by
+observer `obs` at time `t_obs`, returning an [`AcousticPressure`](@ref) object.
+
+The correct value for `t_obs` can be found using [`adv_time`](@ref).
+"""
+function f1a(se::CompactSourceElement, obs::AcousticObserver, t_obs)
     x_obs = obs(t_obs)
 
     rv = x_obs .- se.y0dot
@@ -160,11 +221,26 @@ function f1a(se::CompactSourceElement, obs, t_obs)
     return AcousticPressure(t_obs, p_m, p_d)
 end
 
-function f1a(se::CompactSourceElement, obs::T) where {T<:AcousticObserver}
+"""
+    f1a(se::CompactSourceElement, obs::AcousticObserver)
+
+Calculate the acoustic pressure emitted by source element `se` and recieved by
+observer `obs`, returning an [`AcousticPressure`](@ref) object.
+"""
+function f1a(se::CompactSourceElement, obs::AcousticObserver)
     t_obs = adv_time(se, obs)
     return f1a(se, obs, t_obs)
 end
 
+"""
+    common_obs_time!(t_common, apth::AbstractArray{<:AcousticPressure}, period, axis=1)
+
+Find a suitable time range for the collection of acoustic pressures in `apth`, writing it to `t_common`.
+
+The time range will begin near the latest start time of the acoustic pressures
+in `apth`, and be of time length `period`. `axis` indicates along which axis of
+`apth` the time for a source varies.
+"""
 function common_obs_time!(t_common, apth::AbstractArray{<:AcousticPressure}, period, axis=1)
     # Make a single field struct array that behaves like a time array. 4%-6%
     # faster than creating the array with getproperty.
@@ -184,6 +260,15 @@ function common_obs_time!(t_common, apth::AbstractArray{<:AcousticPressure}, per
     return nothing
 end
 
+"""
+    common_obs_time(apth::AbstractArray{<:AcousticPressure}, period, n, axis=1)
+
+Return a suitable time range for the collection of acoustic pressures in `apth`.
+
+The time range will begin near the latest start time of the acoustic pressures
+in `apth`, and be a `Vector` of length `n` and of time length `period`. `axis`
+indicates along which axis of `apth` the time for a source varies.
+"""
 function common_obs_time(apth, period, n, axis=1)
     T = typeof(first(apth).t)
     t_common = Vector{T}(undef, n)
@@ -193,6 +278,16 @@ function common_obs_time(apth, period, n, axis=1)
     return t_common
 end
 
+"""
+    combine!(apth_out::AcousticPressure{<:AbstractVector, AbstractVector, AbstractVector}, apth::AbstractArray{<:AcousticPressure}, axis; f_interp=akima)
+
+Combine the acoustic pressures of multiple sources (`apth`) into a single acoustic pressure time history `apth_out`.
+
+The input acoustic pressures `apth` are interpolated onto the time grid
+`apth_out.t`. The interpolation is performed by the function `f_intep(xpt, ypt,
+x)`, where `xpt` and `ytp` are the input grid and function values, respectively,
+and `x` is the output grid.
+"""
 function combine!(apth_out, apth, axis; f_interp=akima)
     # This makes no difference compared to passing in a cache (an object with
     # working arrays that I'd copy stuff to) to this function (sometimes a
@@ -239,6 +334,11 @@ function combine!(apth_out, apth, axis; f_interp=akima)
     return nothing
 end
 
+"""
+    combine(apth_out, apth::AbstractArray{<:AcousticPressure}, axis; f_interp=akima)
+
+Combine the acoustic pressures of multiple sources (`apth`) into a single acoustic pressure time history `apth_out`.
+"""
 function combine(apth, t_common::AbstractArray, axis::Integer=1; f_interp=akima)
     # Allocate output arrays.
     nout = length(t_common)
