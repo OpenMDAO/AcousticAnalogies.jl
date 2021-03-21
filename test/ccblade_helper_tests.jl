@@ -48,7 +48,8 @@ end
     src_time_range = num_blade_passes*bpp
 
     # Finally get all the source elements.
-    ses_helper = source_elements_ccblade(rotor, sections, ops, outs, ccbc.area_over_chord_squared, src_time_range, num_src_times)
+    aoc2 = fill(ccbc.area_over_chord_squared, length(sections))
+    ses_helper = source_elements_ccblade(rotor, sections, ops, outs, aoc2, src_time_range, num_src_times)
 
     # Now need to get the source elements the "normal" way. First get the
     # transformation objects.

@@ -4,7 +4,14 @@
 Construct a source element to be used with the compact form of Farassat's formulation 1A from CCBlade objects.
 
 # Arguments
-- 
+- rotor::CCBlade.Rotor: CCBlade rotor object, needed for the precone angle.precone).
+- section::CCBlade.Section: CCBlade section object, needed for the radial location and chord length of the element.
+- op::CCBlade.OperatingPoint: CCBlade operating point, needed for atmospheric properties.
+- out::CCBlade.Outputs: CCBlade outputs object, needed for the loading.
+- θ: polar coordinate of the element, in radians.
+- Δr: length of the element.
+- area_per_chord2: cross-sectional area divided by the chord squared of the element.
+- τ: source time of the element.
 """
 function CompactSourceElement(rotor::CCBlade.Rotor, section::CCBlade.Section, op::CCBlade.OperatingPoint, out::CCBlade.Outputs, θ, Δr, area_per_chord2, τ)
     ρ0 = op.rho
@@ -62,6 +69,20 @@ function CompactSourceElement(rotor::CCBlade.Rotor, section::CCBlade.Section, op
 
 end
 
+"""
+    source_elements_ccblade(rotor::CCBlade.Rotor, sections::Vector{CCBlade.Section}, ops::Vector{CCBlade.OperatingPoint}, outputs::Vector{CCBlade.Outputs}, area_per_chord2::Vector{AbstractFloat}, period, num_src_times)
+
+Construct and return an array of CompactSourceElement objects from CCBlade structs.
+
+# Arguments
+- rotor: CCBlade rotor object.precone).
+- sections: CCBlade section object.
+- ops: CCBlade operating point.
+- outputs::CCBlade.Outputs: CCBlade outputs object.
+- area_per_chord2: cross-sectional area divided by the chord squared of the element at each CCBlade.section. Should be a Vector{AbstractFloat}, same length as `sections`.
+- period: length of the source time over which the returned source elements will evaluated.
+- num_src_times: number of source times.
+"""
 function source_elements_ccblade(rotor, sections, ops, outputs, area_per_chord2, period, num_src_times)
     # Need to know the radial spacing. (CCBlade doesn't use this—when
     # integrating stuff (torque and thrust) it uses the trapezoidal rule and
@@ -109,6 +130,7 @@ function source_elements_ccblade(rotor, sections, ops, outputs, area_per_chord2,
     ops = reshape(ops, 1, :, 1)
     outputs = reshape(outputs, 1, :, 1)
     dradii = reshape(dradii, 1, :, 1)
+    area_per_chord2 = reshape(area_per_chord2, 1, :, 1)
     src_times = reshape(src_times, :, 1, 1)  # This one isn't necessary.
 
     # Construct and transform the source elements.
@@ -117,6 +139,11 @@ function source_elements_ccblade(rotor, sections, ops, outputs, area_per_chord2,
     return ses
 end
 
+"""
+    get_ccblade_dradii(rotor::CCBlade.Rotor, sections::Vector{CCBlade.Section})
+
+Construct and return a Vector of the lengths of each CCBlade section.
+"""
 function get_ccblade_dradii(rotor, sections)
     radii = SingleFieldStructArray(sections, :r)
     dradii = get_dradii(radii, rotor.Rhub, rotor.Rtip)
