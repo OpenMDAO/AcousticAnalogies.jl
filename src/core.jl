@@ -66,10 +66,12 @@ function (trans::KinematicTransformation)(se::CompactSourceElement)
 end
 
 """
-    AcousticObserver
-
 Supertype for an object that recieves a noise prediction when combined with an
 acoustic analogy source; computational equivalent of a microphone.
+
+    (obs::AcousticObserver)(t)
+
+Calculate the position of the acoustic observer at time `t`.
 """
 abstract type AcousticObserver end
 
@@ -93,13 +95,6 @@ Construct an acoustic observer moving with a constant velocity `v`, located at
     x0
     v
 end
-
-"""
-    obs::AcousticObserver(t)
-
-Calculate the position of the acoustic observer at time `t`.
-"""
-(obs::AcousticObserver)(t)
 
 function (obs::StationaryAcousticObserver)(t)
     return obs.x
