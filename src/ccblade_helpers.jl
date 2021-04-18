@@ -4,14 +4,14 @@
 Construct a source element to be used with the compact form of Farassat's formulation 1A from CCBlade objects.
 
 # Arguments
-- rotor::CCBlade.Rotor: CCBlade rotor object, needed for the precone angle.precone).
-- section::CCBlade.Section: CCBlade section object, needed for the radial location and chord length of the element.
-- op::CCBlade.OperatingPoint: CCBlade operating point, needed for atmospheric properties.
-- out::CCBlade.Outputs: CCBlade outputs object, needed for the loading.
-- θ: polar coordinate of the element, in radians.
-- Δr: length of the element.
-- area_per_chord2: cross-sectional area divided by the chord squared of the element.
-- τ: source time of the element.
+- `rotor::CCBlade.Rotor`: CCBlade rotor object, needed for the precone angle.precone.
+- `section::CCBlade.Section`: CCBlade section object, needed for the radial location and chord length of the element.
+- `op::CCBlade.OperatingPoint`: CCBlade operating point, needed for atmospheric properties.
+- `out::CCBlade.Outputs`: CCBlade outputs object, needed for the loading.
+- `θ`: polar coordinate of the element, in radians.
+- `Δr`: length of the element.
+- `area_per_chord2`: cross-sectional area divided by the chord squared of the element.
+- `τ`: source time of the element.
 """
 function CompactSourceElement(rotor::CCBlade.Rotor, section::CCBlade.Section, op::CCBlade.OperatingPoint, out::CCBlade.Outputs, θ, Δr, area_per_chord2, τ)
     ρ0 = op.rho
@@ -75,24 +75,24 @@ end
 Construct and return an array of CompactSourceElement objects from CCBlade structs.
 
 # Arguments
-- rotor: CCBlade rotor object.precone).
-- sections: CCBlade section object.
-- ops: CCBlade operating point.
-- outputs::CCBlade.Outputs: CCBlade outputs object.
-- area_per_chord2: cross-sectional area divided by the chord squared of the element at each CCBlade.section. Should be a Vector{AbstractFloat}, same length as `sections`.
-- period: length of the source time over which the returned source elements will evaluated.
-- num_src_times: number of source times.
+- `rotor`: CCBlade rotor object.precone).
+- `sections`: `Vector` of CCBlade section object.
+- `ops`: `Vector` of CCBlade operating point.
+- `outputs`::`Vector` of CCBlade output objects.
+- `area_per_chord2`: cross-sectional area divided by the chord squared of the element at each CCBlade.section. Should be a Vector{AbstractFloat}, same length as `sections`, `ops`, `outputs`.
+- `period`: length of the source time over which the returned source elements will evaluated.
+- `num_src_times`: number of source times.
 """
 function source_elements_ccblade(rotor, sections, ops, outputs, area_per_chord2, period, num_src_times)
     # Need to know the radial spacing. (CCBlade doesn't use this—when
-    # integrating stuff (torque and thrust) it uses the trapezoidal rule and
-    # passes in the radial locations, and assumes that integrands go to zero at
-    # the hub and tip.) Kind of lame that I have to calcluate it here, but
-    # whatever.
+    # integrating stuff [loading to get torque and thrust] it uses the
+    # trapezoidal rule and passes in the radial locations, and assumes that
+    # integrands go to zero at the hub and tip.) Kind of lame that I have to
+    # calcluate it here, but whatever.
     dradii = get_ccblade_dradii(rotor, sections)
 
     # Assume the rotor is traveling in the positive x direction, with the first
-    # blade aligned with the positive y axis. Rotor hub is at the origin.
+    # blade aligned with the positive y axis. Rotor hub is initially at the origin.
     rot_axis = @SVector [1.0, 0.0, 0.0]
     blade_axis = @SVector [0.0, 1.0, 0.0]
     y0_hub = @SVector [0.0, 0.0, 0.0]  # m

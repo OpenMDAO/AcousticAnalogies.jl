@@ -1,6 +1,6 @@
 # AcousticAnalogies.jl Documention
 
-**Summary**: A pure-Julia package for noise prediction with acoustic analogies.
+**Summary**: A pure-Julia package for propeller/rotor blade noise prediction with acoustic analogies.
 
 **What's an acoustic analogy?**
 * TL;DR answer:
@@ -8,10 +8,9 @@
   An acoustic analogy is a noise prediction approach that takes information from
   one area of the fluid domain (e.g., a propeller blade surface, or a fictitious
   surface surrounding a complicated flow) and calculates the acoustics radiated
-  by the flow. The particular acoustic analogy used by `AcousticAnalogies.jl` is
+  by the flow. The particular acoustic analogy implemented in `AcousticAnalogies.jl` is
   especially well-suited for predicting tonal propeller/rotor noise, and has
-  features that ease its inclusion in multi-disciplinary analyses and
-  optimizations.
+  features that ease its inclusion in gradient-based optimizations.
 
 * Mathy answer:
 
@@ -35,7 +34,7 @@
     [http://dx.doi.org/10.2514/1.C034048](http://dx.doi.org/10.2514/1.C034048)
     for details).
   * Support for stationary or constant-velocity moving observers, with an
-    explict calculation for the latter from Casalino
+    explict calculation for the latter from D. Casalino
     [http://dx.doi.org/10.1016/S0022-460X(02)00986-0](http://dx.doi.org/10.1016/S0022-460X(02)00986-0).
   * Thoroughly tested: unit tests for everything, and multiple comparisons of the entire
     calculation to equivalent methods in NASA's ANOPP2 code.
@@ -50,8 +49,5 @@
 ```
 
 **Usage**
-See the docs.
 
-```@autodocs
-Modules = [AcousticAnalogies]
-```
+See the docs.

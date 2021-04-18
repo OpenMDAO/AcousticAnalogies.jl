@@ -16,6 +16,8 @@ end
 Compute the spacing between blade elements given the radial locations of the
 element midpoints in `radii` and the hub and tip radius in `Rhub` and `Rtip`,
 respectively.
+
+Assume the interfaces between elements are midway between adjacent element's midpoints.
 """
 function get_dradii(radii, Rhub, Rtip)
     # How do I get the radial spacing? Well, for the inner elements, I'll just
