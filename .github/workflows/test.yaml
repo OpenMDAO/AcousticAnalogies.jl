@@ -29,5 +29,7 @@ jobs:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
       - uses: webfactory/ssh-agent@v0.5.2
+		with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
       - run: julia -e 'using Pkg; Pkg.Registry.add(RegistrySpec(url="git@github.com:dingraha/DanielIngrahamRegistry.git"))'
       - uses: julia-actions/julia-runtest@master
