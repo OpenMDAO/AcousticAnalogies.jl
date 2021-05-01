@@ -1,4 +1,4 @@
-# Compact Formulation 1A Example
+# Compact Formulation 1A Guided Example
 
 There are four steps to predicting propeller/rotor noise with
 AcousticAnalogies.jl.
@@ -209,3 +209,123 @@ size(ses)
 ```
 
 The size of the source element array ended up like we wanted: `(num_src_times, num_radial, num_blades)`.
+
+### The Global Reference Frame
+At this point we have an array of `CompactSourceElement` that describes the what
+each blade element "source" is doing from the perspective of the blade-fixed
+reference frame. But in order to perform the F1A calculation, we need to move
+the sources from the blade-fixed frame to the global reference frame, i.e., the
+one for which the fluid medium (air) appears to be stationary. This involves
+just setting the position and loading components of each `CompactSourceElement`
+to the correct values (`y0dot` through `y3dot` and `f0dot` and `f1dot`). This
+could be done manually, but it's easier to use the
+[KinematicCoordinateTransformations.jl](https://github.com/dingraha/KinematicCoordinateTransformations)
+package.
+
+The first transformation we need to perform is a steady rotation around the x
+axis. So we create a `SteadyRotXTransformation`:
+```@example first_example
+using KinematicCoordinateTransformations
+t0 = 0.0  # Time at which the angle between the source and target coordinate systems is equal to offest.
+offset = 0.0  # Angular offset between the source and target cooridante systems at t0.
+rot_trans = SteadyRotXTransformation(t0, omega, offset)
+nothing # hide
+```
+
+Next, we need to orient the rotation axis of the blades as it is the global
+frame. For example, let's say that it's pointed in the global positive z-axis
+direction, and the first blade is pointed in the positive y-axis direction. Then
+we can perform this transformation using the `ConstantLinearMap` transformation:
+```@example first_example
+using LinearAlgebra: ×
+using StaticArrays
+rot_axis = @SVector [0.0, 0.0, 1.0]
+blade_axis = @SVector [0.0, 1.0, 0.0]
+global_trans = ConstantLinearMap(hcat(rot_axis, blade_axis, rot_axis×blade_axis))
+nothing # hide
+```
+
+Finally, we need the blade to move with the appropriate forward velocity, and
+start from the desired location in the global reference frame:
+
+```@example first_example
+y0_hub = @SVector [0.0, 0.0, 0.0]  # Position of the hub at time t0
+v0_hub = SVector{3}(v.*rot_axis)   # Constant velocity of the hub in the global reference frame
+const_vel_trans = ConstantVelocityTransformation(t0, y0_hub, v0_hub)
+nothing # hide
+```
+
+Now we could apply each of these transformations to the `SourceElement` array.
+But it's more efficient to combine these three transformations into one, and
+then use that on the `SourceElements` using `compose`.
+
+```@example first_example
+trans = compose.(src_times, Ref(const_vel_trans), compose.(src_times, Ref(global_trans), Ref(rot_trans)))
+nothing # hide
+```
+
+Now `trans` will perform the three transformations from right to left
+(`rot_trans`, `global_trans`, `const_vel_trans`). Now we use it on `ses`:
+
+```@example first_example
+ses = ses .|> trans
+nothing # hide
+```
+
+So now the `ses` has been transformed from the blade-fixed reference frame to
+the global reference frame. We could have created the source elements and
+transformed them all in one line, too, which is pretty slick:
+
+```@example first_example
+ses = AcousticAnalogies.CompactSourceElement.(rho, c0, radii, θs, dradii, cs_area, -fn, 0.0, fc, src_times) .|> trans
+nothing # hide
+```
+
+## 2. Perform the Advanced Time Calculation
+The `ses` object now describes how each blade element source is moving through
+the global reference frame over the time `src_time`. As it does this, it will
+emit acoustics that can be sensed by an acoustic observer (a human, or a
+microphone). The exact "amount" of acoustics the observer will experience depends
+on the relative location and motion between each source and the observer. So
+we'll need to define our acoustic observer before we can calculate the noise
+heard by it. For this example, we'll assume that our acoustic observer is
+stationary in the global frame.
+
+```@example first_example
+x0 = @SVector [100*12*0.0254, 0.0, 0.0]  # 100 ft in meters
+obs = StationaryAcousticObserver(x0)
+nothing # hide
+```
+
+Now, in order to perform the F1A calculation, we need to know when each acoustic
+disturbance emitted by the source arrives at the observer. This is referred to an 
+advanced time calculation, and is done this way:
+
+```@example first_example
+obs_time = adv_time.(ses, Ref(obs))
+nothing # hide
+```
+
+That returns an array the same size of `ses` of the time each acoustic
+disturbance reaches the observer `obs`:
+
+```@example first_example
+@show size(obs_time)
+nothing # hide
+```
+
+## 3. Perform the F1A Calculation
+We're finally ready to do the compact F1A calculation!
+
+```@example first_example
+apth = f1a.(ses, Ref(obs), obs_time)
+nothing # hide
+```
+
+When called this way, the `f1a` routine returns an array of `AcousticPressure`
+`struct`s, the same size as `ses` and `obs_time`. Each `AcousticPressure`
+`struct` has three components: the observer time `t`, the thickness/monopole
+part of the acoustic pressure `p_m`, and the loading/dipole part of the acoustic
+pressure `p_d`.
+
+## 4. Combine the Acoustic Pressures

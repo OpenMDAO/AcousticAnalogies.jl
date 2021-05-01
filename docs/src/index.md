@@ -38,6 +38,8 @@
     [http://dx.doi.org/10.1016/S0022-460X(02)00986-0](http://dx.doi.org/10.1016/S0022-460X(02)00986-0).
   * Thoroughly tested: unit tests for everything, and multiple comparisons of the entire
     calculation to equivalent methods in NASA's ANOPP2 code.
+  * Convenient, fast coordinate system transformations through
+    [KinematicCoordinateTransformations.jl](https://github.com/dingraha/KinematicCoordinateTransformations).
   * Written in pure Julia, and compatible with automatic differentiation (AD)
     tools like [ForwardDiff.jl](https://github.com/JuliaDiff/ForwardDiff.jl).
   * Comprehensive docs (TODO).

@@ -1,3 +1,6 @@
 [deps]
 AcousticAnalogies = "e71b3392-1e0c-4536-b366-2bd1fce6fba0"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+KinematicCoordinateTransformations = "730d3219-0a85-48f9-b699-9f31f8913d09"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
