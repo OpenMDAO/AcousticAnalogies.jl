@@ -139,7 +139,7 @@ And we need to decide on some operating point parameters. Let's assume that
 the blade is moving forward at `5.0 m/s` and rotating at `2200 rev/min`.
 
 ```@example first_example
-v = 5.0  # m/s
+v = 0.0  # m/s
 omega = 2200 * 2*pi/60  # rad/s
 nothing # hide
 ```
@@ -149,8 +149,8 @@ blades' acoustics. Let's do one rotation of the blade:
 
 ```@example first_example
 period = 2*pi/omega
-num_src_times = 32
-dt = period/(num_src_times-1)
+num_src_times = 64
+dt = 2*period/(num_src_times-1)
 src_times = (0:num_src_times-1).*dt
 nothing # hide
 ```
@@ -159,9 +159,9 @@ So at this point we have all the information needed to define the source
 elements in a frame of reference that's moving with the blade, i.e., rotating at
 a rate of `omega` and moving forward at a speed of `v` defined above. Let's do
 that. We want one source element for each radial station along the blade at each
-`src_time` and each of the `B` blades. Sounds kind of complicated, but luckily
-Julia's broadcasting makes this easy. What we'd like is an array `ses` of
-`CompactSourceElement` types that has `size` `(num_src_times, num_radial,
+`src_time` and each of the `num_blades` blades. Sounds kind of complicated, but
+luckily Julia's broadcasting makes this easy. What we'd like is an array `ses`
+of `CompactSourceElement` types that has `size` `(num_src_times, num_radial,
 num_blades)`, where `ses[i, j, k]` holds the `CompactSourceElement` at
 `src_time[i]`, `radii[j]`, and blade number `k`. So let's reshape the input
 arrays to make that happen.
@@ -329,18 +329,50 @@ the thickness/monopole part of the acoustic pressure `p_m`, and the
 loading/dipole part of the acoustic pressure `p_d`.
 
 ## 4. Combine the Acoustic Pressures
-We now have a noise prediction for each of the individual source elements in `ses` at the acoustic
-observer `obs`. What we ultimately want is the *total* noise prediction at
-`obs`—we want to add all the acoustic pressures in `apth` together. But we can't
-add them directly, yet, since the observer times are not all the same. (Hmm...
-can I show that somehow? Let's see if I can plot that.)
+We now have a noise prediction for each of the individual source elements in
+`ses` at the acoustic observer `obs`. What we ultimately want is the *total*
+noise prediction at `obs`—we want to add all the acoustic pressures in `apth`
+together. But we can't add them directly, yet, since the observer times are not
+all the same. What we need to do is first interpolate the `apth` of each source
+onto a common observer time grid, and then add them up. We'll do this using the
+`AcousticAnalogies.combine` function.
+
+```@example first_example
+bpp = period/num_blades  # blade passing period
+obs_time_range = 2*bpp
+num_obs_times = 128
+apth_total = combine(apth, obs_time_range, num_obs_times, 1)
+nothing # hide
+```
+
+`combine` returns a single `AcousticPressure` `struct` made up of `Vector`s—it
+is an "struct of arrays" and not an "array of structs" like `apth`:
+
+```@example first_example
+@show typeof(apth) typeof(apth_total)
+nothing # hide
+```
+
+We can now have a look at the total acoustic pressure time history at the
+observer:
 
 ```@example first_example
 using GLMakie
 fig = Figure()
-ax1 = fig[1, 1] = Axis(fig, xlabel="time index", ylabel="observer time, sec.")
-for p in eachcol(reshape(apth, num_src_times, :))
-    lines!(ax1, 1:num_src_times, getproperty.(p, :t))
-end
-save("obs_times.png", fig)
+ax1 = fig[1, 1] = Axis(fig, xlabel="time, blade passes", ylabel="monopole, Pa")
+ax2 = fig[2, 1] = Axis(fig, xlabel="time, blade passes", ylabel="dipole, Pa")
+ax3 = fig[3, 1] = Axis(fig, xlabel="time, blade passes", ylabel="total, Pa")
+t_nondim = (apth_total.t .- apth_total.t[1])./bpp
+l1 = lines!(ax1, t_nondim, apth_total.p_m)
+l2 = lines!(ax2, t_nondim, apth_total.p_d)
+l3 = lines!(ax3, t_nondim, apth_total.p_m.+apth_total.p_d)
+hidexdecorations!(ax1, grid=false)
+hidexdecorations!(ax2, grid=false)
+save("first_example-apth_total.png", fig)
+nothing # hide
 ```
+![](first_example-apth_total.png)
+
+We see that the monopole/thickness source is more significant at the sideline
+observer location than the dipole/loading source. We can post-process the total
+acoustic pressure time history in `apth_total` in any way we'd like.
