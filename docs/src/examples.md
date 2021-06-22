@@ -322,10 +322,25 @@ apth = f1a.(ses, Ref(obs), obs_time)
 nothing # hide
 ```
 
-When called this way, the `f1a` routine returns an array of `AcousticPressure`
-`struct`s, the same size as `ses` and `obs_time`. Each `AcousticPressure`
-`struct` has three components: the observer time `t`, the thickness/monopole
-part of the acoustic pressure `p_m`, and the loading/dipole part of the acoustic
-pressure `p_d`.
+When called this way (notice the `.` after `f1a`), the `f1a` routine returns an
+array of `AcousticPressure` `struct`s, the same size as `ses` and `obs_time`.
+Each `AcousticPressure` `struct` has three components: the observer time `t`,
+the thickness/monopole part of the acoustic pressure `p_m`, and the
+loading/dipole part of the acoustic pressure `p_d`.
 
 ## 4. Combine the Acoustic Pressures
+We now have a noise prediction for each of the individual source elements in `ses` at the acoustic
+observer `obs`. What we ultimately want is the *total* noise prediction at
+`obs`—we want to add all the acoustic pressures in `apth` together. But we can't
+add them directly, yet, since the observer times are not all the same. (Hmm...
+can I show that somehow? Let's see if I can plot that.)
+
+```@example first_example
+using GLMakie
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig, xlabel="time index", ylabel="observer time, sec.")
+for p in eachcol(reshape(apth, num_src_times, :))
+    lines!(ax1, 1:num_src_times, getproperty.(p, :t))
+end
+save("obs_times.png", fig)
+```
