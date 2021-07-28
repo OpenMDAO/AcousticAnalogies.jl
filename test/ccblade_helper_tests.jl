@@ -62,7 +62,7 @@ end
     const_vel_trans = ConstantVelocityTransformation(t0, y0_hub, v0_hub)
 
     # Need the source times.
-    dt = src_time_range/(num_src_times - 1)
+    dt = src_time_range/num_src_times
     src_times = t0 .+ (0:num_src_times-1).*dt
 
     # This is just an array of the angular offsets of each blade.

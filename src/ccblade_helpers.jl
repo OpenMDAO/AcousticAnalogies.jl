@@ -99,7 +99,7 @@ function source_elements_ccblade(rotor, sections, ops, outputs, area_per_chord2,
     t0 = 0.0
 
     # Get the time of each time step.
-    dt = period/(num_src_times - 1)
+    dt = period/num_src_times
     src_times = t0 .+ (0:num_src_times-1).*dt
 
     # Get transformations for each blade element.
