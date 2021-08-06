@@ -78,13 +78,14 @@ end
     y3dot(τ) = [0, omega^3*radii*sin(omega*τ), -omega^3*radii*cos(omega*τ)]
     f0dot(τ) = [-fn, -sin(omega*τ)*fc, cos(omega*τ)*fc]
     f1dot(τ) = [0, -omega*cos(omega*τ)*fc, -omega*sin(omega*τ)*fc]
-    sef1 = CompactSourceElement(rho, c0, dradii, Λ, y0dot, y1dot, nothing, nothing, f0dot, nothing, 0.0)
+    u(τ) = y0dot(τ)./radii
+    sef1 = CompactSourceElement(rho, c0, dradii, Λ, y0dot, y1dot, nothing, nothing, f0dot, nothing, 0.0, u)
 
     t = 0.0
     dt = period*0.5^4
 
     τ0, pmi0, pdiff0, pdinf0 = f1_integrand(sef1, obs, t)
-    sef1a = CompactSourceElement(rho, c0, dradii, Λ, y0dot(τ0), y1dot(τ0), y2dot(τ0), y3dot(τ0), f0dot(τ0), f1dot(τ0), τ0)
+    sef1a = CompactSourceElement(rho, c0, dradii, Λ, y0dot(τ0), y1dot(τ0), y2dot(τ0), y3dot(τ0), f0dot(τ0), f1dot(τ0), τ0, u(τ0))
     apth = f1a(sef1a, obs)
 
     err_prev_pm = nothing

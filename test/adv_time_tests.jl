@@ -22,7 +22,7 @@ using Test
     c0 = 2.0
     dummy0 = 1.0
     dummy3 = @SVector [0.0, 0.0, 0.0]
-    se = CompactSourceElement(dummy0, c0, dummy0, dummy0, y, dummy3, dummy3, dummy3, dummy3, dummy3, τ)
+    se = CompactSourceElement(dummy0, c0, dummy0, dummy0, y, dummy3, dummy3, dummy3, dummy3, dummy3, τ, dummy3)
 
     # Define a function that takes a source element and an observer and compares
     # the advanced time solution to one found by NLsolve.

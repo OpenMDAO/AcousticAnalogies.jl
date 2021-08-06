@@ -12,6 +12,7 @@ KinematicCoordinateTransformations = "730d3219-0a85-48f9-b699-9f31f8913d09"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 SingleFieldStructArrays = "5dd5ea32-d67d-426d-b4ce-2ad113187929"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
+WriteVTK = "64499a7a-5c06-52f2-abe2-ccb03c286192"
 
 [extras]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"

@@ -19,6 +19,9 @@
 
     # Source time.
     τ
+
+    # orientation of the element. Only used for WriteVTK
+    u
 end
 
 """
@@ -39,16 +42,18 @@ Construct a source element to be used with the compact form of Farassat's formul
 - τ: source time (s)
 """
 function CompactSourceElement(ρ0, c0, r, θ, Δr, Λ, fn, fr, fc, τ)
-    y0dot = @SVector [0, r*cos(θ), r*sin(θ)]
+    s, c = sincos(θ)
+    y0dot = @SVector [0, r*c, r*s]
     T = eltype(y0dot)
     y1dot = @SVector zeros(T, 3)
     y2dot = @SVector zeros(T, 3)
     y3dot = @SVector zeros(T, 3)
-    f0dot = @SVector [fn, cos(θ)*fr - sin(θ)*fc, sin(θ)*fr + cos(θ)*fc]
+    f0dot = @SVector [fn, c*fr - s*fc, s*fr + c*fc]
     T = eltype(f0dot)
     f1dot = @SVector zeros(T, 3)
+    u = @SVector [0, c, s]
 
-    return CompactSourceElement(ρ0, c0, Δr, Λ, y0dot, y1dot, y2dot, y3dot, f0dot, f1dot, τ)
+    return CompactSourceElement(ρ0, c0, Δr, Λ, y0dot, y1dot, y2dot, y3dot, f0dot, f1dot, τ, u)
 end
 
 """
@@ -61,8 +66,9 @@ function (trans::KinematicTransformation)(se::CompactSourceElement)
     y0dot, y1dot, y2dot, y3dot = trans(se.τ, se.y0dot, se.y1dot, se.y2dot, se.y3dot, linear_only)
     linear_only = true
     f0dot, f1dot= trans(se.τ, se.f0dot, se.f1dot, linear_only)
+    u = trans(se.τ, se.u, linear_only)
 
-    return CompactSourceElement(se.ρ0, se.c0, se.Δr, se.Λ, y0dot, y1dot, y2dot, y3dot, f0dot, f1dot, se.τ)
+    return CompactSourceElement(se.ρ0, se.c0, se.Δr, se.Λ, y0dot, y1dot, y2dot, y3dot, f0dot, f1dot, se.τ, u)
 end
 
 """
