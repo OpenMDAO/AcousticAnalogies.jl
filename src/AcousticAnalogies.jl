@@ -15,10 +15,10 @@ export get_dradii
 include("core.jl")
 export CompactSourceElement
 export AcousticObserver, StationaryAcousticObserver, ConstVelocityAcousticObserver
-export F1AOutput
+export F1AOutput, F1AAcousticPressure
 export adv_time
 export f1a
-export common_obs_time!, common_obs_time
+export common_obs_time
 export combine!, combine
 
 include("ccblade_helpers.jl")

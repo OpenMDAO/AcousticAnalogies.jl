@@ -5,7 +5,7 @@ using FLOWMath: akima, linear
 using Random
 using Test
 
-@testset "Combine AcousticPressure tests" begin
+@testset "Combine F1AOutput tests" begin
 
     # Goal is to verify that the code can faithfully combine two acoustic
     # pressures on different time "grids" onto a single common grid.
@@ -25,20 +25,20 @@ using Test
     t2 .+= 0.49.*dt.*(1 - 2*rand(size(t2)))
 
     # Now I need a bunch of acoustic pressures.
-    apth1 = @. AcousticPressure(t1, fa(t1), 2*fa(t1))
-    apth2 = @. AcousticPressure(t2, fb(t2), 3*fb(t2))
+    apth1 = @. F1AOutput(t1, fa(t1), 2*fa(t1))
+    apth2 = @. F1AOutput(t2, fb(t2), 3*fb(t2))
 
     # Calculate the "exact" answer by coming up with a common time, then
     # evaluating the test functions directly on the common time grid.
     period = 0.5
     n_out = 51
     t_start = max(t1[1], t2[1])
-    t_common = @. t_start + (0:n_out-1)*(period/n_out)
+    t_common = t_start .+ (0:n_out-1).*(period/n_out)
 
     p_m = @. fa(t_common)+fb(t_common)
     p_d = @. 2*fa(t_common)+3*fb(t_common)
 
-    apth_test = AcousticPressure(t_common, p_m, p_d)
+    apth_test = F1AAcousticPressure(p_m, p_d, step(t_common), first(t_common))
 
     function combine_test_axis1(f_interp)
         # Put all the acoustic pressures in one array.
@@ -46,19 +46,17 @@ using Test
 
         # Combine.
         axis = 1
-        apth_out = combine(apth, t_common, axis, f_interp=f_interp)
+        apth_out = combine(apth, period, n_out, axis, f_interp=f_interp)
 
         # Now find the scaled absolute error between the two approaches.
         p_m_min, p_m_max = extrema(apth_test.p_m)
         err = @. abs(apth_out.p_m - apth_test.p_m)/(p_m_max - p_m_min)
         err_max = maximum(err)
-        # println("p_m err_max = $(err_max)")
         @test err_max < 0.01
 
         p_d_min, p_d_max = extrema(apth_test.p_d)
         err = @. abs(apth_out.p_d - apth_test.p_d)/(p_d_max - p_d_min)
         err_max = maximum(err)
-        # println("p_d err_max = $(err_max)")
         @test err_max < 0.01
 
         return nothing
@@ -70,19 +68,17 @@ using Test
 
         # Combine.
         axis = 2
-        apth_out = combine(apth, t_common, axis, f_interp=f_interp)
+        apth_out = combine(apth, period, n_out, axis, f_interp=f_interp)
 
         # Now find the scaled absolute error between the two approaches.
         p_m_min, p_m_max = extrema(apth_test.p_m)
         err = @. abs(apth_out.p_m - apth_test.p_m)/(p_m_max - p_m_min)
         err_max = maximum(err)
-        # println("p_m err_max = $(err_max)")
         @test err_max < 0.01
 
         p_d_min, p_d_max = extrema(apth_test.p_d)
         err = @. abs(apth_out.p_d - apth_test.p_d)/(p_d_max - p_d_min)
         err_max = maximum(err)
-        # println("p_d err_max = $(err_max)")
         @test err_max < 0.01
 
         return nothing

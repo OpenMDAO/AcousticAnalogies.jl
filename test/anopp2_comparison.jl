@@ -1,14 +1,15 @@
 module ANOPP2Comparison
 
-const DO_PLOTS = false
+# const DO_PLOTS = false
 
+using AcousticMetrics
 import AcousticAnalogies, DelimitedFiles, FLOWMath, Test
 using KinematicCoordinateTransformations
 using LinearAlgebra: ×
 using StaticArrays
-if DO_PLOTS
-    import Plots
-end
+# if DO_PLOTS
+#     import Plots
+# end
 using Printf: @sprintf
 
 include("gen_test_data/gen_ccblade_data/constants.jl")
@@ -106,49 +107,49 @@ Test.@testset "ANOPP2 Comparison" begin
                 println("stationary_observer = $(stationary_observer), theta = $(theta*180.0/pi) deg, rpm = $(rpm[i]), loading aerr_scaled = $(max_aerr_loading_scaled)")
             end
 
-            if DO_PLOTS
-                # Create a plot.
-                p_apth = Plots.plot(legend=:topleft, foreground_color_legend=nothing, background_color_legend=nothing)
+            # if DO_PLOTS
+            #     # Create a plot.
+            #     p_apth = Plots.plot(legend=:topleft, foreground_color_legend=nothing, background_color_legend=nothing)
 
-                # Plot original data.
-                Plots.plot!(p_apth, obs_time, p_thickness, label="thickness", seriescolor=:blue, markershape=:x)
-                Plots.plot!(p_apth, obs_time, p_loading, label="loading", seriescolor=:red, markershape=:x)
-                Plots.plot!(p_apth, t_a2, p_monopole_a2, label="ANOPP2 monopole", seriescolor=:blue, markershape=:+, markerstrokecolor=:blue)
-                Plots.plot!(p_apth, t_a2, p_dipole_a2, label="ANOPP2 dipole", seriescolor=:red, markershape=:+, markerstrokecolor=:red)
-                # Plot interpolated data.
-                Plots.plot!(p_apth, t, p_thickness_interp, label="thickness, interp", seriescolor=:blue, markershape=:star4, markerstrokecolor=:blue, markercolor=nothing)
-                Plots.plot!(p_apth, t, p_loading_interp, label="loading, interp", seriescolor=:red, markershape=:star4, markerstrokecolor=:red, markercolor=nothing)
-                Plots.plot!(p_apth, t, p_monopole_a2_interp, label="ANOPP2 monopole, interp", seriescolor=:blue, markershape=:star6, markerstrokecolor=:blue, markercolor=nothing)
-                Plots.plot!(p_apth, t, p_dipole_a2_interp, label="ANOPP2 dipole, interp", seriescolor=:red, markershape=:star6, markerstrokecolor=:red, markercolor=nothing)
+            #     # Plot original data.
+            #     Plots.plot!(p_apth, obs_time, p_thickness, label="thickness", seriescolor=:blue, markershape=:x)
+            #     Plots.plot!(p_apth, obs_time, p_loading, label="loading", seriescolor=:red, markershape=:x)
+            #     Plots.plot!(p_apth, t_a2, p_monopole_a2, label="ANOPP2 monopole", seriescolor=:blue, markershape=:+, markerstrokecolor=:blue)
+            #     Plots.plot!(p_apth, t_a2, p_dipole_a2, label="ANOPP2 dipole", seriescolor=:red, markershape=:+, markerstrokecolor=:red)
+            #     # Plot interpolated data.
+            #     Plots.plot!(p_apth, t, p_thickness_interp, label="thickness, interp", seriescolor=:blue, markershape=:star4, markerstrokecolor=:blue, markercolor=nothing)
+            #     Plots.plot!(p_apth, t, p_loading_interp, label="loading, interp", seriescolor=:red, markershape=:star4, markerstrokecolor=:red, markercolor=nothing)
+            #     Plots.plot!(p_apth, t, p_monopole_a2_interp, label="ANOPP2 monopole, interp", seriescolor=:blue, markershape=:star6, markerstrokecolor=:blue, markercolor=nothing)
+            #     Plots.plot!(p_apth, t, p_dipole_a2_interp, label="ANOPP2 dipole, interp", seriescolor=:red, markershape=:star6, markerstrokecolor=:red, markercolor=nothing)
 
-                # Make the plot look good.
-                if theta ≈ 0.0
-                    Plots.ylims!(p_apth, apth_ylims_xrotor[i])
-                end
-                Plots.xlims!(p_apth, (0.0, 1.0))
-                Plots.xlabel!(p_apth, "t/t_blade_pass")
-                Plots.ylabel!(p_apth, "acoustic pressure, Pa")
+            #     # Make the plot look good.
+            #     if theta ≈ 0.0
+            #         Plots.ylims!(p_apth, apth_ylims_xrotor[i])
+            #     end
+            #     Plots.xlims!(p_apth, (0.0, 1.0))
+            #     Plots.xlabel!(p_apth, "t/t_blade_pass")
+            #     Plots.ylabel!(p_apth, "acoustic pressure, Pa")
 
-                # Save the plot.
-                theta_int = Int(round(theta*180.0/pi))
-                if stationary_observer
-                    if f_interp === FLOWMath.akima
-                        Plots.savefig(p_apth, "p_apth_$(@sprintf "%04d" Int(round(rpm[i])))rpm_theta$(theta_int)_akima.png")
-                    elseif f_interp === FLOWMath.linear
-                        Plots.savefig(p_apth, "p_apth_$(@sprintf "%04d" Int(round(rpm[i])))rpm_theta$(theta_int)_linear.png")
-                    else
-                        Plots.savefig(p_apth, "p_apth_$(@sprintf "%04d" Int(round(rpm[i])))rpm_theta$(theta_int)_other.png")
-                    end
-                else
-                    if f_interp === FLOWMath.akima
-                        Plots.savefig(p_apth, "p_apth_const_vel_$(@sprintf "%04d" Int(round(rpm[i])))rpm_theta$(theta_int)_akima.png")
-                    elseif f_interp === FLOWMath.linear
-                        Plots.savefig(p_apth, "p_apth_const_vel_$(@sprintf "%04d" Int(round(rpm[i])))rpm_theta$(theta_int)_linear.png")
-                    else
-                        Plots.savefig(p_apth, "p_apth_const_vel_$(@sprintf "%04d" Int(round(rpm[i])))rpm_theta$(theta_int)_other.png")
-                    end
-                end
-            end
+            #     # Save the plot.
+            #     theta_int = Int(round(theta*180.0/pi))
+            #     if stationary_observer
+            #         if f_interp === FLOWMath.akima
+            #             Plots.savefig(p_apth, "p_apth_$(@sprintf "%04d" Int(round(rpm[i])))rpm_theta$(theta_int)_akima.png")
+            #         elseif f_interp === FLOWMath.linear
+            #             Plots.savefig(p_apth, "p_apth_$(@sprintf "%04d" Int(round(rpm[i])))rpm_theta$(theta_int)_linear.png")
+            #         else
+            #             Plots.savefig(p_apth, "p_apth_$(@sprintf "%04d" Int(round(rpm[i])))rpm_theta$(theta_int)_other.png")
+            #         end
+            #     else
+            #         if f_interp === FLOWMath.akima
+            #             Plots.savefig(p_apth, "p_apth_const_vel_$(@sprintf "%04d" Int(round(rpm[i])))rpm_theta$(theta_int)_akima.png")
+            #         elseif f_interp === FLOWMath.linear
+            #             Plots.savefig(p_apth, "p_apth_const_vel_$(@sprintf "%04d" Int(round(rpm[i])))rpm_theta$(theta_int)_linear.png")
+            #         else
+            #             Plots.savefig(p_apth, "p_apth_const_vel_$(@sprintf "%04d" Int(round(rpm[i])))rpm_theta$(theta_int)_other.png")
+            #         end
+            #     end
+            # end
         end 
 
     end
@@ -206,7 +207,7 @@ Test.@testset "ANOPP2 Comparison" begin
         # Combine all the acoustic pressure time histories into one.
         apth_total = AcousticAnalogies.combine(apth, obs_time_range, num_obs_times, 1; f_interp=f_interp)
 
-        return apth_total.t, apth_total.p_m, apth_total.p_d
+        return AcousticMetrics.time(apth_total), AcousticAnalogies.pressure_monopole(apth_total), AcousticAnalogies.pressure_dipole(apth_total)
     end
 
     # Actually run the tests.

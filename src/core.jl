@@ -145,7 +145,7 @@ function adv_time(se::CompactSourceElement, obs::ConstVelocityAcousticObserver)
 end
 
 """
-Acoustic pressure value at time `t`, broken into monopole component `p_m` and
+Output of the F1A calculation: the acoustic pressure value at time `t`, broken into monopole component `p_m` and
 dipole component `p_d`.
 """
 @concrete struct F1AOutput
@@ -257,7 +257,6 @@ function common_obs_time(apth, period, n, axis=1)
     return t_common
 end
 
-
 @concrete struct F1AAcousticPressure <: AcousticMetrics.AbstractAcousticPressure
     p_m
     p_d
@@ -283,31 +282,35 @@ function F1AAcousticPressure(n, dt, t0)
 end
 
 """
-    F1AAcousticPressure([T=Float64,] t_common)
+    F1AAcousticPressure(apth::AbstractArray{<:F1AOutput}, period::AbstractFloat, n::Integer, axis::Integer=1)
 
-Construct an `F1AAcousticPressure` `struct` suitable for containing an acoustic prediction for times `t_common`.
+Construct an `F1AAcousticPressure` `struct` suitable for containing an acoustic prediction from an array of `F1AOutput` `struct`.
+
+The elapsed time and length of the returned `F1AAcousticPressure` will be
+`period` and `n`, respectively. `axis` indicates which axis the `apth` `struct`s
+time varies. (`period`, `n`, `axis` are passed to [`common_obs_time`](@ref).)
 """
-function F1AAcousticPressure(::Type{T}, t_common) where {T}
-    n = length(t_common)
-    dt = step(t_common)
-    t0 = first(t_common)
-    p_m = Vector{T}(undef, n)
-    p_d = Vector{T}(undef, n)
-    return F1AAcousticPressure(p_m, p_d, dt, t0)
-end
+function F1AAcousticPressure(apth::AbstractArray{<:F1AOutput}, period, n, axis=1)
+    # Get the common observer time.
+    t_common = common_obs_time(apth, period, n, axis)
 
-function F1AAcousticPressure(t_common)
-    n = length(t_common)
+    # Allocate output arrays.
+    T = typeof(first(apth).p_m)
+    p_m = Vector{T}(undef, n)
+    T = typeof(first(apth).p_d)
+    p_d = Vector{T}(undef, n)
+
+    # Create the output apth.
     dt = step(t_common)
     t0 = first(t_common)
-    p_m = Vector{Float64}(undef, n)
-    p_d = Vector{Float64}(undef, n)
-    return F1AAcousticPressure(p_m, p_d, dt, t0)
+    apth_out = F1AAcousticPressure(p_m, p_d, dt, t0)
+
+    return apth_out
 end
 
 @inline AcousticMetrics.pressure(ap::F1AAcousticPressure) = ap.p_m + ap.p_d
-@inline AcousticMetrics.pressure_monopole(ap::F1AAcousticPressure) = ap.p_m
-@inline AcousticMetrics.pressure_dipole(ap::F1AAcousticPressure) = ap.p_d
+@inline pressure_monopole(ap::F1AAcousticPressure) = ap.p_m
+@inline pressure_dipole(ap::F1AAcousticPressure) = ap.p_d
 
 """
     combine!(apth_out::F1AAcousticPressure, apth::AbstractArray{<:F1AOutput}, axis; f_interp=akima)
@@ -366,40 +369,13 @@ function combine!(apth_out, apth, axis; f_interp=akima)
 end
 
 """
-    combine!(apth_out::F1AAcousticPressure, apth::AbstractArray{<:F1AOutput}, period::AbstractFloat, n::Integer, axis=1; f_interp=akima)
-
-Combine the acoustic pressures of multiple sources (`apth`) into a single
-acoustic pressure time history on a time grid of size `n` extending over time
-length `period.
-"""
-function combine!(apth_out, apth, period::AbstractFloat, n::Integer, axis::Integer=1; f_interp=akima)
-    # Get the common observer time.
-    t_common = common_obs_time(apth, period, n, axis)
-
-    return combine!(apth_out, apth, t_common, axis; f_interp=f_interp)
-end
-
-"""
     combine(apth::AbstractArray{<:F1AOutput}, period::AbstractFloat, n::Integer, axis=1; f_interp=akima)
 
 Combine the acoustic pressures of multiple sources (`apth`) into a single
 acoustic pressure time history on a time grid of size `n` extending over time
-length `period.
+length `period`.
 """
 function combine(apth, period::AbstractFloat, n::Integer, axis::Integer=1; f_interp=akima)
-    # Get the common observer time.
-    t_common = common_obs_time(apth, period, n, axis)
-
-    # Allocate output arrays.
-    T = typeof(first(apth).p_m)
-    p_m = zeros(T, n)
-    T = typeof(first(apth).p_d)
-    p_d = zeros(T, n)
-
-    # Create the output apth.
-    dt = step(t_common)
-    t0 = first(t_common)
-    apth_out = F1AAcousticPressure(p_m, p_d, dt, t0)
-
-    return combine!(apth_out, apth, t_common, axis; f_interp=f_interp)
+    apth_out = F1AAcousticPressure(apth, period, n, axis)
+    return combine!(apth_out, apth, axis; f_interp=f_interp)
 end
