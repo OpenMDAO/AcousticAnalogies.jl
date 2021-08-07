@@ -4,10 +4,12 @@ using AcousticMetrics
 using CCBlade
 using ConcreteStructs: @concrete
 using FLOWMath: akima, linear, ksmax
+using Formatting: format
 using KinematicCoordinateTransformations
 using LinearAlgebra: cross, norm, mul!
 using SingleFieldStructArrays
 using StaticArrays
+using WriteVTK
 
 include("utils.jl")
 export get_dradii
@@ -23,5 +25,7 @@ export combine!, combine
 
 include("ccblade_helpers.jl")
 export source_elements_ccblade
+
+include("writevtk.jl")
 
 end # module

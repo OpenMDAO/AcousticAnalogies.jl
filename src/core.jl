@@ -20,7 +20,7 @@
     # Source time.
     τ
 
-    # orientation of the element. Only used for WriteVTK
+    # orientation of the element. Only used for WriteVTK.
     u
 end
 
