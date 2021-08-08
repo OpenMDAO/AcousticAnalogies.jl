@@ -12,7 +12,7 @@ using StaticArrays
 # end
 using Printf: @sprintf
 
-include("gen_test_data/gen_ccblade_data/constants.jl")
+include(joinpath(@__DIR__, "gen_test_data", "gen_ccblade_data", "constants.jl"))
 using .CCBladeTestCaseConstants
 ccbc = CCBladeTestCaseConstants
 
