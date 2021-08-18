@@ -19,6 +19,9 @@
 
     # Source time.
     τ
+
+    # orientation of the element. Only used for WriteVTK.
+    u
 end
 
 """
@@ -39,16 +42,18 @@ Construct a source element to be used with the compact form of Farassat's formul
 - τ: source time (s)
 """
 function CompactSourceElement(ρ0, c0, r, θ, Δr, Λ, fn, fr, fc, τ)
-    y0dot = @SVector [0, r*cos(θ), r*sin(θ)]
+    s, c = sincos(θ)
+    y0dot = @SVector [0, r*c, r*s]
     T = eltype(y0dot)
     y1dot = @SVector zeros(T, 3)
     y2dot = @SVector zeros(T, 3)
     y3dot = @SVector zeros(T, 3)
-    f0dot = @SVector [fn, cos(θ)*fr - sin(θ)*fc, sin(θ)*fr + cos(θ)*fc]
+    f0dot = @SVector [fn, c*fr - s*fc, s*fr + c*fc]
     T = eltype(f0dot)
     f1dot = @SVector zeros(T, 3)
+    u = @SVector [0, c, s]
 
-    return CompactSourceElement(ρ0, c0, Δr, Λ, y0dot, y1dot, y2dot, y3dot, f0dot, f1dot, τ)
+    return CompactSourceElement(ρ0, c0, Δr, Λ, y0dot, y1dot, y2dot, y3dot, f0dot, f1dot, τ, u)
 end
 
 """
@@ -61,8 +66,9 @@ function (trans::KinematicTransformation)(se::CompactSourceElement)
     y0dot, y1dot, y2dot, y3dot = trans(se.τ, se.y0dot, se.y1dot, se.y2dot, se.y3dot, linear_only)
     linear_only = true
     f0dot, f1dot= trans(se.τ, se.f0dot, se.f1dot, linear_only)
+    u = trans(se.τ, se.u, linear_only)
 
-    return CompactSourceElement(se.ρ0, se.c0, se.Δr, se.Λ, y0dot, y1dot, y2dot, y3dot, f0dot, f1dot, se.τ)
+    return CompactSourceElement(se.ρ0, se.c0, se.Δr, se.Λ, y0dot, y1dot, y2dot, y3dot, f0dot, f1dot, se.τ, u)
 end
 
 """
@@ -145,20 +151,21 @@ function adv_time(se::CompactSourceElement, obs::ConstVelocityAcousticObserver)
 end
 
 """
-Acoustic pressure value at time `t`, broken into monopole component `p_m` and
+Output of the F1A calculation: the acoustic pressure value at time `t`, broken into monopole component `p_m` and
 dipole component `p_d`.
 """
-@concrete struct AcousticPressure
+@concrete struct F1AOutput
     t
     p_m
     p_d
 end
 
+
 """
     f1a(se::CompactSourceElement, obs::AcousticObserver, t_obs)
 
 Calculate the acoustic pressure emitted by source element `se` and recieved by
-observer `obs` at time `t_obs`, returning an [`AcousticPressure`](@ref) object.
+observer `obs` at time `t_obs`, returning an [`F1AOutput`](@ref) object.
 
 The correct value for `t_obs` can be found using [`adv_time`](@ref).
 """
@@ -213,30 +220,32 @@ function f1a(se::CompactSourceElement, obs::AcousticObserver, t_obs)
     # Dipole acoustic pressure!
     p_d = (dot_cs_safe(se.f1dot, D1A) + dot_cs_safe(se.f0dot, E1A))*se.Δr/(4.0*pi*se.c0)
 
-    return AcousticPressure(t_obs, p_m, p_d)
+    return F1AOutput(t_obs, p_m, p_d)
 end
 
 """
     f1a(se::CompactSourceElement, obs::AcousticObserver)
 
 Calculate the acoustic pressure emitted by source element `se` and recieved by
-observer `obs`, returning an [`AcousticPressure`](@ref) object.
+observer `obs`, returning an [`F1AOutput`](@ref) object.
 """
 function f1a(se::CompactSourceElement, obs::AcousticObserver)
     t_obs = adv_time(se, obs)
     return f1a(se, obs, t_obs)
 end
 
-"""
-    common_obs_time!(t_common, apth::AbstractArray{<:AcousticPressure}, period, axis=1)
 
-Find a suitable time range for the collection of acoustic pressures in `apth`, writing it to `t_common`.
+"""
+    common_obs_time(apth::AbstractArray{<:F1AOutput}, period, n, axis=1)
+
+Return a suitable time range for the collection of F1A acoustic pressures in `apth`.
 
 The time range will begin near the latest start time of the acoustic pressures
-in `apth`, and be of time length `period`. `axis` indicates along which axis of
-`apth` the time for a source varies.
+in `apth`, and be an `AbstractVector` (really a `StepRangeLen`) of size `n` and
+of time length `period`. `axis` indicates which axis of `apth` the time for a
+source varies.
 """
-function common_obs_time!(t_common, apth::AbstractArray{<:AcousticPressure}, period, axis=1)
+function common_obs_time(apth, period, n, axis=1)
     # Make a single field struct array that behaves like a time array. 4%-6%
     # faster than creating the array with getproperty.
     t_obs = SingleFieldStructArray(apth, :t)
@@ -248,38 +257,74 @@ function common_obs_time!(t_common, apth::AbstractArray{<:AcousticPressure}, per
     t_common_start = ksmax(t_starts, 30/period)
 
     # Get the common observer time.
-    n = length(t_common)
     dt = period/n
-    t_common .= t_common_start .+ (0:n-1)*dt
-
-    return nothing
-end
-
-"""
-    common_obs_time(apth::AbstractArray{<:AcousticPressure}, period, n, axis=1)
-
-Return a suitable time range for the collection of acoustic pressures in `apth`.
-
-The time range will begin near the latest start time of the acoustic pressures
-in `apth`, and be a `Vector` of length `n` and of time length `period`. `axis`
-indicates along which axis of `apth` the time for a source varies.
-"""
-function common_obs_time(apth, period, n, axis=1)
-    T = typeof(first(apth).t)
-    t_common = Vector{T}(undef, n)
-
-    common_obs_time!(t_common, apth, period, axis)
+    t_common = t_common_start .+ (0:n-1)*dt
 
     return t_common
 end
 
+@concrete struct F1AAcousticPressure <: AcousticMetrics.AbstractAcousticPressure
+    p_m
+    p_d
+    dt
+    t0
+end
+
 """
-    combine!(apth_out::AcousticPressure{<:AbstractVector, AbstractVector, AbstractVector}, apth::AbstractArray{<:AcousticPressure}, axis; f_interp=akima)
+    F1AAcousticPressure([T=Float64,] n, dt, t0)
+
+Construct an `F1AAcousticPressure` `struct` suitable for containing an acoustic prediction of length `n`, starting at time `t0` with time step `dt`.
+"""
+function F1AAcousticPressure(::Type{T}, n, dt, t0) where {T}
+    p_m = Vector{T}(undef, n)
+    p_d = Vector{T}(undef, n)
+    return F1AAcousticPressure(p_m, p_d, dt, t0)
+end
+
+function F1AAcousticPressure(n, dt, t0)
+    p_m = Vector{Float64}(undef, n)
+    p_d = Vector{Float64}(undef, n)
+    return F1AAcousticPressure(p_m, p_d, dt, t0)
+end
+
+"""
+    F1AAcousticPressure(apth::AbstractArray{<:F1AOutput}, period::AbstractFloat, n::Integer, axis::Integer=1)
+
+Construct an `F1AAcousticPressure` `struct` suitable for containing an acoustic prediction from an array of `F1AOutput` `struct`.
+
+The elapsed time and length of the returned `F1AAcousticPressure` will be
+`period` and `n`, respectively. `axis` indicates which axis the `apth` `struct`s
+time varies. (`period`, `n`, `axis` are passed to [`common_obs_time`](@ref).)
+"""
+function F1AAcousticPressure(apth::AbstractArray{<:F1AOutput}, period, n, axis=1)
+    # Get the common observer time.
+    t_common = common_obs_time(apth, period, n, axis)
+
+    # Allocate output arrays.
+    T = typeof(first(apth).p_m)
+    p_m = Vector{T}(undef, n)
+    T = typeof(first(apth).p_d)
+    p_d = Vector{T}(undef, n)
+
+    # Create the output apth.
+    dt = step(t_common)
+    t0 = first(t_common)
+    apth_out = F1AAcousticPressure(p_m, p_d, dt, t0)
+
+    return apth_out
+end
+
+@inline AcousticMetrics.pressure(ap::F1AAcousticPressure) = ap.p_m + ap.p_d
+@inline pressure_monopole(ap::F1AAcousticPressure) = ap.p_m
+@inline pressure_dipole(ap::F1AAcousticPressure) = ap.p_d
+
+"""
+    combine!(apth_out::F1AAcousticPressure, apth::AbstractArray{<:F1AOutput}, axis; f_interp=akima)
 
 Combine the acoustic pressures of multiple sources (`apth`) into a single acoustic pressure time history `apth_out`.
 
 The input acoustic pressures `apth` are interpolated onto the time grid
-`apth_out.t`. The interpolation is performed by the function `f_intep(xpt, ypt,
+returned by `time(apth_out)`. The interpolation is performed by the function `f_intep(xpt, ypt,
 x)`, where `xpt` and `ytp` are the input grid and function values, respectively,
 and `x` is the output grid.
 """
@@ -294,9 +339,9 @@ function combine!(apth_out, apth, axis; f_interp=akima)
     p_d = SingleFieldStructArray(apth, :p_d)
 
     # Unpack the output arrays for clarity.
-    t_common = apth_out.t
-    p_m_interp = apth_out.p_m
-    p_d_interp = apth_out.p_d
+    t_common = AcousticMetrics.time(apth_out)
+    p_m_interp = pressure_monopole(apth_out)
+    p_d_interp = pressure_dipole(apth_out)
 
     dimsAPTH = [axes(t_obs)...]
     ndimsAPTH = ndims(t_obs)
@@ -326,39 +371,17 @@ function combine!(apth_out, apth, axis; f_interp=akima)
         p_d_interp .+= f_interp(t_obs[idx...], p_d[idx...], t_common)
     end
 
-    return nothing
-end
-
-"""
-    combine(apth::AbstractArray{<:AcousticPressure}, t_common::AbstractArray, axis=1; f_interp=akima)
-
-Combine the acoustic pressures of multiple sources (`apth`) into a single acoustic pressure time history on the time grid `t_common`.
-"""
-function combine(apth, t_common::AbstractArray, axis::Integer=1; f_interp=akima)
-    # Allocate output arrays.
-    nout = length(t_common)
-    T = typeof(first(apth).p_m)
-    p_m_interp = zeros(T, nout)
-    T = typeof(first(apth).p_d)
-    p_d_interp = zeros(T, nout)
-
-    # Create the output apth.
-    apth_out = AcousticPressure(t_common, p_m_interp, p_d_interp)
-
-    # Do it.
-    combine!(apth_out, apth, axis; f_interp=f_interp)
-
     return apth_out
 end
 
 """
-    combine(apth::AbstractArray{<:AcousticPressure}, period::AbstractFloat, n::Integer, axis=1; f_interp=akima)
+    combine(apth::AbstractArray{<:F1AOutput}, period::AbstractFloat, n::Integer, axis=1; f_interp=akima)
 
-Combine the acoustic pressures of multiple sources (`apth`) into a single acoustic pressure time history on a time grid of length `n` and elapsed time `period`.
+Combine the acoustic pressures of multiple sources (`apth`) into a single
+acoustic pressure time history on a time grid of size `n` extending over time
+length `period`.
 """
-function combine(apth, period, n::Integer, axis::Integer=1; f_interp=akima)
-    # Get a common time grid.
-    t_common = common_obs_time(apth, period, n, axis)
-    return combine(apth, t_common, axis; f_interp=f_interp)
+function combine(apth, period::AbstractFloat, n::Integer, axis::Integer=1; f_interp=akima)
+    apth_out = F1AAcousticPressure(apth, period, n, axis)
+    return combine!(apth_out, apth, axis; f_interp=f_interp)
 end
-

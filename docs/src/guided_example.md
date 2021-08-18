@@ -323,8 +323,8 @@ nothing # hide
 ```
 
 When called this way (notice the `.` after `f1a`), the `f1a` routine returns an
-array of `AcousticPressure` `struct`s, the same size as `ses` and `obs_time`.
-Each `AcousticPressure` `struct` has three components: the observer time `t`,
+array of `F1AOutput` `struct`s, the same size as `ses` and `obs_time`.
+Each `F1AOutput` `struct` has three components: the observer time `t`,
 the thickness/monopole part of the acoustic pressure `p_m`, and the
 loading/dipole part of the acoustic pressure `p_d`.
 
@@ -345,7 +345,7 @@ apth_total = combine(apth, obs_time_range, num_obs_times, 1)
 nothing # hide
 ```
 
-`combine` returns a single `AcousticPressure` `struct` made up of `Vector`s—it
+`combine` returns a single `F1AAcousticPressure` `struct` made up of `Vector`s—it
 is an "struct of arrays" and not an "array of structs" like `apth`:
 
 ```@example first_example
@@ -357,12 +357,13 @@ We can now have a look at the total acoustic pressure time history at the
 observer:
 
 ```@example first_example
+using AcousticMetrics
 using GLMakie
 fig = Figure()
 ax1 = fig[1, 1] = Axis(fig, xlabel="time, blade passes", ylabel="monopole, Pa")
 ax2 = fig[2, 1] = Axis(fig, xlabel="time, blade passes", ylabel="dipole, Pa")
 ax3 = fig[3, 1] = Axis(fig, xlabel="time, blade passes", ylabel="total, Pa")
-t_nondim = (apth_total.t .- apth_total.t[1])./bpp
+t_nondim = (AcousticMetrics.time(apth_total) .- AcousticMetrics.starttime(apth_total))./bpp
 l1 = lines!(ax1, t_nondim, apth_total.p_m)
 l2 = lines!(ax2, t_nondim, apth_total.p_d)
 l3 = lines!(ax3, t_nondim, apth_total.p_m.+apth_total.p_d)
@@ -373,6 +374,4 @@ nothing # hide
 ```
 ![](first_example-apth_total.png)
 
-We see that the monopole/thickness source is more significant at the sideline
-observer location than the dipole/loading source. We can post-process the total
-acoustic pressure time history in `apth_total` in any way we'd like.
+We can now post-process the total acoustic pressure time history in `apth_total` in any way we'd like.

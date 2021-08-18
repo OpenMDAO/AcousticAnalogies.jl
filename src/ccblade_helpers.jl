@@ -31,7 +31,9 @@ function CompactSourceElement(rotor::CCBlade.Rotor, section::CCBlade.Section, op
     #  |φ.                .
     #  |.--------->x      .
 
-    y0dot = @SVector [r*sin(precone), r*cos(precone)*cos(θ), r*cos(precone)*sin(θ)]
+    sθ, cθ = sincos(θ)
+    spc, cpc = sincos(precone)
+    y0dot = @SVector [r*spc, r*cpc*cθ, r*cpc*sθ]
     T = eltype(y0dot)
     y1dot = @SVector zeros(T, 3)
     y2dot = @SVector zeros(T, 3)
@@ -57,15 +59,17 @@ function CompactSourceElement(rotor::CCBlade.Rotor, section::CCBlade.Section, op
     # the blade would be pointed in the negative z direction. So that means the
     # load on the fluid would be in the positive z direction, and we don't need
     # to switch the sign.
-    fn = -Np*cos(precone)
-    fr = Np*sin(precone)
+    fn = -Np*cpc
+    fr = Np*spc
     fc = Tp
 
-    f0dot = @SVector [fn, cos(θ)*fr - sin(θ)*fc, sin(θ)*fr + cos(θ)*fc]
+    f0dot = @SVector [fn, cθ*fr - sθ*fc, sθ*fr + cθ*fc]
     T = eltype(f0dot)
     f1dot = @SVector zeros(T, 3)
 
-    return CompactSourceElement(ρ0, c0, Δr, Λ, y0dot, y1dot, y2dot, y3dot, f0dot, f1dot, τ)
+    u = @SVector [spc, cpc*cθ, cpc*sθ]
+
+    return CompactSourceElement(ρ0, c0, Δr, Λ, y0dot, y1dot, y2dot, y3dot, f0dot, f1dot, τ, u)
 
 end
 
