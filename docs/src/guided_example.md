@@ -93,7 +93,7 @@ chord = [
     0.36898E-01 , 0.33752E-01 , 0.30255E-01 , 0.26401E-01 ,
     0.22217E-01 , 0.17765E-01 , 0.13147E-01 , 0.85683E-02 ,
     0.47397E-02].*Rtip
-cs_area = cs_area_over_chord_squared.*chord
+cs_area = cs_area_over_chord_squared.*chord.^2
 nothing # hide
 ```
 

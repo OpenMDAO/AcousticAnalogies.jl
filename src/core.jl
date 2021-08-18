@@ -332,7 +332,7 @@ end
 """
     combine(apth::AbstractArray{<:AcousticPressure}, t_common::AbstractArray, axis=1; f_interp=akima)
 
-Combine the acoustic pressures of multiple sources (`apth`) into a single acoustic pressure time history on the time grid t_common
+Combine the acoustic pressures of multiple sources (`apth`) into a single acoustic pressure time history on the time grid `t_common`.
 """
 function combine(apth, t_common::AbstractArray, axis::Integer=1; f_interp=akima)
     # Allocate output arrays.
@@ -351,6 +351,11 @@ function combine(apth, t_common::AbstractArray, axis::Integer=1; f_interp=akima)
     return apth_out
 end
 
+"""
+    combine(apth::AbstractArray{<:AcousticPressure}, period::AbstractFloat, n::Integer, axis=1; f_interp=akima)
+
+Combine the acoustic pressures of multiple sources (`apth`) into a single acoustic pressure time history on a time grid of length `n` and elapsed time `period`.
+"""
 function combine(apth, period, n::Integer, axis::Integer=1; f_interp=akima)
     # Get a common time grid.
     t_common = common_obs_time(apth, period, n, axis)
