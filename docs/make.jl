@@ -7,6 +7,7 @@ makedocs(sitename="AcousticAnalogies.jl", modules=[AcousticAnalogies], doctest=f
          pages=["Introduction"=>"index.md",
                 "Guided Example"=>"guided_example.md",
                 "CCBlade.jl Example"=>"ccblade_example.md",
+                "WriteVTK.jl Support"=>"writevtk_support.md",
                 "API Reference"=>"api.md"])
 
 if IN_CI
