@@ -375,3 +375,21 @@ nothing # hide
 ![](first_example-apth_total.png)
 
 We can now post-process the total acoustic pressure time history in `apth_total` in any way we'd like.
+
+# AcousticMetrics.jl Support
+The [`combine`](@ref) function returns a `F1AAcousticPressure` `struct`, which
+subtypes the `AbstractAcousticPressure` type from the AcousticMetrics.jl
+package. Because of this, any of the acoustic metric functions defined in
+AcousticMetrics.jl relevant to `AbstractAcousticPressure` objects can be used
+with the `F1AAcousticPressure` returned by `combine`:
+```@example first_example
+using AcousticMetrics
+# Calculate the overall sound pressure level from the acoustic pressure time history.
+oaspl_from_apth = AcousticMetrics.OASPL(apth_total)
+# Calculate the narrowband spectrum.
+nbs = AcousticMetrics.NarrowbandSpectrum(apth_total)
+# Calculate the OASPL from the NBS.
+oaspl_from_nbs = AcousticMetrics.OASPL(nbs)
+(oaspl_from_apth, oaspl_from_nbs)
+```
+The two approaches to calculate the OASPL give essentially the same result.
