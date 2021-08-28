@@ -381,7 +381,7 @@ Combine the acoustic pressures of multiple sources (`apth`) into a single
 acoustic pressure time history on a time grid of size `n` extending over time
 length `period`.
 """
-function combine(apth, period::AbstractFloat, n::Integer, axis::Integer=1; f_interp=akima)
+function combine(apth, period, n::Integer, axis::Integer=1; f_interp=akima)
     apth_out = F1AAcousticPressure(apth, period, n, axis)
     return combine!(apth_out, apth, axis; f_interp=f_interp)
 end
