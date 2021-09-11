@@ -71,6 +71,35 @@ function (trans::KinematicTransformation)(se::CompactSourceElement)
     return CompactSourceElement(se.ρ0, se.c0, se.Δr, se.Λ, y0dot, y1dot, y2dot, y3dot, f0dot, f1dot, se.τ, u)
 end
 
+@concrete struct NonCompactSourceElement
+    # Density.
+    ρ0
+    # Speed of sound.
+    c0
+    # Area of surface element
+    ΔA
+    # Cross-sectional area.
+    Λ
+
+    # Normal unit vector.
+    n
+
+    # Source position and its time derivatives.
+    y0dot
+    y1dot
+    y2dot
+
+    # Fluid velocity.
+    u0dot
+
+    # Load *on the fluid*, and its time derivative.
+    f0dot
+    f1dot
+
+    # Source time.
+    τ
+end
+
 """
 Supertype for an object that recieves a noise prediction when combined with an
 acoustic analogy source; computational equivalent of a microphone.
