@@ -1,4 +1,6 @@
-@concrete struct CompactSourceElement
+abstract type SourceElement end
+
+@concrete struct CompactSourceElement <: SourceElement
     # Density.
     ρ0
     # Speed of sound.
@@ -13,7 +15,7 @@
     y2dot
     y3dot
 
-    # Load *on the fluid*, and its time derivative.
+    # Load *on the fluid* per unit span, and its time derivative.
     f0dot
     f1dot
 
@@ -59,7 +61,7 @@ end
 """
     (trans::KinematicTransformation)(se::CompactSourceElement)
 
-Transform the position and forces of a source element according to the coordinate system transformation `trans`.
+Transform the motion and loading of a compact source element according to the coordinate system transformation `trans`.
 """
 function (trans::KinematicTransformation)(se::CompactSourceElement)
     linear_only = false
@@ -71,33 +73,51 @@ function (trans::KinematicTransformation)(se::CompactSourceElement)
     return CompactSourceElement(se.ρ0, se.c0, se.Δr, se.Λ, y0dot, y1dot, y2dot, y3dot, f0dot, f1dot, se.τ, u)
 end
 
-@concrete struct NonCompactSourceElement
-    # Density.
+@concrete struct NonCompactSourceElement <: SourceElement
+    # Ambient density.
     ρ0
-    # Speed of sound.
+    # Ambient speed of sound.
     c0
+    # Local density
+    ρ
     # Area of surface element
     ΔA
-    # Cross-sectional area.
-    Λ
 
-    # Normal unit vector.
-    n
+    # Normal unit vector and its time derivative.
+    n0dot
+    n1dot
 
     # Source position and its time derivatives.
     y0dot
     y1dot
     y2dot
 
-    # Fluid velocity.
+    # Fluid velocity and its time derivative.
     u0dot
+    u1dot
 
-    # Load *on the fluid*, and its time derivative.
+    # Load *on the fluid* per unit area, and its time derivative.
     f0dot
     f1dot
 
     # Source time.
     τ
+end
+
+"""
+    (trans::KinematicTransformation)(se::NonCompactSourceElement)
+
+Transform the motion and loading of a non-compact source element according to the coordinate system transformation `trans`.
+"""
+function (trans::KinematicTransformation)(se::NonCompactSourceElement)
+    linear_only = false
+    y0dot, y1dot, y2dot = trans(se.τ, se.y0dot, se.y1dot, se.y2dot, linear_only)
+    y0dot, u0dot, u1dot = trans(se.τ, se.y0dot, se.u0dot, se.u1dot, linear_only)
+    linear_only = true
+    n0dot, n1dot = trans(se.τ, se.n0dot, n1dot)
+    f0dot, f1dot= trans(se.τ, se.f0dot, se.f1dot, linear_only)
+
+    return NonCompactSourceElement(se.ρ0, se.c0, se.ρ, se.ΔA, n0dot, n1dot, y0dot, y1dot, y2dot, u0dot, u1dot, f0dot, f1dot, se.τ)
 end
 
 """
@@ -140,21 +160,21 @@ function (obs::ConstVelocityAcousticObserver)(t)
 end
 
 """
-    adv_time(se::CompactSourceElement, obs::AcousticObserver)
+    adv_time(se::SourceElement, obs::AcousticObserver)
 
-Calculate the time an acoustic wave emmited by source `se` at time `se.τ` is
-recieved by observer `obs`.
+Calculate the time an acoustic wave emmitted by source `se` at time `se.τ` is
+received by observer `obs`.
 """
-adv_time(se::CompactSourceElement, obs::AcousticObserver)
+adv_time(se::SourceElement, obs::AcousticObserver)
 
-function adv_time(se::CompactSourceElement, obs::StationaryAcousticObserver)
+function adv_time(se::SourceElement, obs::StationaryAcousticObserver)
     rv = obs(se.τ) .- se.y0dot
     r = norm_cs_safe(rv)
     t = se.τ + r/se.c0
     return t
 end
 
-function adv_time(se::CompactSourceElement, obs::ConstVelocityAcousticObserver)
+function adv_time(se::SourceElement, obs::ConstVelocityAcousticObserver)
     # Location of the observer at the source time.
     x = obs(se.τ)
 
@@ -193,10 +213,11 @@ end
 """
     f1a(se::CompactSourceElement, obs::AcousticObserver, t_obs)
 
-Calculate the acoustic pressure emitted by source element `se` and recieved by
+Calculate the acoustic pressure emitted by compact source element `se` and received by
 observer `obs` at time `t_obs`, returning an [`F1AOutput`](@ref) object.
 
 The correct value for `t_obs` can be found using [`adv_time`](@ref).
+Alternatively you can omit the `t_obs` argument and it will be calculated.
 """
 function f1a(se::CompactSourceElement, obs::AcousticObserver, t_obs)
     x_obs = obs(t_obs)
@@ -215,16 +236,16 @@ function f1a(se::CompactSourceElement, obs::AcousticObserver, t_obs)
 
     Mr = dot_cs_safe(-rv1dot/se.c0, rhat)
 
-    rhat1dot = -1.0/(r*r)*r1dot*rv + 1.0/r*rv1dot
+    rhat1dot = -1/(r*r)*r1dot*rv + 1/r*rv1dot
     Mr1dot = (dot_cs_safe(rv2dot, rhat) + dot_cs_safe(rv1dot, rhat1dot))/(-se.c0)
 
-    rhat2dot = (2.0/(r^3)*r1dot*r1dot*rv .- 1.0/(r^2)*r2dot*rv .- 2.0/(r^2)*r1dot*rv1dot .+ 1.0/r*rv2dot)
+    rhat2dot = (2/(r^3)*r1dot*r1dot*rv .- 1/(r^2)*r2dot*rv .- 2/(r^2)*r1dot*rv1dot .+ 1/r*rv2dot)
 
-    Mr2dot = (dot_cs_safe(rv3dot, rhat) .+ 2.0*dot_cs_safe(rv2dot, rhat1dot) .+ dot_cs_safe(rv1dot, rhat2dot))/(-se.c0)
+    Mr2dot = (dot_cs_safe(rv3dot, rhat) .+ 2*dot_cs_safe(rv2dot, rhat1dot) .+ dot_cs_safe(rv1dot, rhat2dot))/(-se.c0)
 
-    # Rnm = r^(-n)*(1.0 - Mr)^(-m)
-    R10 = 1.0/r
-    R01 = 1.0/(1.0 - Mr)
+    # Rnm = r^(-n)*(1 - Mr)^(-m)
+    R10 = 1/r
+    R01 = 1/(1 - Mr)
     R11 = R10*R01
     R02 = R01*R01
     R21 = R11*R10
@@ -240,29 +261,104 @@ function f1a(se::CompactSourceElement, obs::AcousticObserver, t_obs)
     C1A = R02*R11dotdot + R01*R01dot*R11dot
 
     # Monople acoustic pressure!
-    p_m = se.ρ0/(4.0*pi)*se.Λ*C1A*se.Δr
+    p_m = se.ρ0/(4*pi)*se.Λ*C1A*se.Δr
 
     # Dipole coefficients.
     D1A = R01*R11*rhat
     E1A = R01*(R11dot*rhat + R11*rhat1dot) + se.c0*R21*rhat
 
     # Dipole acoustic pressure!
-    p_d = (dot_cs_safe(se.f1dot, D1A) + dot_cs_safe(se.f0dot, E1A))*se.Δr/(4.0*pi*se.c0)
+    p_d = (dot_cs_safe(se.f1dot, D1A) + dot_cs_safe(se.f0dot, E1A))*se.Δr/(4*pi*se.c0)
 
     return F1AOutput(t_obs, p_m, p_d)
 end
 
 """
-    f1a(se::CompactSourceElement, obs::AcousticObserver)
+    f1a(se::NonCompactSourceElement, obs::AcousticObserver, t_obs)
 
-Calculate the acoustic pressure emitted by source element `se` and recieved by
+Calculate the acoustic pressure emitted by non-compact source element `se` and received by
+observer `obs` at time `t_obs`, returning an [`F1AOutput`](@ref) object.
+
+The correct value for `t_obs` can be found using [`adv_time`](@ref).
+Alternatively you can omit the `t_obs` argument and it will be calculated.
+"""
+function f1a(se::NonCompactSourceElement, obs::AcousticObserver, t_obs)
+    x_obs = obs(t_obs)
+
+    rv = x_obs .- se.y0dot
+    r = norm_cs_safe(rv)
+    rhat = rv/r
+
+    rv1dot = -se.y1dot
+    r1dot = dot_cs_safe(rhat, rv1dot)
+
+    rv2dot = -se.y2dot
+    r2dot = (dot_cs_safe(rv1dot, rv1dot) + dot_cs_safe(rv, rv2dot) - r1dot*r1dot)/r
+
+    rv3dot = -se.y3dot
+
+    Mr = dot_cs_safe(-rv1dot/se.c0, rhat)
+
+    rhat1dot = -1/(r*r)*r1dot*rv + 1/r*rv1dot
+    Mr1dot = (dot_cs_safe(rv2dot, rhat) + dot_cs_safe(rv1dot, rhat1dot))/(-se.c0)
+
+    rhat2dot = (2/(r^3)*r1dot*r1dot*rv .- 1/(r^2)*r2dot*rv .- 2/(r^2)*r1dot*rv1dot .+ 1/r*rv2dot)
+
+    Mr2dot = (dot_cs_safe(rv3dot, rhat) .+ 2*dot_cs_safe(rv2dot, rhat1dot) .+ dot_cs_safe(rv1dot, rhat2dot))/(-se.c0)
+
+    # Rnm = r^(-n)*(1 - Mr)^(-m)
+    R10 = 1/r
+    R01 = 1/(1 - Mr)
+    R11 = R10*R01
+    R21 = R11*R10
+
+    # Rnm1dot = d/dt(Rnm) = (-n*R10*r1dot + m*R01*Mr1dot)*Rnm
+    R11dot = (-R10*r1dot + R01*Mr1dot)*R11
+
+    A1 = R11
+    A1dot = R11dot
+    B1 = R11*rhat
+    B1dot = R11dot*rhat + R11*rhat1dot
+    C1 = se.c0*R21*rhat
+
+    A1A = R01*A1
+    B1A = R01*A1dot
+    C1A = R01*B1
+    D1A = R01*B1dot
+    E1A = C1
+
+    v = se.y1dot
+    vdot = se.y2dot
+    u = se.u0dot
+    udot = se.u1dot
+    n = se.n0dot
+    ndot = se.n1dot
+    v_n = dot_cs_safe(v, n)
+    v_ndot = dot_cs_safe(vdot, n) + dot_cs_safe(v, ndot)
+    u_n = dot_cs_safe(u, n)
+    u_ndot = dot_cs_safe(udot, n) + dot_cs_safe(u, ndot)
+    Q = se.ρ0*v_n + se.ρ*(u_n - v_n)
+    # Hmm... Qdot should actually have the derivative of the local density...
+    Qdot = se.ρ0*v_ndot + se.ρ*(u_ndot - v_ndot)
+    p_m = (Qdot*A1A + Q*B1A)*(se.ΔA)/(4*pi)
+
+    L = se.f0dot .+ se.ρ*u.*(u_n - v_n)
+    Ldot = se.f1dot .+ se.ρ*udot*(u_n - v_n) .+ se.ρ*u.*(u_ndot .- v_ndot)
+    p_d = (dot_cs_safe(Ldot, C1A) + dot_cs_safe(L, D1A) + dot_cs_safe(L, E1A))*(se.ΔA)/(4*pi*se.c0)
+
+    return F1AOutput(t_obs, p_m, p_d)
+end
+
+"""
+    f1a(se::SourceElement, obs::AcousticObserver)
+
+Calculate the acoustic pressure emitted by source element `se` and received by
 observer `obs`, returning an [`F1AOutput`](@ref) object.
 """
-function f1a(se::CompactSourceElement, obs::AcousticObserver)
+function f1a(se::SourceElement, obs::AcousticObserver)
     t_obs = adv_time(se, obs)
     return f1a(se, obs, t_obs)
 end
-
 
 """
     common_obs_time(apth::AbstractArray{<:F1AOutput}, period, n, axis=1)
