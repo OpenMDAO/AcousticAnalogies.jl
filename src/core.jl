@@ -78,10 +78,12 @@ end
     ρ0
     # Ambient speed of sound.
     c0
-    # Local density
-    ρ
     # Area of surface element
     ΔA
+
+    # Local density and its time derivative.
+    ρ0dot
+    ρ1dot
 
     # Normal unit vector and its time derivative.
     n0dot
@@ -117,7 +119,7 @@ function (trans::KinematicTransformation)(se::NonCompactSourceElement)
     n0dot, n1dot = trans(se.τ, se.n0dot, n1dot)
     f0dot, f1dot= trans(se.τ, se.f0dot, se.f1dot, linear_only)
 
-    return NonCompactSourceElement(se.ρ0, se.c0, se.ρ, se.ΔA, n0dot, n1dot, y0dot, y1dot, y2dot, u0dot, u1dot, f0dot, f1dot, se.τ)
+    return NonCompactSourceElement(se.ρ0, se.c0, se.ΔA, se.ρ0dot, se.ρ1dot, n0dot, n1dot, y0dot, y1dot, y2dot, u0dot, u1dot, f0dot, f1dot, se.τ)
 end
 
 """
@@ -293,18 +295,11 @@ function f1a(se::NonCompactSourceElement, obs::AcousticObserver, t_obs)
     r1dot = dot_cs_safe(rhat, rv1dot)
 
     rv2dot = -se.y2dot
-    r2dot = (dot_cs_safe(rv1dot, rv1dot) + dot_cs_safe(rv, rv2dot) - r1dot*r1dot)/r
-
-    rv3dot = -se.y3dot
 
     Mr = dot_cs_safe(-rv1dot/se.c0, rhat)
 
     rhat1dot = -1/(r*r)*r1dot*rv + 1/r*rv1dot
     Mr1dot = (dot_cs_safe(rv2dot, rhat) + dot_cs_safe(rv1dot, rhat1dot))/(-se.c0)
-
-    rhat2dot = (2/(r^3)*r1dot*r1dot*rv .- 1/(r^2)*r2dot*rv .- 2/(r^2)*r1dot*rv1dot .+ 1/r*rv2dot)
-
-    Mr2dot = (dot_cs_safe(rv3dot, rhat) .+ 2*dot_cs_safe(rv2dot, rhat1dot) .+ dot_cs_safe(rv1dot, rhat2dot))/(-se.c0)
 
     # Rnm = r^(-n)*(1 - Mr)^(-m)
     R10 = 1/r
@@ -337,13 +332,12 @@ function f1a(se::NonCompactSourceElement, obs::AcousticObserver, t_obs)
     v_ndot = dot_cs_safe(vdot, n) + dot_cs_safe(v, ndot)
     u_n = dot_cs_safe(u, n)
     u_ndot = dot_cs_safe(udot, n) + dot_cs_safe(u, ndot)
-    Q = se.ρ0*v_n + se.ρ*(u_n - v_n)
-    # Hmm... Qdot should actually have the derivative of the local density...
-    Qdot = se.ρ0*v_ndot + se.ρ*(u_ndot - v_ndot)
+    Q = se.ρ0*v_n + se.ρ0dot*(u_n - v_n)
+    Qdot = se.ρ0*v_ndot + se.ρ1dot*(u_n - v_n) + se.ρ0dot*(u_ndot - v_ndot)
     p_m = (Qdot*A1A + Q*B1A)*(se.ΔA)/(4*pi)
 
-    L = se.f0dot .+ se.ρ*u.*(u_n - v_n)
-    Ldot = se.f1dot .+ se.ρ*udot*(u_n - v_n) .+ se.ρ*u.*(u_ndot .- v_ndot)
+    L = se.f0dot .+ se.ρ0dot*u*(u_n - v_n)
+    Ldot = se.f1dot .+ se.ρ1dot*u*(u_n - v_n) .+ se.ρ0dot*udot*(u_n - v_n) .+ se.ρ0dot*u*(u_ndot - v_ndot)
     p_d = (dot_cs_safe(Ldot, C1A) + dot_cs_safe(L, D1A) + dot_cs_safe(L, E1A))*(se.ΔA)/(4*pi*se.c0)
 
     return F1AOutput(t_obs, p_m, p_d)
