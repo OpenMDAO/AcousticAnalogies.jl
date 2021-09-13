@@ -205,18 +205,18 @@ end
         period = 1.0
         ρ0dot(τ) = rho0 + 1e-3*cos(4*pi/period*τ)
         ρ1dot(τ) = -1e-3*4*pi/period*sin(4*pi/period*τ)
-        n0dot(τ) = [cos(2*pi/period*τ), sin(2*pi/period*τ), zero(τ)]
-        n1dot(τ) = [-2*pi/period*sin(2*pi/period*τ), 2*pi/period*cos(2*pi/period*τ), zero(τ)]
+        n0dot(τ) = [cos(2*pi/period*τ), sin(2*pi/period*τ), 1e-2*τ]
+        n1dot(τ) = [-2*pi/period*sin(2*pi/period*τ), 2*pi/period*cos(2*pi/period*τ), 1e-2]
         R = 2  # m
-        y0dot(τ) = R*[cos(2*pi/period*τ), sin(2*pi/period*τ), zero(τ)]
-        y1dot(τ) = R*[-2*pi/period*sin(2*pi/period*τ), 2*pi/period*cos(2*pi/period*τ), zero(τ)]
-        y2dot(τ) = R*[-(2*pi/period)^2*cos(2*pi/period*τ), -(2*pi/period)^2*sin(2*pi/period*τ), zero(τ)]
+        y0dot(τ) = R*[cos(2*pi/period*τ), sin(2*pi/period*τ), τ^3]
+        y1dot(τ) = R*[-2*pi/period*sin(2*pi/period*τ), 2*pi/period*cos(2*pi/period*τ), 3*τ^2]
+        y2dot(τ) = R*[-(2*pi/period)^2*cos(2*pi/period*τ), -(2*pi/period)^2*sin(2*pi/period*τ), 6*τ]
 
-        u0dot(τ) = [1e-3*sin(4*pi/period*τ), zero(τ), zero(τ)]
-        u1dot(τ) = [1e-3*4*pi/period*cos(4*pi/period*τ), zero(τ), zero(τ)]
+        u0dot(τ) = [            1e-3*sin(4*pi/period*τ),              1e-3*cos(4*pi/period*τ), 2e-3*sin(4*pi/period*τ)]
+        u1dot(τ) = [1e-3*4*pi/period*cos(4*pi/period*τ), -1e-3*4*pi/period*sin(4*pi/period*τ), 2e-3*4*pi/period*cos(4*pi/period*τ)]
 
-        f0dot(τ) = [p0 + 1e-2*sin(4*pi/period*τ), zero(τ), zero(τ)]
-        f1dot(τ) = [     1e-2*4*pi/period*cos(4*pi/period*τ), zero(τ), zero(τ)]
+        f0dot(τ) = [p0 + 1e-2*sin(4*pi/period*τ), p0 + 2e-2*cos(4*pi/period*τ), 3e-2*cos(6*pi/period*τ)]
+        f1dot(τ) = [     1e-2*4*pi/period*cos(4*pi/period*τ), -2e-2*4*pi/period*sin(4*pi/period*τ), -3e-2*6*pi/period*sin(6*pi/period*τ)]
         sef1 = NonCompactSourceElement(rho0, c0, ΔA, ρ0dot, ρ1dot, n0dot, n1dot, y0dot, y1dot, y2dot, u0dot, u1dot, f0dot, f1dot, 0.0)
         t = 0.0
         dt = period*0.5^2
