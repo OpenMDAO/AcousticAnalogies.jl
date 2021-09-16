@@ -352,7 +352,7 @@ end
         ρ1dot(τ) = -1e-3*4*pi/period*sin(4*pi/period*τ)
         n0dot(τ) = [3.0, 2.0, 1.0]
         R = 2  # m
-        y0dot(τ) = R*[1.0, 2.0, 3.0]
+        y0dot(τ) = R*[0.25, 0.15, 0.3]
 
         u0dot(τ) = [            1e-3*sin(4*pi/period*τ),              1e-3*cos(4*pi/period*τ), 2e-3*sin(4*pi/period*τ)]
         u1dot(τ) = [1e-3*4*pi/period*cos(4*pi/period*τ), -1e-3*4*pi/period*sin(4*pi/period*τ), 2e-3*4*pi/period*cos(4*pi/period*τ)]
