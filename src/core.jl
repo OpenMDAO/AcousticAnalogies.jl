@@ -122,6 +122,36 @@ function (trans::KinematicTransformation)(se::NonCompactSourceElement)
     return NonCompactSourceElement(se.ρ0, se.c0, se.ΔA, se.ρ0dot, se.ρ1dot, n0dot, n1dot, y0dot, y1dot, y2dot, u0dot, u1dot, f0dot, f1dot, se.τ)
 end
 
+@concrete struct StationaryNonCompactSourceElement <: SourceElement
+    # Ambient density.
+    ρ0
+    # Ambient speed of sound.
+    c0
+    # Area of surface element
+    ΔA
+
+    # Local density and its time derivative.
+    ρ0dot
+    ρ1dot
+
+    # Normal unit vector.
+    n0dot
+
+    # Source position.
+    y0dot
+
+    # Fluid velocity and its time derivative.
+    u0dot
+    u1dot
+
+    # Load *on the fluid* per unit area, and its time derivative.
+    f0dot
+    f1dot
+
+    # Source time.
+    τ
+end
+
 """
 Supertype for an object that recieves a noise prediction when combined with an
 acoustic analogy source; computational equivalent of a microphone.
@@ -339,6 +369,43 @@ function f1a(se::NonCompactSourceElement, obs::AcousticObserver, t_obs)
     L = se.f0dot .+ se.ρ0dot*u*(u_n - v_n)
     Ldot = se.f1dot .+ se.ρ1dot*u*(u_n - v_n) .+ se.ρ0dot*udot*(u_n - v_n) .+ se.ρ0dot*u*(u_ndot - v_ndot)
     p_d = (dot_cs_safe(Ldot, C1A) + dot_cs_safe(L, D1A) + dot_cs_safe(L, E1A))*(se.ΔA)/(4*pi*se.c0)
+
+    return F1AOutput(t_obs, p_m, p_d)
+end
+
+function f1a(se::StationaryNonCompactSourceElement, obs::AcousticObserver, t_obs)
+    x_obs = obs(t_obs)
+
+    rv = x_obs .- se.y0dot
+    r = norm_cs_safe(rv)
+    rhat = rv/r
+
+    # Rnm = r^(-n)*(1 - Mr)^(-m)
+    R10 = 1/r
+    R01 = 1
+    R11 = R10*R01
+    R21 = R11*R10
+
+    A1 = R11
+    B1 = R11*rhat
+    C1 = se.c0*R21*rhat
+
+    A1A = R01*A1
+    C1A = R01*B1
+    E1A = C1
+
+    u = se.u0dot
+    udot = se.u1dot
+    n = se.n0dot
+    u_n = dot_cs_safe(u, n)
+    u_ndot = dot_cs_safe(udot, n)
+    Q = se.ρ0dot*u_n
+    Qdot = se.ρ1dot*u_n + se.ρ0dot*u_ndot
+    p_m = Qdot*A1A*(se.ΔA)/(4*pi)
+
+    L = se.f0dot .+ se.ρ0dot*u*u_n
+    Ldot = se.f1dot .+ se.ρ1dot*u*u_n .+ se.ρ0dot*udot*u_n .+ se.ρ0dot*u*u_ndot
+    p_d = (dot_cs_safe(Ldot, C1A) + dot_cs_safe(L, E1A))*(se.ΔA)/(4*pi*se.c0)
 
     return F1AOutput(t_obs, p_m, p_d)
 end

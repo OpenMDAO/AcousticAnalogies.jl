@@ -15,7 +15,7 @@ include("utils.jl")
 export get_dradii
 
 include("core.jl")
-export CompactSourceElement, NonCompactSourceElement
+export CompactSourceElement, NonCompactSourceElement, StationaryNonCompactSourceElement
 export AcousticObserver, StationaryAcousticObserver, ConstVelocityAcousticObserver
 export F1AOutput, F1AAcousticPressure
 export adv_time
