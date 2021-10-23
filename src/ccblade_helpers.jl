@@ -3,6 +3,14 @@
 
 Construct a source element to be used with the compact form of Farassat's formulation 1A from CCBlade objects.
 
+The source element's position is calculated from `section.r`, `rotor.precone`, and the `θ` argument using
+```julia
+    sθ, cθ = sincos(θ)
+    spc, cpc = sincos(precone)
+    y0dot = [r*spc, r*cpc*cθ, r*cpc*sθ]
+```
+where `y0dot` is the position of the source element.
+
 # Arguments
 - `rotor::CCBlade.Rotor`: CCBlade rotor object, needed for the precone angle.precone.
 - `section::CCBlade.Section`: CCBlade section object, needed for the radial location and chord length of the element.
@@ -92,7 +100,8 @@ function source_elements_ccblade(rotor, sections, ops, outputs, area_per_chord2,
     # integrating stuff [loading to get torque and thrust] it uses the
     # trapezoidal rule and passes in the radial locations, and assumes that
     # integrands go to zero at the hub and tip.) Kind of lame that I have to
-    # calcluate it here, but whatever.
+    # calcluate it here, but whatever. Maybe I should use StaticArrays for this?
+    # Ah, no, I don't know the length at compile time.
     dradii = get_ccblade_dradii(rotor, sections)
 
     # Assume the rotor is traveling in the positive x direction, with the first
