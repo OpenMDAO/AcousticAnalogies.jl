@@ -248,7 +248,7 @@ source varies.
 function common_obs_time(apth, period, n, axis=1)
     # Make a single field struct array that behaves like a time array. 4%-6%
     # faster than creating the array with getproperty.
-    t_obs = SingleFieldStructArray(apth, :t)
+    t_obs = SingleFieldStructArray(apth, Val{:t})
 
     # Get the first time for all the sources (returns a view ♥).
     t_starts = selectdim(t_obs, axis, 1)
@@ -334,9 +334,9 @@ function combine!(apth_out, apth, axis; f_interp=akima)
     # speedup of <1%, sometimes a slowdown of <1%). I'm sure it'd be worse if I
     # didn't pass in the cache. But it's nice to not have to worry about passing
     # it in.
-    t_obs = SingleFieldStructArray(apth, :t)
-    p_m = SingleFieldStructArray(apth, :p_m)
-    p_d = SingleFieldStructArray(apth, :p_d)
+    t_obs = SingleFieldStructArray(apth, Val{:t})
+    p_m = SingleFieldStructArray(apth, Val{:p_m})
+    p_d = SingleFieldStructArray(apth, Val{:p_d})
 
     # Unpack the output arrays for clarity.
     t_common = AcousticMetrics.time(apth_out)
