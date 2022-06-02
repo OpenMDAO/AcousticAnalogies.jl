@@ -169,7 +169,7 @@ observer `obs` at time `t_obs`, returning an [`F1AOutput`](@ref) object.
 
 The correct value for `t_obs` can be found using [`adv_time`](@ref).
 """
-function f1a(se::CompactSourceElement, obs::AcousticObserver, t_obs)
+function f1a(se::CompactSourceElement, obs::AcousticObserver, t_obs; with_fdot=true)
     x_obs = obs(t_obs)
 
     rv = x_obs .- se.y0dot
@@ -218,7 +218,11 @@ function f1a(se::CompactSourceElement, obs::AcousticObserver, t_obs)
     E1A = R01*(R11dot*rhat + R11*rhat1dot) + se.c0*R21*rhat
 
     # Dipole acoustic pressure!
-    p_d = (dot_cs_safe(se.f1dot, D1A) + dot_cs_safe(se.f0dot, E1A))*se.Δr/(4.0*pi*se.c0)
+    if with_fdot
+        p_d = (dot_cs_safe(se.f1dot, D1A) + dot_cs_safe(se.f0dot, E1A))*se.Δr/(4.0*pi*se.c0)
+    else
+        p_d = (dot_cs_safe(se.f0dot, E1A))*se.Δr/(4.0*pi*se.c0)
+    end
 
     return F1AOutput(t_obs, p_m, p_d)
 end
@@ -229,9 +233,9 @@ end
 Calculate the acoustic pressure emitted by source element `se` and recieved by
 observer `obs`, returning an [`F1AOutput`](@ref) object.
 """
-function f1a(se::CompactSourceElement, obs::AcousticObserver)
+function f1a(se::CompactSourceElement, obs::AcousticObserver; with_fdot=true)
     t_obs = adv_time(se, obs)
-    return f1a(se, obs, t_obs)
+    return f1a(se, obs, t_obs; with_fdot)
 end
 
 
