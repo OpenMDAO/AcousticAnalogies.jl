@@ -38,7 +38,8 @@ using Test
     p_m = @. fa(t_common)+fb(t_common)
     p_d = @. 2*fa(t_common)+3*fb(t_common)
 
-    apth_test = F1AAcousticPressure(p_m, p_d, step(t_common), first(t_common))
+    even_length = iseven(n_out)
+    apth_test = F1APressureTimeHistory{even_length}(p_m, p_d, step(t_common), first(t_common))
 
     function combine_test_axis1(f_interp)
         # Put all the acoustic pressures in one array.

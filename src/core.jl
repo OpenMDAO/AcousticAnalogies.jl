@@ -263,40 +263,50 @@ function common_obs_time(apth, period, n, axis=1)
     return t_common
 end
 
-@concrete struct F1AAcousticPressure <: AcousticMetrics.AbstractAcousticPressure
+@concrete struct F1APressureTimeHistory{IsEven} <: AcousticMetrics.AbstractPressureTimeHistory{IsEven}
     p_m
     p_d
     dt
     t0
+    function F1APressureTimeHistory{IsEven}(p_m, p_d, dt, t0) where {IsEven}
+        n_p_m = length(p_m)
+        n_p_d = length(p_d)
+        n_p_m == n_p_d || throw(ArgumentError("length(p_m) = $(n_p_m) is not the same as length(p_d) = $(n_p_d)"))
+        iseven(n_p_m) == IsEven || throw(ArgumentError("IsEven = $(IsEven) is not consistent with length(p_m) = $n_p_m"))
+        return new{IsEven, typeof(p_m), typeof(p_d), typeof(dt), typeof(t0)}(p_m, p_d, dt, t0)
+    end
 end
 
-"""
-    F1AAcousticPressure([T=Float64,] n, dt, t0)
+# Assume the pressure time history arrays `p_m` and `p_d` will have an even length.
+F1APressureTimeHistory(p_m, p_d, dt, t0) = F1APressureTimeHistory{true}(p_m, p_d, dt, t0)
 
-Construct an `F1AAcousticPressure` `struct` suitable for containing an acoustic prediction of length `n`, starting at time `t0` with time step `dt`.
 """
-function F1AAcousticPressure(::Type{T}, n, dt, t0) where {T}
+    F1APressureTimeHistory([T=Float64,] n, dt, t0)
+
+Construct an `F1APressureTimeHistory` `struct` suitable for containing an acoustic prediction of length `n`, starting at time `t0` with time step `dt`.
+"""
+function F1APressureTimeHistory(::Type{T}, n, dt, t0) where {T}
     p_m = Vector{T}(undef, n)
     p_d = Vector{T}(undef, n)
-    return F1AAcousticPressure(p_m, p_d, dt, t0)
+    return F1APressureTimeHistory{iseven(n)}(p_m, p_d, dt, t0)
 end
 
-function F1AAcousticPressure(n, dt, t0)
+function F1APressureTimeHistory(n, dt, t0)
     p_m = Vector{Float64}(undef, n)
     p_d = Vector{Float64}(undef, n)
-    return F1AAcousticPressure(p_m, p_d, dt, t0)
+    return F1APressureTimeHistory{iseven(n)}(p_m, p_d, dt, t0)
 end
 
 """
-    F1AAcousticPressure(apth::AbstractArray{<:F1AOutput}, period::AbstractFloat, n::Integer, axis::Integer=1)
+    F1APressureTimeHistory(apth::AbstractArray{<:F1AOutput}, period::AbstractFloat, n::Integer, axis::Integer=1)
 
-Construct an `F1AAcousticPressure` `struct` suitable for containing an acoustic prediction from an array of `F1AOutput` `struct`.
+Construct an `F1APressureTimeHistory` `struct` suitable for containing an acoustic prediction from an array of `F1AOutput` `struct`.
 
-The elapsed time and length of the returned `F1AAcousticPressure` will be
+The elapsed time and length of the returned `F1APressureTimeHistory` will be
 `period` and `n`, respectively. `axis` indicates which axis the `apth` `struct`s
 time varies. (`period`, `n`, `axis` are passed to [`common_obs_time`](@ref).)
 """
-function F1AAcousticPressure(apth::AbstractArray{<:F1AOutput}, period, n, axis=1)
+function F1APressureTimeHistory(apth::AbstractArray{<:F1AOutput}, period, n, axis=1)
     # Get the common observer time.
     t_common = common_obs_time(apth, period, n, axis)
 
@@ -309,17 +319,17 @@ function F1AAcousticPressure(apth::AbstractArray{<:F1AOutput}, period, n, axis=1
     # Create the output apth.
     dt = step(t_common)
     t0 = first(t_common)
-    apth_out = F1AAcousticPressure(p_m, p_d, dt, t0)
+    apth_out = F1APressureTimeHistory{iseven(n)}(p_m, p_d, dt, t0)
 
     return apth_out
 end
 
-@inline AcousticMetrics.pressure(ap::F1AAcousticPressure) = ap.p_m + ap.p_d
-@inline pressure_monopole(ap::F1AAcousticPressure) = ap.p_m
-@inline pressure_dipole(ap::F1AAcousticPressure) = ap.p_d
+@inline AcousticMetrics.pressure(ap::F1APressureTimeHistory) = ap.p_m + ap.p_d
+@inline pressure_monopole(ap::F1APressureTimeHistory) = ap.p_m
+@inline pressure_dipole(ap::F1APressureTimeHistory) = ap.p_d
 
 """
-    combine!(apth_out::F1AAcousticPressure, apth::AbstractArray{<:F1AOutput}, axis; f_interp=akima)
+    combine!(apth_out::F1APressureTimeHistory, apth::AbstractArray{<:F1AOutput}, axis; f_interp=akima)
 
 Combine the acoustic pressures of multiple sources (`apth`) into a single acoustic pressure time history `apth_out`.
 
@@ -382,6 +392,6 @@ acoustic pressure time history on a time grid of size `n` extending over time
 length `period`.
 """
 function combine(apth, period, n::Integer, axis::Integer=1; f_interp=akima)
-    apth_out = F1AAcousticPressure(apth, period, n, axis)
+    apth_out = F1APressureTimeHistory(apth, period, n, axis)
     return combine!(apth_out, apth, axis; f_interp=f_interp)
 end

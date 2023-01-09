@@ -17,7 +17,7 @@ export get_dradii
 include("core.jl")
 export CompactSourceElement
 export AcousticObserver, StationaryAcousticObserver, ConstVelocityAcousticObserver
-export F1AOutput, F1AAcousticPressure
+export F1AOutput, F1APressureTimeHistory
 export adv_time
 export f1a
 export common_obs_time
