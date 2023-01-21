@@ -278,7 +278,7 @@ end
 end
 
 # Assume the pressure time history arrays `p_m` and `p_d` will have an even length.
-F1APressureTimeHistory(p_m, p_d, dt, t0) = F1APressureTimeHistory{true}(p_m, p_d, dt, t0)
+# F1APressureTimeHistory(p_m, p_d, dt, t0) = F1APressureTimeHistory{true}(p_m, p_d, dt, t0)
 
 """
     F1APressureTimeHistory([T=Float64,] n, dt, t0)

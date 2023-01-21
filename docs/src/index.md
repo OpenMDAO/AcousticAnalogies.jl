@@ -1,3 +1,6 @@
+```@meta
+CurrentModule = AADocs
+```
 # AcousticAnalogies.jl Documentation
 
 **Summary**: A pure-Julia package for propeller/rotor blade noise prediction with acoustic analogies.

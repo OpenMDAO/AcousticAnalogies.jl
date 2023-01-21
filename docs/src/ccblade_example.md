@@ -1,3 +1,6 @@
+```@meta
+CurrentModule = AADocs
+```
 # Compact Formulation 1A CCBlade.jl Example
 
 AcousticAnalogies.jl contains routines that take in types defined by

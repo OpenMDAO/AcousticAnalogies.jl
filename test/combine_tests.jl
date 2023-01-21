@@ -18,11 +18,11 @@ using Test
     # Add a bit of random noise to the time grid. Make sure that the amount of
     # randomness isn't large enough to make the time values non-monotonically
     # increasing (i.e., they don't overlap).
-    t1 .+= 0.49.*dt.*(1 - 2*rand(size(t1)))
+    t1 .+= 0.49.*dt.*(1 .- 2 .* rand(size(t1)...))
 
     t2 = collect(range(0.1, 1.1, length=n))
     dt = t2[2] - t2[1]
-    t2 .+= 0.49.*dt.*(1 - 2*rand(size(t2)))
+    t2 .+= 0.49.*dt.*(1 .- 2 .* rand(size(t2)...))
 
     # Now I need a bunch of acoustic pressures.
     apth1 = @. F1AOutput(t1, fa(t1), 2*fa(t1))

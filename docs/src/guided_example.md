@@ -1,4 +1,7 @@
-# Compact Formulation 1A Guided Example
+```@meta
+CurrentModule = AADocs
+```
+# [Compact Formulation 1A Guided Example](@id guided_example)
 
 There are four steps to predicting propeller/rotor noise with
 AcousticAnalogies.jl.
