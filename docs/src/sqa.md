@@ -57,7 +57,7 @@ whereon
   * ``c_0`` is the speed of sound
 
 AcousticAnalogies.jl currently uses an advanced time approach to solving this equation.
-This means we start with knowledge of ``\tau`` and then calculate ``t``---we "advance" the source time to the observer time by adding the amount of time it takes for the acoustic disturbance to travel from ``y`` to ``x``.
+This means we start with knowledge of ``\tau`` and then calculate ``t``—we "advance" the source time to the observer time by adding the amount of time it takes for the acoustic disturbance to travel from ``y`` to ``x``.
 
 Now, the ``R(t) = 0`` equation is quite easy to solve if the observer is stationary.
 In that case, ``x`` is not a function of ``t``, and so solving for ``t`` just involves moving everything in the parenthesis to the right-hand side.
@@ -182,12 +182,6 @@ apth = hcat(apth1, apth2)
 # Combine.
 apth_out = AcousticAnalogies.combine(apth, period, n_out)
 
-# Now find the scaled absolute error between the two approaches.
-p_m_min, p_m_max = extrema(apth_test.p_m)
-err = @. abs(apth_out.p_m - apth_test.p_m)/(p_m_max - p_m_min)
-err_max = maximum(err)
-println("maximum scaled error: $(err_max)")
-
 # Plot the two solutions.
 fig2 = Figure()
 ax2_1 = fig2[1, 1] = Axis(fig2, xlabel="time", ylabel="acoustic pressure, monopole")
@@ -227,5 +221,17 @@ How are we going to test that we have all that implemented properly?
 Well, it turns out that Farassat's original formulation (F1) is much simpler than F1A:
 
 ```math
-4 \pi c_0 p_d = \frac{\partial}{\partial t} \int_{L=0} \left( \vec{f} \cdot \vec{B}_{1}\right) dr
+4 \pi c_0 p_d = \frac{\partial}{\partial t} \int_{L=0} \left( \vec{f} \cdot \vec{B}_{1}\right) dr + \int_{L=0}\left( \vec{f} \cdot \vec{C}_1 \right) dr
 ```
+
+where ``\vec{B}_1`` and ``\vec{C}_1`` are again functions of the position of the source element and time derivatives of the same.
+It might not look that much simpler, but it is, because:
+
+  * The F1 integrands don't depend on ``\dot{\vec{f}}``
+  * ``\vec{D}_{1A}`` and ``\vec{E}_{1A}`` from F1A are more complicated than ``\vec{B}_1`` and ``\vec{C}_1``, and involve higher-order time derivatives
+
+But the key thing to understand about F1 and F1A is that they are equivalent—going from F1A to F1 involves some fancy math (moving the derivative with respect to the observer time $t$ into the integral), but should give the same answer.
+
+## Signed Commits
+
+## Reporting Bugs
