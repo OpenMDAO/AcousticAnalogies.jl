@@ -230,8 +230,222 @@ It might not look that much simpler, but it is, because:
   * The F1 integrands don't depend on ``\dot{\vec{f}}``
   * ``\vec{D}_{1A}`` and ``\vec{E}_{1A}`` from F1A are more complicated than ``\vec{B}_1`` and ``\vec{C}_1``, and involve higher-order time derivatives
 
-But the key thing to understand about F1 and F1A is that they are equivalent—going from F1A to F1 involves some fancy math (moving the derivative with respect to the observer time $t$ into the integral), but should give the same answer.
+But the key thing to understand about F1 and F1A is that they are equivalent—going from F1A to F1 involves some fancy math (moving the derivative with respect to the observer time $t$ inside the integral), but should give the same answer.
+The only trick is this: how will we evaluate the derivatives with respect to the observer time ``t`` in the F1 expressions?
+What we'll do here is just use standard second-order-accurate finite difference approximations, i.e.,
+
+```math
+\frac{\partial g}{\partial t} = \frac{g(t+\Delta t) - g(t-\Delta t)}{2 \Delta t} + \mathcal{O}(\Delta t^2)
+```
+
+where the notation ``\mathcal{O}(\Delta t^2)`` indicates that the error associated with the finite difference approximation should be proportional to ``\Delta t^2``.
+But this means that we can't expect our F1 calculation to exactly match F1A.
+So, what to do about that?
+What we can expect is that, if F1A and F1 have been implemented properly, the difference between them should go to zero at a second-order rate.
+So we can systematically reduce the time step size ``\Delta t`` used to evaluate F1, and check that goes to zero at the expected rate.
+If it does, that proves that the only error between the two codes is due to the finite difference approximation, and gives us strong evidence that both F1A and F1 have been implemented properly.
+
+So, let's try it out!
+First we'll need a function that evaluates the f1 integrands
+
+```@example f1a_tests
+using AcousticAnalogies
+using LinearAlgebra: norm
+using NLsolve
+using Polynomials
+using GLMakie
+
+function f1_integrand(se, obs, t)
+    c0 = se.c0
+
+    # Need to get the retarded time.
+    R(τ) = [t - (τ[1] + norm(obs(t) .- se.y0dot(τ[1]))/c0)]
+    result = nlsolve(R, [-0.1], autodiff=:forward)
+    if !converged(result)
+        @error "nlsolve retarded time calculation did not converge:\n$(result)"
+    end
+    τ = result.zero[1]
+
+    # Position of source at the retarted time.
+    y = se.y0dot(τ)
+
+    # Position vector from source to observer.
+    rv = obs(t) .- y
+
+    # Distance from source to observer.
+    r = AcousticAnalogies.norm_cs_safe(rv)
+
+    # Unit vector pointing from source to observer.
+    rhat = rv./r
+
+    # First time derivative of rv.
+    rv1dot = -se.y1dot(τ)
+
+    # Mach number of the velocity of the source in the direction of the
+    # observer.
+    Mr = AcousticAnalogies.dot_cs_safe(-rv1dot/se.c0, rhat)
+
+    # Now evaluate the integrand.
+    p_m_integrand = se.ρ0/(4*pi)*se.Λ*se.Δr/(r*(1 - Mr))
+
+    # Loading at the retarded time.
+    f0dot = se.f0dot(τ)
+
+    p_d_integrand_ff = (1/(4*pi*c0))*AcousticAnalogies.dot_cs_safe(f0dot, rhat)/(r*(1 - Mr))*se.Δr
+    p_d_integrand_nf = (1/(4*pi*c0))*AcousticAnalogies.dot_cs_safe(f0dot, rhat)*c0/(r^2*(1 - Mr))*se.Δr
+
+    return τ, p_m_integrand, p_d_integrand_ff, p_d_integrand_nf
+end
+
+```
+
+The `f1_integrand` function takes a source element `se`, and acoustic observer `obs`, and an observer time `t` and finds the source time and intermediate stuff that will eventually want to differentiate using the finite difference approximation.
+
+Now we need to make up a source and observer that we can test this out with:
+```@example f1a_tests
+
+# https://docs.makie.org/v0.19/examples/blocks/axis/index.html#logticks
+struct IntegerTicks end
+Makie.get_tickvalues(::IntegerTicks, vmin, vmax) = ceil(Int, vmin) : floor(Int, vmax)
+
+function doit()
+    # Scale up the density to make the error bigger.
+    rho = 1.226e6  # kg/m^3
+    c0 = 340.0  # m/s
+    Rtip = 1.1684  # meters
+    radii = 0.99932*Rtip
+    dradii = (0.99932 - 0.99660)*Rtip  # m
+    area_over_chord_squared = 0.064
+    chord = 0.47397E-02 * Rtip
+    Λ = area_over_chord_squared * chord^2
+
+    theta = 90.0*pi/180.0
+    x0 = [cos(theta), 0.0, sin(theta)].*100.0.*12.0.*0.0254  # 100 ft in meters
+    obs = StationaryAcousticObserver(x0)
+
+    # Need the position and velocity of the source as a function of
+    # source/retarded time. How do I want it to move? I want it to rotate around
+    # an axis on the origin, pointing in the x direction.
+    rpm = 2200
+    omega = 2*pi/60*rpm
+    period = 60/rpm
+    fn = 180.66763939805125
+    fc = 19.358679206883078
+    y0dot(τ) = [0,  radii*cos(omega*τ), radii*sin(omega*τ)]
+    y1dot(τ) = [0, -omega*radii*sin(omega*τ), omega*radii*cos(omega*τ)]
+    y2dot(τ) = [0, -omega^2*radii*cos(omega*τ), -omega^2*radii*sin(omega*τ)]
+    y3dot(τ) = [0, omega^3*radii*sin(omega*τ), -omega^3*radii*cos(omega*τ)]
+    f0dot(τ) = [-fn, -sin(omega*τ)*fc, cos(omega*τ)*fc]
+    f1dot(τ) = [0, -omega*cos(omega*τ)*fc, -omega*sin(omega*τ)*fc]
+    u(τ) = y0dot(τ)./radii
+    sef1 = CompactSourceElement(rho, c0, dradii, Λ, y0dot, y1dot, nothing, nothing, f0dot, nothing, 0.0, u)
+
+    t = 0.0
+    dt = period*0.5^4
+
+    τ0, pmi0, pdiff0, pdinf0 = f1_integrand(sef1, obs, t)
+    sef1a = CompactSourceElement(rho, c0, dradii, Λ, y0dot(τ0), y1dot(τ0), y2dot(τ0), y3dot(τ0), f0dot(τ0), f1dot(τ0), τ0, u(τ0))
+    apth = f1a(sef1a, obs)
+
+    err_prev_pm = nothing
+    err_prev_pd = nothing
+    dt_prev = nothing
+    dt_curr = dt
+    first_time = true
+
+    err_pm = Vector{Float64}()
+    err_pd = Vector{Float64}()
+    dts = Vector{Float64}()
+    ooa_pm = Vector{Float64}()
+    ooa_pd = Vector{Float64}()
+    # Gradually reduce time step size, recording the error and order-of-accuracy each time.
+    for n in 1:7
+        τ_1, pmi_1, pdiff_1, pdinf_1 = f1_integrand(sef1, obs, t-dt_curr)
+        τ1, pmi1, pdiff1, pdinf1 = f1_integrand(sef1, obs, t+dt_curr)
+
+        p_m_f1 = (pmi_1 - 2*pmi0 + pmi1)/(dt_curr^2)
+        p_d_f1 = (pdiff1 - pdiff_1)/(2*dt_curr) + pdinf0
+
+        err_curr_pm = abs(p_m_f1 - apth.p_m)
+        err_curr_pd = abs(p_d_f1 - apth.p_d)
+
+        if first_time
+            first_time = false
+        else
+            push!(ooa_pm, log(err_curr_pm/err_prev_pm)/log(dt_curr/dt_prev))
+            push!(ooa_pd, log(err_curr_pd/err_prev_pd)/log(dt_curr/dt_prev))
+        end
+
+        push!(dts, dt_curr)
+        push!(err_pm, err_curr_pm)
+        push!(err_pd, err_curr_pd)
+
+        dt_prev = dt_curr
+        err_prev_pm = err_curr_pm
+        err_prev_pd = err_curr_pd
+        dt_curr = 0.5*dt_curr
+    end
+
+    # Fit a line through the errors on a log-log plot, then check that the slope
+    # is second-order.
+    l = fit(log.(dts), log.(err_pm), 1)
+    println("monopole term convergence rate = $(l.coeffs[2])")
+
+    l = fit(log.(dts), log.(err_pd), 1)
+    println("dipole term convergence rate = $(l.coeffs[2])")
+
+    # Plot the error and observered order of accuracy.
+    fig = Figure()
+    ax1 = fig[1, 1] = Axis(fig, xlabel="time step size", ylabel="error", xscale=log10, xticks=LogTicks(IntegerTicks()), yscale=log10)
+    ax2 = fig[2, 1] = Axis(fig, xlabel="time step size", ylabel="convergence rate", xscale=log10, xticks=LogTicks(IntegerTicks()))
+    linkxaxes!(ax2, ax1)
+    lines!(ax1, dts, err_pm, label="monopole term")
+    lines!(ax1, dts, err_pd, label="dipole term")
+    lines!(ax2, dts[2:end], ooa_pm, label="monopole term")
+    lines!(ax2, dts[2:end], ooa_pd, label="dipole term")
+    ylims!(ax2, -0.1, 3.1)
+    axislegend(ax1; merge=true, unique=true, framevisible=false, bgcolor=:transparent, position=:lt)
+    save("f1a_test.png", fig)
+end
+
+doit()
+```
+![](f1a_test.png)
+
+The convergence rate of the error (the bottom plot) is extremely close to 2, which is what we're looking for.
+
+### ANOPP2 Comparisons
+The AcousticAnalogies.jl test suite includes comparisons to ANOPP2 predictions.
+Tests for a hypothetical isolated rotor are performed over a range of RPMs, with both stationary and moving observers.
+Here is an example using a moving observer:
+
+```@example anopp2
+using GLMakie
+using FLOWMath: akima
+include(joinpath(@__DIR__, "..", "..", "test", "anopp2_run.jl"))
+using .ANOPP2Run
+rpm = 2200.0
+t, p_thickness, p_loading, p_monopole_a2, p_dipole_a2 = ANOPP2Run.get_results(;
+    stationary_observer=false, theta=0.0, f_interp=akima, rpm=rpm, irpm=11)
+
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig, xlabel="time, blade passes", ylabel="acoustic pressure, monopole, Pa")
+ax2 = fig[2, 1] = Axis(fig, xlabel="time, blade passes", ylabel="acoustic pressure, dipole, Pa")
+lines!(ax1, t, p_thickness, label="AcousticAnalogies.jl")
+scatter!(ax1, t, p_monopole_a2, label="ANOPP2", markersize=6)
+lines!(ax2, t, p_loading)
+scatter!(ax2, t, p_dipole_a2, markersize=6)
+hidexdecorations!(ax1, grid=false)
+axislegend(ax1; merge=true, unique=true, framevisible=false, bgcolor=:transparent, position=:lt)
+save("anopp2_comparison.png", fig)
+```
+![](anopp2_comparison.png)
+
+The difference between the two codes' predictions is very small (less than 1% error).
 
 ## Signed Commits
+The AcousticAnalogies.jl GitHub repository requires all commits to the `main` branch to be signed.
+See the [GitHub docs on signing commits](https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification) for more information.
 
 ## Reporting Bugs
+Users can use the [GitHub Issues](https://docs.github.com/en/issues/tracking-your-work-with-issues/about-issues) feature to report bugs and submit feature requests.
