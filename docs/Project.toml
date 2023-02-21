@@ -2,6 +2,8 @@
 AcousticAnalogies = "e71b3392-1e0c-4536-b366-2bd1fce6fba0"
 AcousticMetrics = "046f749b-9c1e-43ca-86bc-6902340f753e"
 CCBlade = "e1828068-15df-11e9-03e4-ef195ea46fa4"
+ColorSchemes = "35d6a980-a343-548e-a6ea-1d62b119f2f4"
+DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 FLOWMath = "6cb5d3fb-0fe8-4cc2-bd89-9fe0b19a99d3"
 GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"

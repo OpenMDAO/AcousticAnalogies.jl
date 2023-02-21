@@ -14,6 +14,9 @@ using WriteVTK
 include("utils.jl")
 export get_dradii
 
+include("boundary_layers.jl")
+include("shape_functions.jl")
+
 include("core.jl")
 export CompactSourceElement
 export AcousticObserver, StationaryAcousticObserver, ConstVelocityAcousticObserver
