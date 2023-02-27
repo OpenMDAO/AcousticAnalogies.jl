@@ -1,6 +1,7 @@
 module BoundaryLayerTests
 
 using AcousticAnalogies: AcousticAnalogies
+using AcousticMetrics: AcousticMetrics
 using DelimitedFiles: DelimitedFiles
 using FLOWMath: linear
 using Test
@@ -331,6 +332,252 @@ end
             vmin, vmax = extrema(K_2_K_1)
             err = abs.(K_2_K_1_jl .- K_2_K_1_interp)./(vmax - vmin)
             @test maximum(err) < 0.024
+        end
+
+        @testset "BPM Figure 11a" begin
+            fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure11-a-TBL-TE-suction.csv")
+            bpm = DelimitedFiles.readdlm(fname, ',')
+            f_s = bpm[:, 1] # This is in kHz.
+            SPL_s = bpm[:, 2]
+
+            # At zero angle of attack the pressure and suction side predictions are the same.
+            f_p = f_s
+            SPL_p = SPL_s
+
+            nu = 1.4529e-5  # kinematic viscosity, m^2/s
+            L = 45.72e-2  # span in meters
+            chord = 30.48e-2  # chord in meters
+            U = 71.3  # freestream velocity in m/s
+            M = 0.209  # Mach number, corresponds to U = 71.3 m/s in BPM report
+            r_e = 1.22 # radiation distance in meters
+            θ_e = 90*pi/180 
+            Φ_e = 90*pi/180
+            M_c = 0.8*M
+            alphastar = 0.0
+
+            f_jl = AcousticMetrics.ExactThirdOctaveCenterBands(0.2, 20e3)
+            SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
+            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
+            SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 3)
+            tblte_branches = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 4)
+
+            @test all(getproperty.(tblte_branches, :K_1) .== 3)
+            @test all(getproperty.(tblte_branches, :DeltaK_1) .== 2)
+            @test all(getproperty.(tblte_branches, :A_s) .== 3)
+            @test all(getproperty.(tblte_branches, :A_p) .== 3)
+            @test all(getproperty.(tblte_branches, :B) .== 3)
+            @test all(getproperty.(tblte_branches, :St_2) .== 1)
+            @test all(getproperty.(tblte_branches, :K_2) .== 1)
+
+            SPL_s_jl_interp = linear(f_jl, SPL_s_jl, f_s.*1e3)
+            vmin, vmax = extrema(SPL_s)
+            err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
+            @test maximum(err) < 0.029
+
+            SPL_p_jl_interp = linear(f_jl, SPL_p_jl, f_p.*1e3)
+            vmin, vmax = extrema(SPL_p)
+            err = abs.(SPL_p_jl_interp .- SPL_s)./(vmax - vmin)
+            @test maximum(err) < 0.029
+
+            # Make sure predictions for Figure 11b take all the same branches as Figure 11a.
+            U = 55.5  # freestream velocity in m/s
+            M = 0.163  # Mach number, corresponds to U = 55.5 m/s in BPM report
+            M_c = 0.8*M
+
+            SPL_s_SPL_p_SPL_alpha_branches_11b = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+            SPL_s_11b_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches_11b, 1)
+            SPL_p_11b_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches_11b, 2)
+            SPL_alpha_11b_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches_11b, 3)
+            tblte_branches_11b = getindex.(SPL_s_SPL_p_SPL_alpha_branches_11b, 4)
+
+            @test all(getproperty.(tblte_branches_11b, :K_1) .== getproperty.(tblte_branches, :K_1))
+            @test all(getproperty.(tblte_branches_11b, :DeltaK_1) .== getproperty.(tblte_branches, :DeltaK_1))
+            @test all(getproperty.(tblte_branches_11b, :A_s) .== getproperty.(tblte_branches, :A_s))
+            @test all(getproperty.(tblte_branches_11b, :A_p) .== getproperty.(tblte_branches, :A_p))
+            @test all(getproperty.(tblte_branches_11b, :B) .== getproperty.(tblte_branches, :B))
+            @test all(getproperty.(tblte_branches_11b, :St_2) .== getproperty.(tblte_branches, :St_2))
+            @test all(getproperty.(tblte_branches_11b, :K_2) .== getproperty.(tblte_branches, :K_2))
+
+        end
+
+        @testset "BPM Figure 11d" begin
+            fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure11-d-TBL-TE-suction.csv")
+            bpm = DelimitedFiles.readdlm(fname, ',')
+            f_s = bpm[:, 1]
+            SPL_s = bpm[:, 2]
+
+            # At zero angle of attack the pressure and suction side predictions are the same.
+            f_p = f_s
+            SPL_p = SPL_s
+
+            nu = 1.4529e-5  # kinematic viscosity, m^2/s
+            L = 45.72e-2  # span in meters
+            chord = 30.48e-2  # chord in meters
+            U = 31.7  # freestream velocity in m/s
+            M = 0.093  # Mach number, corresponds to U = 31.7 m/s in BPM report
+            r_e = 1.22 # radiation distance in meters
+            θ_e = 90*pi/180 
+            Φ_e = 90*pi/180
+            M_c = 0.8*M
+            alphastar = 0.0
+
+            f_jl = AcousticMetrics.ExactThirdOctaveCenterBands(0.2, 20e3)
+            SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
+            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
+            SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 3)
+            tblte_branches = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 4)
+
+            @test all(getproperty.(tblte_branches, :K_1) .== 2)
+            @test all(getproperty.(tblte_branches, :DeltaK_1) .== 2)
+            @test all(getproperty.(tblte_branches, :A_s) .== 2)
+            @test all(getproperty.(tblte_branches, :A_p) .== 2)
+            @test all(getproperty.(tblte_branches, :B) .== 2)
+            @test all(getproperty.(tblte_branches, :St_2) .== 1)
+            @test all(getproperty.(tblte_branches, :K_2) .== 1)
+
+            SPL_s_jl_interp = linear(f_jl, SPL_s_jl, f_s.*1e3)
+            vmin, vmax = extrema(SPL_s)
+            err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
+            @test maximum(err) < 0.015
+
+            SPL_p_jl_interp = linear(f_jl, SPL_p_jl, f_p.*1e3)
+            vmin, vmax = extrema(SPL_p)
+            err = abs.(SPL_p_jl_interp .- SPL_s)./(vmax - vmin)
+            @test maximum(err) < 0.015
+
+            # # Check if all the predictions for Figure 11c also take the same branches as 11d.
+            # U = 39.6  # freestream velocity in m/s
+            # M = 0.116  # Mach number, corresponds to U = 36.6 m/s in BPM report
+            # M_c = 0.8*M
+
+            # SPL_s_SPL_p_SPL_alpha_branches_11c = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+            # SPL_s_11c_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches_11c, 1)
+            # SPL_p_11c_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches_11c, 2)
+            # SPL_alpha_11c_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches_11c, 3)
+            # tblte_branches_11c = getindex.(SPL_s_SPL_p_SPL_alpha_branches_11c, 4)
+
+            # @show getproperty.(tblte_branches_11c, :K_1)
+            # @show getproperty.(tblte_branches_11c, :DeltaK_1)
+            # @show getproperty.(tblte_branches_11c, :A_s)
+            # @show getproperty.(tblte_branches_11c, :A_p)
+            # @show getproperty.(tblte_branches_11c, :B)
+            # @show getproperty.(tblte_branches_11c, :St_2)
+            # @show getproperty.(tblte_branches_11c, :K_2)
+
+        end
+
+        @testset "BPM Figure 12a" begin
+            fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure12-U71.3-TBL-TE-suction.csv")
+            bpm = DelimitedFiles.readdlm(fname, ',')
+            f_s = bpm[:, 1]
+            SPL_s = bpm[:, 2]
+
+            fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure12-U71.3-TBL-TE-pressure.csv")
+            bpm = DelimitedFiles.readdlm(fname, ',')
+            f_p = bpm[:, 1]
+            SPL_p = bpm[:, 2]
+
+            fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure12-U71.3-separation.csv")
+            bpm = DelimitedFiles.readdlm(fname, ',')
+            f_alpha = bpm[:, 1]
+            SPL_alpha = bpm[:, 2]
+
+            nu = 1.4529e-5  # kinematic viscosity, m^2/s
+            L = 45.72e-2  # span in meters
+            chord = 30.48e-2  # chord in meters
+            U = 71.3  # freestream velocity in m/s
+            M = 0.209  # Mach number, corresponds to U = 71.3 m/s in BPM report
+            r_e = 1.22 # radiation distance in meters
+            θ_e = 90*pi/180 
+            Φ_e = 90*pi/180
+            M_c = 0.8*M
+            alphastar = 1.5*pi/180
+
+            f_jl = AcousticMetrics.ExactThirdOctaveCenterBands(0.2e3, 20e3)
+            SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
+            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
+            SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 3)
+            tblte_branches = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 4)
+
+            @test all(getproperty.(tblte_branches, :K_1) .== 3)
+            @test all(getproperty.(tblte_branches, :DeltaK_1) .== 2)
+            @test all(getproperty.(tblte_branches, :A_s) .== 3)
+            @test all(getproperty.(tblte_branches, :A_p) .== 3)
+            @test all(getproperty.(tblte_branches, :B) .== 3)
+            @test all(getproperty.(tblte_branches, :St_2) .== 2)
+            @test all(getproperty.(tblte_branches, :K_2) .== 2)
+
+            SPL_s_jl_interp = linear(f_jl, SPL_s_jl, f_s.*1e3)
+            vmin, vmax = extrema(SPL_s)
+            err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
+            @test maximum(err) < 0.022
+
+            SPL_p_jl_interp = linear(f_jl, SPL_p_jl, f_p.*1e3)
+            vmin, vmax = extrema(SPL_p)
+            err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
+            @test maximum(err) < 0.017
+
+            SPL_alpha_jl_interp = linear(f_jl, SPL_alpha_jl, f_alpha.*1e3)
+            vmin, vmax = extrema(SPL_alpha)
+            err = abs.(SPL_alpha_jl_interp .- SPL_alpha)./(vmax - vmin)
+            @test maximum(err) < 0.037
+        end
+
+        @testset "BPM Figure 45a" begin
+            fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure45-a-TBL-TE-suction.csv")
+            bpm = DelimitedFiles.readdlm(fname, ',')
+            f_s = bpm[:, 1]
+            SPL_s = bpm[:, 2]
+
+            fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure45-a-TBL-TE-pressure.csv")
+            bpm = DelimitedFiles.readdlm(fname, ',')
+            f_p = bpm[:, 1]
+            SPL_p = bpm[:, 2]
+
+            fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure45-a-separation.csv")
+            bpm = DelimitedFiles.readdlm(fname, ',')
+            f_alpha = bpm[:, 1]
+            SPL_alpha = bpm[:, 2]
+
+            nu = 1.4529e-5  # kinematic viscosity, m^2/s
+            L = 45.72e-2  # span in meters
+            chord = 30.48e-2  # chord in meters
+            U = 71.3  # freestream velocity in m/s
+            M = 0.209  # Mach number, corresponds to U = 71.3 m/s in BPM report
+            r_e = 1.22 # radiation distance in meters
+            θ_e = 90*pi/180 
+            Φ_e = 90*pi/180
+            M_c = 0.8*M
+            alphastar = 1.5*pi/180
+
+            f_jl = AcousticMetrics.ExactThirdOctaveCenterBands(0.2e3, 20e3)
+
+            SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
+
+            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
+            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
+            SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 3)
+            tblte_branches = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 4)
+
+            # The agreement with these ones aren't so great.
+            # Might be better if I grabbed the listing in the BPM appendix?
+            SPL_s_jl_interp = linear(f_jl, SPL_s_jl, f_s.*1e3)
+            vmin, vmax = extrema(SPL_s)
+            err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
+            @test maximum(err) < 0.037
+
+            SPL_p_jl_interp = linear(f_jl, SPL_p_jl, f_p.*1e3)
+            vmin, vmax = extrema(SPL_p)
+            err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
+            @test maximum(err) < 0.058
+
+            SPL_alpha_jl_interp = linear(f_jl, SPL_alpha_jl, f_alpha.*1e3)
+            vmin, vmax = extrema(SPL_alpha)
+            err = abs.(SPL_alpha_jl_interp .- SPL_alpha)./(vmax - vmin)
+            @test maximum(err) < 0.091
         end
     end
 end

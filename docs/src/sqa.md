@@ -959,6 +959,550 @@ axislegend(ax1, position=:lt)
 save("19890016302-figure82.png", fig)
 ```
 ![](19890016302-figure82.png)
+
+```@example bpm_figure11_a
+using AcousticAnalogies: AcousticAnalogies
+using AcousticMetrics: ExactThirdOctaveCenterBands
+using DelimitedFiles: DelimitedFiles
+using GLMakie
+
+# https://docs.makie.org/stable/examples/blocks/axis/index.html#logticks
+struct IntegerTicks end
+Makie.get_tickvalues(::IntegerTicks, vmin, vmax) = ceil(Int, vmin) : floor(Int, vmax)
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure11-a-TBL-TE-suction.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+f_s = bpm[:, 1]
+SPL_s = bpm[:, 2]
+
+# At zero angle of attack the pressure and suction side predictions are the same.
+f_p = f_s
+SPL_p = SPL_s
+
+nu = 1.4529e-5  # kinematic viscosity, m^2/s
+L = 45.72e-2  # span in meters
+chord = 30.48e-2  # chord in meters
+U = 71.3  # freestream velocity in m/s
+M = 0.209  # Mach number, corresponds to U = 71.3 m/s in BPM report
+r_e = 1.22 # radiation distance in meters
+θ_e = 90*pi/180 
+Φ_e = 90*pi/180
+M_c = 0.8*M
+# D_h = AcousticAnalogies.Dbar_h(θ_e, Φ_e, M, M_c)
+alphastar = 0.0
+# Re_c = U*chord/nu
+# deltastar_s = AcousticAnalogies.disp_thickness_s(AcousticAnalogies.TrippedN0012BoundaryLayer(), Re_c, alphastar)*chord
+# deltastar_p = AcousticAnalogies.disp_thickness_p(AcousticAnalogies.TrippedN0012BoundaryLayer(), Re_c, alphastar)*chord
+f_jl = ExactThirdOctaveCenterBands(0.2, 20e3)
+# St_s = @. f_jl*deltastar_s/U
+# St_p = @. f_jl*deltastar_p/U
+# A_s = AcousticAnalogies.A.(St_s./AcousticAnalogies.St_1(M), Re_c)
+# A_p = AcousticAnalogies.A.(St_p./AcousticAnalogies.St_1(M), Re_c)
+# Re_deltastar_p = U*deltastar_p/nu
+# ΔK_1 = AcousticAnalogies.DeltaK_1(alphastar, Re_deltastar_p)
+# K_1 = AcousticAnalogies.K_1(Re_c)
+# println("K_1 = $K_1 (should be 128.5)")
+# SPL_s_jl = @. 10*log10((deltastar_s*M^5*L*D_h)/(r_e^2)) + A_s + K_1 - 3
+# SPL_s_jl = AcousticAnalogies.TBL_TE_s.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+# SPL_p_jl = @. 10*log10((deltastar_p*M^5*L*D_h)/(r_e^2)) + A_p + K_1 - 3 + ΔK_1
+# @show M Re_c
+# SPL_p_jl = AcousticAnalogies.TBL_TE_s.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
+SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
+SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 3)
+tblte_branches = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 4)
+
+# Now, I want to know what branches were actually used.
+@show getproperty.(tblte_branches, :K_1) getproperty.(tblte_branches, :DeltaK_1) getproperty.(tblte_branches, :A_s) getproperty.(tblte_branches, :A_p) getproperty.(tblte_branches, :B) getproperty.(tblte_branches, :St_2) getproperty.(tblte_branches, :K_2)
+
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
+                       xscale=log10,
+                       xminorticksvisible=true,
+                       xminorticks=IntervalsBetween(9),
+                       xticks=LogTicks(IntegerTicks()),
+                       title="Figure 11 (a) - U = $U m/s")
+scatter!(ax1, f_s, SPL_s; marker='o', label="TBL-TE suction side, BPM")
+lines!(ax1, f_jl./1e3, SPL_s_jl; label="TBL-TE suction side, Julia")
+
+scatter!(ax1, f_p, SPL_p; marker='□', label="TBL-TE pressure side, BPM")
+lines!(ax1, f_jl./1e3, SPL_p_jl; label="TBL-TE pressure side, Julia")
+
+xlims!(ax1, 0.2, 20.0)
+ylims!(ax1, 40, 80)
+axislegend(ax1, position=:rt)
+save("19890016302-figure11-a.png", fig)
+```
+![](19890016302-figure11-a.png)
+
+```@example bpm_figure11_b
+using AcousticAnalogies: AcousticAnalogies
+using AcousticMetrics: ExactThirdOctaveCenterBands
+using DelimitedFiles: DelimitedFiles
+using GLMakie
+
+# https://docs.makie.org/stable/examples/blocks/axis/index.html#logticks
+struct IntegerTicks end
+Makie.get_tickvalues(::IntegerTicks, vmin, vmax) = ceil(Int, vmin) : floor(Int, vmax)
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure11-b-TBL-TE-suction.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+f_s = bpm[:, 1]
+SPL_s = bpm[:, 2]
+
+# At zero angle of attack the pressure and suction side predictions are the same.
+f_p = f_s
+SPL_p = SPL_s
+
+nu = 1.4529e-5  # kinematic viscosity, m^2/s
+L = 45.72e-2  # span in meters
+chord = 30.48e-2  # chord in meters
+U = 55.5  # freestream velocity in m/s
+# M = 0.163  # Mach number, corresponds to U = 55.5 m/s in BPM report
+M = U/340.46
+r_e = 1.22 # radiation distance in meters
+θ_e = 90*pi/180 
+Φ_e = 90*pi/180
+M_c = 0.8*M
+D_h = AcousticAnalogies.Dbar_h(θ_e, Φ_e, M, M_c)
+alphastar = 0.0
+# Re_c = U*chord/nu
+# deltastar_s = AcousticAnalogies.disp_thickness_s(AcousticAnalogies.TrippedN0012BoundaryLayer(), Re_c, alphastar)*chord
+# deltastar_s = 0.0093*chord
+# deltastar_s *= 0.6  # "lightly tripped" boundary layer?
+# deltastar_p = AcousticAnalogies.disp_thickness_p(AcousticAnalogies.TrippedN0012BoundaryLayer(), Re_c, alphastar)*chord
+# deltastar_p *= 0.6  # "lightly tripped" boundary layer?
+f_jl = ExactThirdOctaveCenterBands(0.2, 20e3)
+# St_s = @. f_jl*deltastar_s/U
+# St_p = @. f_jl*deltastar_p/U
+# # St_1 = AcousticAnalogies.St_1(M)
+# St_1 = 0.056 # From Table 1 in the appendix.
+# A_s = AcousticAnalogies.A.(St_s./St_1, Re_c)
+# A_p = AcousticAnalogies.A.(St_p./St_1, Re_c)
+# Re_deltastar_p = U*deltastar_p/nu
+# ΔK_1 = AcousticAnalogies.DeltaK_1(alphastar, Re_deltastar_p)
+# # K_1 = AcousticAnalogies.K_1(Re_c)
+# # K_1 = 128.0
+# println("K_1 = $K_1 (should be 128.5)")
+# SPL_s_jl = @. 10*log10((deltastar_s*M^5*L*D_h)/(r_e^2)) + A_s + K_1 - 3
+# SPL_p_jl = @. 10*log10((deltastar_p*M^5*L*D_h)/(r_e^2)) + A_p + K_1 - 3 + ΔK_1
+# @show M Re_c
+# @show deltastar_s/chord
+# @show AcousticAnalogies.St_1(M)
+
+SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
+SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
+SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 3)
+tblte_branches = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 4)
+
+# Now, I want to know what branches were actually used.
+@show getproperty.(tblte_branches, :K_1) getproperty.(tblte_branches, :DeltaK_1) getproperty.(tblte_branches, :A_s) getproperty.(tblte_branches, :A_p) getproperty.(tblte_branches, :B) getproperty.(tblte_branches, :St_2) getproperty.(tblte_branches, :K_2)
+
+# K_1_table = 128.0  # Value from line 11(b) in Table (1), BPM appendix.
+
+# SPL_s_jl_table = @. 10*log10((deltastar_s*M^5*L*D_h)/(r_e^2)) + A_s + K_1_table - 3
+# SPL_p_jl_table = @. 10*log10((deltastar_p*M^5*L*D_h)/(r_e^2)) + A_p + K_1_table - 3 + ΔK_1
+
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
+                       xscale=log10,
+                       xminorticksvisible=true,
+                       xminorticks=IntervalsBetween(9),
+                       xticks=LogTicks(IntegerTicks()),
+                       title="Figure 11 (b) - U = $U m/s")
+scatter!(ax1, f_s, SPL_s; marker='o', label="TBL-TE suction side, BPM")
+lines!(ax1, f_jl./1e3, SPL_s_jl; label="TBL-TE suction side, Julia")
+# lines!(ax1, f_jl./1e3, SPL_s_jl_table; label="TBL-TE suction side, Julia, K_1 from Table 1")
+
+scatter!(ax1, f_p, SPL_p; marker='□', label="TBL-TE pressure side, BPM")
+lines!(ax1, f_jl./1e3, SPL_p_jl; label="TBL-TE pressure side, Julia")
+# lines!(ax1, f_jl./1e3, SPL_p_jl_table; label="TBL-TE pressure side, Julia, K_1 from Table 1")
+
+xlims!(ax1, 0.2, 20.0)
+ylims!(ax1, 30, 70)
+axislegend(ax1, position=:rt)
+save("19890016302-figure11-b.png", fig)
+```
+![](19890016302-figure11-b.png)
+
+```@example bpm_figure11_c
+using AcousticAnalogies: AcousticAnalogies
+using AcousticMetrics: ExactThirdOctaveCenterBands
+using DelimitedFiles: DelimitedFiles
+using GLMakie
+
+# https://docs.makie.org/stable/examples/blocks/axis/index.html#logticks
+struct IntegerTicks end
+Makie.get_tickvalues(::IntegerTicks, vmin, vmax) = ceil(Int, vmin) : floor(Int, vmax)
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure11-c-TBL-TE-suction.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+f_s = bpm[:, 1]
+SPL_s = bpm[:, 2]
+
+# At zero angle of attack the pressure and suction side predictions are the same.
+f_p = f_s
+SPL_p = SPL_s
+
+nu = 1.4529e-5  # kinematic viscosity, m^2/s
+L = 45.72e-2  # span in meters
+chord = 30.48e-2  # chord in meters
+U = 39.6  # freestream velocity in m/s
+# M = 0.116  # Mach number, corresponds to U = 36.6 m/s in BPM report
+M = U/340.46
+@show M
+r_e = 1.22 # radiation distance in meters
+θ_e = 90*pi/180 
+Φ_e = 90*pi/180
+M_c = 0.8*M
+D_h = AcousticAnalogies.Dbar_h(θ_e, Φ_e, M, M_c)
+alphastar = 0.0
+Re_c = U*chord/nu
+deltastar_s = AcousticAnalogies.disp_thickness_s(AcousticAnalogies.TrippedN0012BoundaryLayer(), Re_c, alphastar)*chord
+deltastar_p = AcousticAnalogies.disp_thickness_p(AcousticAnalogies.TrippedN0012BoundaryLayer(), Re_c, alphastar)*chord
+f_jl = ExactThirdOctaveCenterBands(0.2, 20e3)
+St_s = @. f_jl*deltastar_s/U
+St_p = @. f_jl*deltastar_p/U
+A_s = AcousticAnalogies.A.(St_s./AcousticAnalogies.St_1(M), Re_c)
+A_p = AcousticAnalogies.A.(St_p./AcousticAnalogies.St_1(M), Re_c)
+Re_deltastar_p = U*deltastar_p/nu
+ΔK_1 = AcousticAnalogies.DeltaK_1(alphastar, Re_deltastar_p)
+K_1 = AcousticAnalogies.K_1(Re_c)
+SPL_s_jl = @. 10*log10((deltastar_s*M^5*L*D_h)/(r_e^2)) + A_s + K_1 - 3
+SPL_p_jl = @. 10*log10((deltastar_p*M^5*L*D_h)/(r_e^2)) + A_p + K_1 - 3 + ΔK_1
+@show maximum(SPL_s_jl)
+@show Re_c
+
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
+                       xscale=log10,
+                       xminorticksvisible=true,
+                       xminorticks=IntervalsBetween(9),
+                       xticks=LogTicks(IntegerTicks()),
+                       title="Figure 11 (c) - U = $U m/s")
+scatter!(ax1, f_s, SPL_s; marker='o', label="TBL-TE suction side, BPM")
+lines!(ax1, f_jl./1e3, SPL_s_jl; label="TBL-TE suction side, Julia")
+
+scatter!(ax1, f_p, SPL_p; marker='□', label="TBL-TE pressure side, BPM")
+lines!(ax1, f_jl./1e3, SPL_p_jl; label="TBL-TE pressure side, Julia")
+
+xlims!(ax1, 0.2, 20.0)
+ylims!(ax1, 20, 60)
+axislegend(ax1, position=:rt)
+save("19890016302-figure11-c.png", fig)
+```
+![](19890016302-figure11-c.png)
+
+```@example bpm_figure11_d
+using AcousticAnalogies: AcousticAnalogies
+using AcousticMetrics: ExactThirdOctaveCenterBands
+using DelimitedFiles: DelimitedFiles
+using GLMakie
+
+# https://docs.makie.org/stable/examples/blocks/axis/index.html#logticks
+struct IntegerTicks end
+Makie.get_tickvalues(::IntegerTicks, vmin, vmax) = ceil(Int, vmin) : floor(Int, vmax)
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure11-d-TBL-TE-suction.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+f_s = bpm[:, 1]
+SPL_s = bpm[:, 2]
+
+# At zero angle of attack the pressure and suction side predictions are the same.
+f_p = f_s
+SPL_p = SPL_s
+
+nu = 1.4529e-5  # kinematic viscosity, m^2/s
+L = 45.72e-2  # span in meters
+chord = 30.48e-2  # chord in meters
+U = 31.7  # freestream velocity in m/s
+M = 0.093  # Mach number, corresponds to U = 31.7 m/s in BPM report
+r_e = 1.22 # radiation distance in meters
+θ_e = 90*pi/180 
+Φ_e = 90*pi/180
+M_c = 0.8*M
+D_h = AcousticAnalogies.Dbar_h(θ_e, Φ_e, M, M_c)
+alphastar = 0.0
+Re_c = U*chord/nu
+deltastar_s = AcousticAnalogies.disp_thickness_s(AcousticAnalogies.TrippedN0012BoundaryLayer(), Re_c, alphastar)*chord
+deltastar_p = AcousticAnalogies.disp_thickness_p(AcousticAnalogies.TrippedN0012BoundaryLayer(), Re_c, alphastar)*chord
+f_jl = ExactThirdOctaveCenterBands(0.2, 20e3)
+St_s = @. f_jl*deltastar_s/U
+St_p = @. f_jl*deltastar_p/U
+A_s = AcousticAnalogies.A.(St_s./AcousticAnalogies.St_1(M), Re_c)
+A_p = AcousticAnalogies.A.(St_p./AcousticAnalogies.St_1(M), Re_c)
+Re_deltastar_p = U*deltastar_p/nu
+ΔK_1 = AcousticAnalogies.DeltaK_1(alphastar, Re_deltastar_p)
+K_1 = AcousticAnalogies.K_1(Re_c)
+SPL_s_jl = @. 10*log10((deltastar_s*M^5*L*D_h)/(r_e^2)) + A_s + K_1 - 3
+SPL_p_jl = @. 10*log10((deltastar_p*M^5*L*D_h)/(r_e^2)) + A_p + K_1 - 3 + ΔK_1
+@show maximum(SPL_s_jl)
+@show Re_c
+
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
+                       xscale=log10,
+                       xminorticksvisible=true,
+                       xminorticks=IntervalsBetween(9),
+                       xticks=LogTicks(IntegerTicks()),
+                       title="Figure 11 (d) - U = $U m/s")
+scatter!(ax1, f_s, SPL_s; marker='o', label="TBL-TE suction side, BPM")
+lines!(ax1, f_jl./1e3, SPL_s_jl; label="TBL-TE suction side, Julia")
+
+scatter!(ax1, f_p, SPL_p; marker='□', label="TBL-TE pressure side, BPM")
+lines!(ax1, f_jl./1e3, SPL_p_jl; label="TBL-TE pressure side, Julia")
+
+xlims!(ax1, 0.2, 20.0)
+ylims!(ax1, 20, 60)
+axislegend(ax1, position=:rt)
+save("19890016302-figure11-d.png", fig)
+```
+![](19890016302-figure11-d.png)
+
+```@example bpm_figure12_a
+using AcousticAnalogies: AcousticAnalogies
+using AcousticMetrics: ExactThirdOctaveCenterBands
+using DelimitedFiles: DelimitedFiles
+using GLMakie
+
+# https://docs.makie.org/stable/examples/blocks/axis/index.html#logticks
+struct IntegerTicks end
+Makie.get_tickvalues(::IntegerTicks, vmin, vmax) = ceil(Int, vmin) : floor(Int, vmax)
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure12-U71.3-TBL-TE-suction.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+f_s = bpm[:, 1]
+SPL_s = bpm[:, 2]
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure12-U71.3-TBL-TE-pressure.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+f_p = bpm[:, 1]
+SPL_p = bpm[:, 2]
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure12-U71.3-separation.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+f_alpha = bpm[:, 1]
+SPL_alpha = bpm[:, 2]
+
+nu = 1.4529e-5  # kinematic viscosity, m^2/s
+L = 45.72e-2  # span in meters
+chord = 30.48e-2  # chord in meters
+U = 71.3  # freestream velocity in m/s
+M = 0.209  # Mach number, corresponds to U = 71.3 m/s in BPM report
+r_e = 1.22 # radiation distance in meters
+θ_e = 90*pi/180 
+Φ_e = 90*pi/180
+M_c = 0.8*M
+alphastar = 1.5*pi/180
+# D_h = AcousticAnalogies.Dbar_h(θ_e, Φ_e, M, M_c)
+# Re_c = U*chord/nu
+# deltastar_s = AcousticAnalogies.disp_thickness_s(AcousticAnalogies.TrippedN0012BoundaryLayer(), Re_c, alphastar)*chord
+# deltastar_p = AcousticAnalogies.disp_thickness_p(AcousticAnalogies.TrippedN0012BoundaryLayer(), Re_c, alphastar)*chord
+# f = range(0.2, 20; length=100).*1e3
+f_jl = ExactThirdOctaveCenterBands(0.2, 20e3)
+# St_s = @. f_jl*deltastar_s/U
+# St_p = @. f_jl*deltastar_p/U
+# A_s = AcousticAnalogies.A.(St_s./AcousticAnalogies.St_1(M), Re_c)
+# A_p = AcousticAnalogies.A.(St_p./AcousticAnalogies.St_1(M), Re_c)
+# Re_deltastar_p = U*deltastar_p/nu
+# ΔK_1 = AcousticAnalogies.DeltaK_1(alphastar, Re_deltastar_p)
+# K_1 = AcousticAnalogies.K_1(Re_c)
+# SPL_s_jl = @. 10*log10((deltastar_s*M^5*L*D_h)/(r_e^2)) + A_s + K_1 - 3
+SPL_s_jl = AcousticAnalogies.TBL_TE_s.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+# SPL_p_jl = @. 10*log10((deltastar_p*M^5*L*D_h)/(r_e^2)) + A_p + K_1 - 3 + ΔK_1
+SPL_p_jl = AcousticAnalogies.TBL_TE_p.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+# B = AcousticAnalogies.B.(St_s./AcousticAnalogies.St_2(AcousticAnalogies.St_1(M), alphastar), Re_c)
+# K_2 = AcousticAnalogies.K_2(Re_c, M, alphastar)
+# SPL_alpha_jl = @. 10*log10((deltastar_s*M^5*L*D_h)/(r_e^2)) + B + K_2
+SPL_alpha_jl = AcousticAnalogies.TBL_TE_alpha.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+gamma0 = 23.43*M + 4.651
+println("gamma0 = $gamma0 deg, alphastar = $(alphastar*180/pi) deg")
+
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
+                       xscale=log10,
+                       xminorticksvisible=true,
+                       xminorticks=IntervalsBetween(9),
+                       xticks=LogTicks(IntegerTicks()),
+                       title="Figure 12 (a) - U = $U m/s")
+scatter!(ax1, f_s, SPL_s; marker='o', label="TBL-TE suction side, BPM")
+lines!(ax1, f_jl./1e3, SPL_s_jl; label="TBL-TE suction side, Julia")
+
+scatter!(ax1, f_p, SPL_p; marker='□', label="TBL-TE pressure side, BPM")
+lines!(ax1, f_jl./1e3, SPL_p_jl; label="TBL-TE pressure side, Julia")
+
+scatter!(ax1, f_alpha, SPL_alpha; marker='△', label="separation, BPM")
+lines!(ax1, f_jl./1e3, SPL_alpha_jl; label="separation, Julia")
+
+xlims!(ax1, 0.2, 20.0)
+ylims!(ax1, 40, 80)
+axislegend(ax1, position=:rt)
+save("19890016302-figure12-a.png", fig)
+```
+![](19890016302-figure12-a.png)
+
+```@example bpm_figure12_b
+using AcousticAnalogies: AcousticAnalogies
+using AcousticMetrics: ExactThirdOctaveCenterBands
+using DelimitedFiles: DelimitedFiles
+using GLMakie
+
+# https://docs.makie.org/stable/examples/blocks/axis/index.html#logticks
+struct IntegerTicks end
+Makie.get_tickvalues(::IntegerTicks, vmin, vmax) = ceil(Int, vmin) : floor(Int, vmax)
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure12-b-TBL-TE-suction.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+f_s = bpm[:, 1]
+SPL_s = bpm[:, 2]
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure12-b-TBL-TE-pressure.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+f_p = bpm[:, 1]
+SPL_p = bpm[:, 2]
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure12-b-TBL-TE-separation.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+f_alpha = bpm[:, 1]
+SPL_alpha = bpm[:, 2]
+
+nu = 1.4529e-5  # kinematic viscosity, m^2/s
+L = 45.72e-2  # span in meters
+chord = 30.48e-2  # chord in meters
+U = 39.6  # freestream velocity in m/s
+M = 0.116  # Mach number, corresponds to U = 36.6 m/s in BPM report
+r_e = 1.22 # radiation distance in meters
+θ_e = 90*pi/180 
+Φ_e = 90*pi/180
+M_c = 0.8*M
+alphastar = 1.5*pi/180
+# D_h = AcousticAnalogies.Dbar_h(θ_e, Φ_e, M, M_c)
+# Re_c = U*chord/nu
+# deltastar_s = AcousticAnalogies.disp_thickness_s(AcousticAnalogies.TrippedN0012BoundaryLayer(), Re_c, alphastar)*chord
+# deltastar_p = AcousticAnalogies.disp_thickness_p(AcousticAnalogies.TrippedN0012BoundaryLayer(), Re_c, alphastar)*chord
+f_jl = ExactThirdOctaveCenterBands(0.2, 20e3)
+# St_s = @. f_jl*deltastar_s/U
+# St_p = @. f_jl*deltastar_p/U
+# A_s = AcousticAnalogies.A.(St_s./AcousticAnalogies.St_1(M), Re_c)
+# A_p = AcousticAnalogies.A.(St_p./AcousticAnalogies.St_1(M), Re_c)
+# Re_deltastar_p = U*deltastar_p/nu
+# ΔK_1 = AcousticAnalogies.DeltaK_1(alphastar, Re_deltastar_p)
+# K_1 = AcousticAnalogies.K_1(Re_c)
+# SPL_s_jl = @. 10*log10((deltastar_s*M^5*L*D_h)/(r_e^2)) + A_s + K_1 - 3
+SPL_s_jl = AcousticAnalogies.TBL_TE_s.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+# SPL_p_jl = @. 10*log10((deltastar_p*M^5*L*D_h)/(r_e^2)) + A_p + K_1 - 3 + ΔK_1
+SPL_p_jl = AcousticAnalogies.TBL_TE_p.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+SPL_alpha_jl = AcousticAnalogies.TBL_TE_alpha.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+@show maximum(SPL_s_jl)
+# @show Re_c
+
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
+                       xscale=log10,
+                       xminorticksvisible=true,
+                       xminorticks=IntervalsBetween(9),
+                       xticks=LogTicks(IntegerTicks()),
+                       title="Figure 12 (b) - U = $U m/s")
+scatter!(ax1, f_s, SPL_s; marker='o', label="TBL-TE suction side, BPM")
+lines!(ax1, f_jl./1e3, SPL_s_jl; label="TBL-TE suction side, Julia")
+
+scatter!(ax1, f_p, SPL_p; marker='□', label="TBL-TE pressure side, BPM")
+lines!(ax1, f_jl./1e3, SPL_p_jl; label="TBL-TE pressure side, Julia")
+
+scatter!(ax1, f_alpha, SPL_alpha; marker='△', label="separation, BPM")
+lines!(ax1, f_jl./1e3, SPL_alpha_jl; label="separation, Julia")
+
+xlims!(ax1, 0.2, 20.0)
+ylims!(ax1, 20, 60)
+axislegend(ax1, position=:rt)
+save("19890016302-figure12-b.png", fig)
+```
+![](19890016302-figure12-b.png)
+
+```@example bpm_figure45_a
+using AcousticAnalogies: AcousticAnalogies
+using AcousticMetrics: ExactThirdOctaveCenterBands
+using DelimitedFiles: DelimitedFiles
+using GLMakie
+
+# https://docs.makie.org/stable/examples/blocks/axis/index.html#logticks
+struct IntegerTicks end
+Makie.get_tickvalues(::IntegerTicks, vmin, vmax) = ceil(Int, vmin) : floor(Int, vmax)
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure45-a-TBL-TE-suction.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+f_s = bpm[:, 1]
+SPL_s = bpm[:, 2]
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure45-a-TBL-TE-pressure.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+f_p = bpm[:, 1]
+SPL_p = bpm[:, 2]
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure45-a-separation.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+f_alpha = bpm[:, 1]
+SPL_alpha = bpm[:, 2]
+
+nu = 1.4529e-5  # kinematic viscosity, m^2/s
+L = 45.72e-2  # span in meters
+chord = 30.48e-2  # chord in meters
+U = 71.3  # freestream velocity in m/s
+M = 0.209  # Mach number, corresponds to U = 71.3 m/s in BPM report
+r_e = 1.22 # radiation distance in meters
+θ_e = 90*pi/180 
+Φ_e = 90*pi/180
+M_c = 0.8*M
+# D_h = AcousticAnalogies.Dbar_h(θ_e, Φ_e, M, M_c)
+alphastar = 1.5*pi/180
+# Re_c = U*chord/nu
+# deltastar_s = AcousticAnalogies.disp_thickness_s(AcousticAnalogies.UntrippedN0012BoundaryLayer(), Re_c, alphastar)*chord
+# deltastar_p = AcousticAnalogies.disp_thickness_p(AcousticAnalogies.UntrippedN0012BoundaryLayer(), Re_c, alphastar)*chord
+f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
+# St_s = @. f_jl*deltastar_s/U
+# St_p = @. f_jl*deltastar_p/U
+# A_s = AcousticAnalogies.A.(St_s./AcousticAnalogies.St_1(M), Re_c)
+# A_p = AcousticAnalogies.A.(St_p./AcousticAnalogies.St_1(M), Re_c)
+# Re_deltastar_p = U*deltastar_p/nu
+# ΔK_1 = AcousticAnalogies.DeltaK_1(alphastar, Re_deltastar_p)
+# K_1 = AcousticAnalogies.K_1(Re_c)
+# SPL_s_jl = @. 10*log10((deltastar_s*M^5*L*D_h)/(r_e^2)) + A_s + K_1 - 3
+# SPL_p_jl = @. 10*log10((deltastar_p*M^5*L*D_h)/(r_e^2)) + A_p + K_1 - 3 + ΔK_1
+# B = AcousticAnalogies.B.(St_s./AcousticAnalogies.St_2(AcousticAnalogies.St_1(M), alphastar), Re_c)
+# K_2 = AcousticAnalogies.K_2(Re_c, M, alphastar)
+# SPL_alpha_jl = @. 10*log10((deltastar_s*M^5*L*D_h)/(r_e^2)) + B + K_2
+SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
+
+SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
+SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
+SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 3)
+tblte_branches = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 4)
+
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
+                       xscale=log10,
+                       xminorticksvisible=true,
+                       xminorticks=IntervalsBetween(9),
+                       xticks=LogTicks(IntegerTicks()),
+                       title="Figure 45 (a) - U = $U m/s")
+scatter!(ax1, f_s, SPL_s; marker='o', label="TBL-TE suction side, BPM")
+lines!(ax1, f_jl./1e3, SPL_s_jl; label="TBL-TE suction side, Julia")
+
+scatter!(ax1, f_p, SPL_p; marker='□', label="TBL-TE pressure side, BPM")
+lines!(ax1, f_jl./1e3, SPL_p_jl; label="TBL-TE pressure side, Julia")
+
+scatter!(ax1, f_alpha, SPL_alpha; marker='△', label="separation, BPM")
+lines!(ax1, f_jl./1e3, SPL_alpha_jl; label="separation, Julia")
+
+xlims!(ax1, 0.2, 20.0)
+ylims!(ax1, 40, 80)
+axislegend(ax1, position=:rt)
+save("19890016302-figure45-a.png", fig)
+```
+![](19890016302-figure45-a.png)
+
 ## Signed Commits
 The AcousticAnalogies.jl GitHub repository requires all commits to the `main` branch to be signed.
 See the [GitHub docs on signing commits](https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification) for more information.
