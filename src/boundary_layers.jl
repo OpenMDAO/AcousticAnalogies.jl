@@ -19,11 +19,11 @@ function disp_thickness_0(::TrippedN0012BoundaryLayer, Re_c)
     end
 end
 
-# function bl_thickness_0(::UntrippedN0012BoundaryLayer, Re_c)
-#     # Equation 5 from the BPM report.
-#     logRe_c = log10(Re_c)
-#     return 10^(1.6569 - 0.9045*logRe_c + 0.0596*logRe_c^2)
-# end
+function bl_thickness_0(::UntrippedN0012BoundaryLayer, Re_c)
+    # Equation 5 from the BPM report.
+    logRe_c = log10(Re_c)
+    return 10^(1.6569 - 0.9045*logRe_c + 0.0596*logRe_c^2)
+end
 
 function disp_thickness_0(::UntrippedN0012BoundaryLayer, Re_c)
     # Equation 6 from the BPM report.
@@ -31,10 +31,11 @@ function disp_thickness_0(::UntrippedN0012BoundaryLayer, Re_c)
     return 10^(3.0187 - 1.5397*logRe_c + 0.1059*logRe_c^2)
 end
 
-# function bl_thickness_p(::Union{TrippedN0012BoundaryLayer,UntrippedN0012BoundaryLayer}, alphastar)
-#     # Equation 8 from the BPM report.
-#     return 10^(-0.04175*alphastar + 0.00106*alphastar^2)
-# end
+function bl_thickness_p(::Union{TrippedN0012BoundaryLayer,UntrippedN0012BoundaryLayer}, alphastar)
+    # Equation 8 from the BPM report.
+    alphastar_deg = alphastar*180/pi
+    return 10^(-0.04175*alphastar_deg + 0.00106*alphastar_deg^2)
+end
 
 function disp_thickness_p(::Union{TrippedN0012BoundaryLayer,UntrippedN0012BoundaryLayer}, alphastar)
     # Equation 9 from the BPM report.
@@ -66,6 +67,7 @@ end
 
 function disp_thickness_s(::TrippedN0012BoundaryLayer, alphastar)
     # Equation 12 from the BPM report.
+    T = typeof(alphastar)
     alphastar_deg = alphastar*180/pi
     if alphastar_deg < 0
         throw(DomainError(alphastar, "negative alphastar argument invalid"))
@@ -78,7 +80,7 @@ function disp_thickness_s(::TrippedN0012BoundaryLayer, alphastar)
     else
         # What should I do for angles of attack greater than 25°?
         # Maybe just keep the same thickness?
-        return 14.296*10^(0.0258*25)
+        return 14.296*10^(0.0258*25)*one(T)
     end
 end
 
@@ -118,9 +120,9 @@ function disp_thickness_s(::UntrippedN0012BoundaryLayer, alphastar)
     end
 end
 
-# function bl_thickness_p(bl::AbstractBoundaryLayer, Re_c, alphastar)
-#     return bl_thickness_p(bl, alphastar)*bl_thickness_0(bl, Re_c)
-# end
+function bl_thickness_p(bl::AbstractBoundaryLayer, Re_c, alphastar)
+    return bl_thickness_p(bl, alphastar)*bl_thickness_0(bl, Re_c)
+end
 
 # function bl_thickness_s(bl::AbstractBoundaryLayer, Re_c, alphastar)
 #     return bl_thickness_s(bl, alphastar)*bl_thickness_0(bl, Re_c)

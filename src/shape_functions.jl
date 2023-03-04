@@ -243,25 +243,59 @@ function St_2(St_1, alphastar)
     return ret
 end
 
+# function gammas_betas(M)
+#     # Equation (50) from the BPM report.
+#     gamma_deg = 27.094*M + 3.31
+#     gamma0_deg = 23.43*M + 4.651
+#     beta_deg = 72.65*M + 10.74
+#     beta0_deg = -34.19*M - 13.82
+#     return gamma_deg, gamma0_deg, beta_deg, beta0_deg
+# end
+
+function gamma(M)
+    # Equation (50) from the BPM report.
+    gamma_deg = 27.094*M + 3.31
+    return gamma_deg
+end
+
+function gamma0(M)
+    # Equation (50) from the BPM report.
+    gamma0_deg = 23.43*M + 4.651
+    return gamma0_deg
+end
+
+function beta(M)
+    # Equation (50) from the BPM report.
+    beta_deg = 72.65*M + 10.74
+    return beta_deg
+end
+
+function beta0(M)
+    # Equation (50) from the BPM report.
+    beta0_deg = -34.19*M - 13.82
+    return beta0_deg
+end
+
 function K_2_b(Re_c, M, alphastar)
     T = promote_type(typeof(Re_c), typeof(M), typeof(alphastar))
     alphastar_deg = alphastar*180/pi
 
     k_1 = K_1(Re_c)*one(T)
     # Equation (50) from the BPM report.
-    gamma = 27.094*M + 3.31
-    gamma0 = 23.43*M + 4.651
-    beta = 72.65*M + 10.74
-    beta0 = -34.19*M - 13.82
+    # gamma_deg, gamma0_deg, beta_deg, beta0_deg = gammas_betas(M)
+    gamma_deg = gamma(M)
+    gamma0_deg = gamma0(M)
+    beta_deg = beta(M)
+    beta0_deg = beta0(M)
 
     # Equation (49) from the BPM report.
-    if alphastar_deg < gamma0 - gamma
+    if alphastar_deg < gamma0_deg - gamma_deg
         branch = 1
         return k_1 - 1000, branch
-    # elseif alphastar_deg ≤ gamma0 + gamma
-    elseif alphastar_deg ≤ gamma0 + sqrt(-(gamma/beta)^2*(-12 - beta0)^2 + gamma^2)
+    # elseif alphastar_deg ≤ gamma0_deg + gamma_deg
+    elseif alphastar_deg ≤ gamma0_deg + sqrt(-(gamma_deg/beta_deg)^2*(-12 - beta0_deg)^2 + gamma_deg^2)
         branch = 2
-        return k_1 + sqrt(beta^2 - (beta/gamma)^2*(alphastar_deg - gamma0)^2) + beta0, branch
+        return k_1 + sqrt(beta_deg^2 - (beta_deg/gamma_deg)^2*(alphastar_deg - gamma0_deg)^2) + beta0_deg, branch
     else
         branch = 3
         return k_1 - 12, branch
@@ -290,6 +324,11 @@ end
 function Dbar_h(theta_e, phi_e, M, M_c)
     # Equation (B1) from the BPM report.
     return (2*sin(0.5*theta_e)^2*sin(phi_e)^2)/((1 + M*cos(theta_e))*(1 + (M - M_c)*cos(theta_e))^2)
+end
+
+function Dbar_l(theta_e, phi_e, M)
+    # Equation (B2) from the BPM report.
+    return (sin(theta_e)^2*sin(phi_e)^2)/((1 + M*cos(theta_e))^4)
 end
 
 function TBL_TE_s(freq, nu, L, chord, U, M, M_c, r_e, theta_e, phi_e, alphastar, bl)
@@ -333,32 +372,63 @@ function TBL_TE_alpha(freq, nu, L, chord, U, M, M_c, r_e, theta_e, phi_e, alphas
     return SPL_alpha
 end
 
-function TBL_TE_branch(freq, nu, L, chord, U, M, M_c, r_e, theta_e, phi_e, alphastar, bl)
-    D = Dbar_h(theta_e, phi_e, M, M_c)
+function TBL_TE_branch(freq, nu, L, chord, U, M, M_c, r_e, theta_e, phi_e, alphastar, alphastar0, bl)
+    T = promote_type(typeof(freq), typeof(nu), typeof(L), typeof(chord), typeof(U), typeof(M), typeof(M_c), typeof(r_e), typeof(theta_e), typeof(phi_e), typeof(alphastar), typeof(alphastar0))
     Re_c = U*chord/nu
+
+    # gamma_deg, gamma0_deg, beta_deg, beta0_deg = gammas_betas(M)
+    gamma0_deg = gamma0(M)
     deltastar_s = disp_thickness_s(bl, Re_c, alphastar)*chord
-
     St_s = freq*deltastar_s/U
-    St_peak_sp = St_1(M)
-    A_s, A_min_a0_s_branch, A_max_a0_s_branch, A_min_a_s_branch, A_max_a_s_branch, A_s_branch = A_b(St_s/St_peak_sp, Re_c)
 
-    k_1, K_1_branch = K_1_b(Re_c)
-    SPL_s = 10*log10((deltastar_s*M^5*L*D)/(r_e^2)) + A_s + k_1 - 3
+    if alphastar*180/pi > min(gamma0_deg, alphastar0*180/pi)
+        SPL_s = -100*one(T)
+        SPL_p = -100*one(T)
+        D = Dbar_l(theta_e, phi_e, M)
+        St_peak_p = St_1(M)
+        St_peak_alpha, St_2_branch = St_2_b(St_peak_p, alphastar)
+        A_prime, A_min_a0_s_branch, A_max_a0_s_branch, A_min_a_s_branch, A_max_a_s_branch, A_s_branch = A_b(St_s/St_peak_alpha, 3*Re_c)
+        k2, K_2_branch = K_2_b(Re_c, M, alphastar)
+        SPL_alpha = 10*log10((deltastar_s*M^5*L*D)/(r_e^2)) + A_prime + k2
 
-    deltastar_p = disp_thickness_p(bl, Re_c, alphastar)*chord
+        K_1_branch = 0
+        DeltaK_1_branch = 0
+        A_min_a0_p_branch = 0
+        A_max_a0_p_branch = 0
+        A_min_a_p_branch = 0
+        A_max_a_p_branch = 0
+        A_p_branch = 0
+        B_min_b0_branch = 0
+        B_max_b0_branch = 0
+        B_min_b_branch = 0
+        B_max_b_branch = 0
+        B_branch = 0
+    else
+        D = Dbar_h(theta_e, phi_e, M, M_c)
 
-    St_p = freq*deltastar_p/U
-    A_p, A_min_a0_p_branch, A_max_a0_p_branch, A_min_a_p_branch, A_max_a_p_branch, A_p_branch = A_b(St_p/St_peak_sp, Re_c)
+        St_peak_p = St_1(M)
+        St_peak_alpha, St_2_branch = St_2_b(St_peak_p, alphastar)
+        St_peak_s = 0.5*(St_peak_p + St_peak_alpha)
 
-    Re_deltastar_p = U*deltastar_p/nu
-    ΔK_1, DeltaK_1_branch = DeltaK_1_b(alphastar, Re_deltastar_p)
+        A_s, A_min_a0_s_branch, A_max_a0_s_branch, A_min_a_s_branch, A_max_a_s_branch, A_s_branch = A_b(St_s/St_peak_s, Re_c)
 
-    SPL_p = 10*log10((deltastar_p*M^5*L*D)/(r_e^2)) + A_p + k_1 - 3 + ΔK_1
+        k_1, K_1_branch = K_1_b(Re_c)
+        SPL_s = 10*log10((deltastar_s*M^5*L*D)/(r_e^2)) + A_s + k_1 - 3
 
-    St_peak_alpha, St_2_branch = St_2_b(St_1(M), alphastar)
-    B_alpha, B_min_b0_branch, B_max_b0_branch, B_min_b_branch, B_max_b_branch, B_branch = B_b(St_s/St_peak_alpha, Re_c)
-    k2, K_2_branch = K_2_b(Re_c, M, alphastar)
-    SPL_alpha = 10*log10((deltastar_s*M^5*L*D)/(r_e^2)) + B_alpha + k2
+        deltastar_p = disp_thickness_p(bl, Re_c, alphastar)*chord
+
+        St_p = freq*deltastar_p/U
+        A_p, A_min_a0_p_branch, A_max_a0_p_branch, A_min_a_p_branch, A_max_a_p_branch, A_p_branch = A_b(St_p/St_peak_p, Re_c)
+
+        Re_deltastar_p = U*deltastar_p/nu
+        ΔK_1, DeltaK_1_branch = DeltaK_1_b(alphastar, Re_deltastar_p)
+
+        SPL_p = 10*log10((deltastar_p*M^5*L*D)/(r_e^2)) + A_p + k_1 - 3 + ΔK_1
+
+        B_alpha, B_min_b0_branch, B_max_b0_branch, B_min_b_branch, B_max_b_branch, B_branch = B_b(St_s/St_peak_alpha, Re_c)
+        k2, K_2_branch = K_2_b(Re_c, M, alphastar)
+        SPL_alpha = 10*log10((deltastar_s*M^5*L*D)/(r_e^2)) + B_alpha + k2
+    end
 
     tblte_branches = TBLTEBranches(
         K_1_branch,
@@ -380,6 +450,5 @@ function TBL_TE_branch(freq, nu, L, chord, U, M, M_c, r_e, theta_e, phi_e, alpha
         B_branch,
         St_2_branch,
         K_2_branch)
-
     return SPL_s, SPL_p, SPL_alpha, tblte_branches
 end
