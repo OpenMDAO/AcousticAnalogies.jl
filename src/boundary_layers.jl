@@ -3,11 +3,11 @@ abstract type AbstractBoundaryLayer end
 struct TrippedN0012BoundaryLayer <: AbstractBoundaryLayer end
 struct UntrippedN0012BoundaryLayer <: AbstractBoundaryLayer end
 
-# function bl_thickness_0(::TrippedN0012BoundaryLayer, Re_c)
-#     # Equation 2 from the BPM report.
-#     logRe_c = log10(Re_c)
-#     return 10^(1.892 - 0.9045*logRe_c + 0.0596*logRe_c^2)
-# end
+function bl_thickness_0(::TrippedN0012BoundaryLayer, Re_c)
+    # Equation 2 from the BPM report.
+    logRe_c = log10(Re_c)
+    return 10^(1.892 - 0.9045*logRe_c + 0.0596*logRe_c^2)
+end
 
 function disp_thickness_0(::TrippedN0012BoundaryLayer, Re_c)
     # Equation 3 from the BPM report.

@@ -452,17 +452,3 @@ function TBL_TE_branch(freq, nu, L, chord, U, M, M_c, r_e, theta_e, phi_e, alpha
         K_2_branch)
     return SPL_s, SPL_p, SPL_alpha, tblte_branches
 end
-
-function St_1_prime(Re_c)
-    # Equation 55 in the BPM report.
-    T = typeof(Re_c)
-    if Re_c ≤ 1.3e5
-        return 0.18*one(T)
-    elseif Re_c ≤ 4.0e5
-        return 0.001756*Re_c^(0.3931)
-    else
-        return 0.28*one(T)
-    end
-end
-
-function 

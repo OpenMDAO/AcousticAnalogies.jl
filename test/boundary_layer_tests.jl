@@ -694,6 +694,11 @@ end
             f_alpha = bpm[:, 1]
             SPL_alpha = bpm[:, 2]
 
+            fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure45-a-LBL-VS.csv")
+            bpm = DelimitedFiles.readdlm(fname, ',')
+            f_lbl_vs = bpm[:, 1]
+            SPL_lbl_vs = bpm[:, 2]
+
             nu = 1.4529e-5  # kinematic viscosity, m^2/s
             L = 45.72e-2  # span in meters
             chord = 30.48e-2  # chord in meters
@@ -715,6 +720,8 @@ end
             SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 3)
             tblte_branches = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 4)
 
+            SPL_lbl_vs_jl = AcousticAnalogies.LBL_VS.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
+
             # The agreement with these ones aren't so great.
             # Might be better if I grabbed the listing in the BPM appendix?
             SPL_s_jl_interp = linear(f_jl, SPL_s_jl, f_s.*1e3)
@@ -731,6 +738,11 @@ end
             vmin, vmax = extrema(SPL_alpha)
             err = abs.(SPL_alpha_jl_interp .- SPL_alpha)./(vmax - vmin)
             @test maximum(err) < 0.091
+
+            SPL_lbl_vs_jl_interp = linear(f_jl, SPL_lbl_vs_jl, f_lbl_vs.*1e3)
+            vmin, vmax = extrema(SPL_lbl_vs)
+            err = abs.(SPL_lbl_vs_jl_interp .- SPL_lbl_vs)./(vmax - vmin)
+            @test maximum(err) < 0.053
         end
 
         @testset "BPM Figure 69a" begin
@@ -805,6 +817,212 @@ end
             branch_69b = getproperty.(tblte_branches_69b, :A_s)
             @test all(in.(branch_69b, Ref(branch_69a)))
         end
+    end
+
+    @testset "LBL-VS" begin
+        @testset "St_1_prime" begin
+            fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure86-St_1_prime.csv")
+            bpm = DelimitedFiles.readdlm(fname, ',')
+            Re_c_bpm = bpm[:, 1]
+            St_1_prime_bpm = bpm[:, 2]
+
+            Re_c_jl = 10.0.^(range(4, 7; length=100))
+            St_1_prime_jl = AcousticAnalogies.St_1_prime.(Re_c_jl)
+
+            St_1_prime_interp = linear(Re_c_bpm, St_1_prime_bpm, Re_c_jl)
+            vmin, vmax = extrema(St_1_prime_bpm)
+            err = abs.(St_1_prime_interp .- St_1_prime_jl)./(vmax - vmin)
+            @test maximum(err) < 0.04
+        end
+
+        @testset "G1" begin
+            fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure85-G1.csv")
+            bpm = DelimitedFiles.readdlm(fname, ',')
+            e_bpm = bpm[:, 1]
+            G1_bpm = bpm[:, 2]
+
+            e_jl = 10.0.^(range(-1, 1; length=101))
+            G1_jl = AcousticAnalogies.G1.(e_jl)
+
+            G1_interp = linear(e_jl, G1_jl, e_bpm)
+            vmin, vmax = extrema(G1_bpm)
+            err = abs.(G1_interp .- G1_bpm)./(vmax - vmin)
+            @test maximum(err) < 0.033
+        end
+
+        @testset "St_peak_prime_alphastar" begin
+            fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure87.csv")
+            bpm = DelimitedFiles.readdlm(fname, ',')
+            alphastar_bpm = bpm[:, 1]
+            St_peak_ratio_bpm = bpm[:, 2]
+
+            St_1_prime = 0.25  # Just make up a value, since we're multiplying and then dividing by it anyway.
+            alphastar_jl = range(0.0*pi/180, 7.0*pi/180; length=21)
+            St_peak_ratio_jl = AcousticAnalogies.St_peak_prime.(St_1_prime, alphastar_jl)./St_1_prime
+
+            St_peak_ratio_interp = linear(alphastar_jl.*180/pi, St_peak_ratio_jl, alphastar_bpm)
+            vmin, vmax = extrema(St_peak_ratio_bpm)
+            err = abs.(St_peak_ratio_interp .- St_peak_ratio_bpm)./(vmax - vmin)
+            @test maximum(err) < 0.031
+        end
+
+        @testset "G2" begin
+            fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure89.csv")
+            bpm = DelimitedFiles.readdlm(fname, ',')
+            Re_ratio_bpm = bpm[:, 1]
+            G2_bpm = bpm[:, 2]
+
+            Re_ratio_jl = 10.0.^range(-1, 1, length=51)
+            G2_jl = AcousticAnalogies.G2.(Re_ratio_jl)
+
+            G2_interp = linear(Re_ratio_jl, G2_jl, Re_ratio_bpm)
+            vmin, vmax = extrema(G2_interp)
+            err = abs.(G2_interp .- G2_bpm)./(vmax - vmin)
+            @test maximum(err) < 0.024
+        end
+
+        @testset "G2 + G3" begin
+            fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure88-G2-alpha0.csv")
+            alphastar = 0.0*pi/180
+            bpm = DelimitedFiles.readdlm(fname, ',')
+            Re_c_bpm = bpm[:, 1]
+            G2_bpm = bpm[:, 2]
+
+            Re_c_jl = 10.0.^range(log10(first(Re_c_bpm)), log10(last(Re_c_bpm)), length=51)
+            Re_c0 = AcousticAnalogies.Re_c0(alphastar)
+            Re_ratio_jl = Re_c_jl./Re_c0
+            G2_jl = AcousticAnalogies.G2.(Re_ratio_jl) .+ AcousticAnalogies.G3.(alphastar)
+
+            G2_interp = linear(Re_c_jl, G2_jl, Re_c_bpm)
+            vmin, vmax = extrema(G2_interp)
+            err = abs.(G2_interp .- G2_bpm)./(vmax - vmin)
+            @test maximum(err) < 0.013
+
+            fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure88-G2-alpha6.csv")
+            alphastar = 6.0*pi/180
+            bpm = DelimitedFiles.readdlm(fname, ',')
+            Re_c_bpm = bpm[:, 1]
+            G2_bpm = bpm[:, 2]
+
+            Re_c_jl = 10.0.^range(log10(first(Re_c_bpm)), log10(last(Re_c_bpm)), length=51)
+            Re_c0 = AcousticAnalogies.Re_c0(alphastar)
+            Re_ratio_jl = Re_c_jl./Re_c0
+            G2_jl = AcousticAnalogies.G2.(Re_ratio_jl) .+ AcousticAnalogies.G3.(alphastar)
+
+            G2_interp = linear(Re_c_jl, G2_jl, Re_c_bpm)
+            vmin, vmax = extrema(G2_interp)
+            err = abs.(G2_interp .- G2_bpm)./(vmax - vmin)
+            @test maximum(err) < 0.030
+        end
+
+        @testset "BPM Figure 54a" begin
+            fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure54-a-LBL-VS.csv")
+            bpm = DelimitedFiles.readdlm(fname, ',')
+            f_lbl_vs = bpm[:, 1]
+            SPL_lbl_vs = bpm[:, 2]
+
+            nu = 1.4529e-5  # kinematic viscosity, m^2/s
+            L = 45.72e-2  # span in meters
+            chord = 15.24e-2  # chord in meters
+            U = 71.3  # freestream velocity in m/s
+            M = 0.209  # Mach number, corresponds to U = 71.3 m/s in BPM report
+            r_e = 1.22 # radiation distance in meters
+            θ_e = 90*pi/180 
+            Φ_e = 90*pi/180
+            M_c = 0.8*M
+            alphastar = 2.7*pi/180
+            f_jl = AcousticMetrics.ExactThirdOctaveCenterBands(0.2e3, 20e3)
+            alphastar0 = 12.5*pi/180
+            SPL_lbl_vs_jl = AcousticAnalogies.LBL_VS.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
+
+            SPL_lbl_vs_jl_interp = linear(f_jl, SPL_lbl_vs_jl, f_lbl_vs.*1e3)
+            vmin, vmax = extrema(SPL_lbl_vs)
+            err = abs.(SPL_lbl_vs_jl_interp .- SPL_lbl_vs)./(vmax - vmin)
+            @test maximum(err) < 0.026
+        end
+
+        @testset "BPM Figure 60d" begin
+            fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure60-d-LBL-VS.csv")
+            bpm = DelimitedFiles.readdlm(fname, ',')
+            f_lbl_vs = bpm[:, 1]
+            SPL_lbl_vs = bpm[:, 2]
+
+            nu = 1.4529e-5  # kinematic viscosity, m^2/s
+            L = 45.72e-2  # span in meters
+            chord = 10.16e-2  # chord in meters
+            U = 31.7  # freestream velocity in m/s
+            M = 0.093  # mach number, corresponds to u = 31.7 m/s in bpm report
+            r_e = 1.22 # radiation distance in meters
+            θ_e = 90*pi/180 
+            Φ_e = 90*pi/180
+            M_c = 0.8*M
+            alphastar = 3.3*pi/180
+            f_jl = AcousticMetrics.ExactThirdOctaveCenterBands(0.2e3, 20e3)
+            alphastar0 = 12.5*pi/180
+            SPL_lbl_vs_jl = AcousticAnalogies.LBL_VS.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
+
+            SPL_lbl_vs_jl_interp = linear(f_jl, SPL_lbl_vs_jl, f_lbl_vs.*1e3)
+            vmin, vmax = extrema(SPL_lbl_vs)
+            err = abs.(SPL_lbl_vs_jl_interp .- SPL_lbl_vs)./(vmax - vmin)
+            @test maximum(err) < 0.026
+        end
+
+        @testset "BPM Figure 65d" begin
+            fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure65-d-LBL-VS.csv")
+            bpm = DelimitedFiles.readdlm(fname, ',')
+            f_lbl_vs = bpm[:, 1]
+            SPL_lbl_vs = bpm[:, 2]
+
+            nu = 1.4529e-5  # kinematic viscosity, m^2/s
+            L = 45.72e-2  # span in meters
+            chord = 5.08e-2  # chord in meters
+            U = 31.7  # freestream velocity in m/s
+            M = 0.093  # mach number, corresponds to u = 31.7 m/s in bpm report
+            r_e = 1.22 # radiation distance in meters
+            θ_e = 90*pi/180 
+            Φ_e = 90*pi/180
+            M_c = 0.8*M
+            alphastar = 0.0*pi/180
+            f_jl = AcousticMetrics.ExactThirdOctaveCenterBands(0.2e3, 20e3)
+            alphastar0 = 12.5*pi/180
+            SPL_lbl_vs_jl = AcousticAnalogies.LBL_VS.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
+
+            SPL_lbl_vs_jl_interp = linear(f_jl, SPL_lbl_vs_jl, f_lbl_vs.*1e3)
+            vmin, vmax = extrema(SPL_lbl_vs)
+            err = abs.(SPL_lbl_vs_jl_interp .- SPL_lbl_vs)./(vmax - vmin)
+            @test maximum(err) < 0.021
+        end
+
+        @testset "BPM Figure 91" begin
+            fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure91-tip.csv")
+            bpm = DelimitedFiles.readdlm(fname, ',')
+            f_tip = bpm[:, 1]
+            SPL_tip = bpm[:, 2]
+
+            # L = 30.48e-2  # span in meters
+            chord = 15.24e-2  # chord in meters
+            speedofsound = 340.46
+            U = 71.3  # freestream velocity in m/s
+            # M = 0.209  # Mach number, corresponds to U = 71.3 m/s in BPM report
+            M = U/speedofsound
+            M_c = 0.8*M
+            r_e = 1.22 # radiation distance in meters
+            θ_e = 90*pi/180 
+            Φ_e = 90*pi/180
+            alphatip = 0.71*10.8*pi/180
+            # Equation 64 in the BPM report.
+            M_max = (1 + 0.036*(alphatip*180/pi))*M
+            U_max = M_max*speedofsound
+            f_jl = AcousticMetrics.ExactThirdOctaveCenterBands(0.2e3, 20e3)
+            SPL_tip_jl = AcousticAnalogies.TIP.(f_jl, chord, M, M_c, U_max, M_max, r_e, θ_e, Φ_e, alphatip, Ref(AcousticAnalogies.RoundedTip()))
+
+            SPL_tip_jl_interp = linear(f_jl, SPL_tip_jl, f_tip.*1e3)
+            vmin, vmax = extrema(SPL_tip)
+            err = abs.(SPL_tip_jl_interp .- SPL_tip)./(vmax - vmin)
+            @test maximum(err) < 0.047
+        end
+
+
     end
 end
 

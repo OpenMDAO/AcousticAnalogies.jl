@@ -15,7 +15,9 @@ include("utils.jl")
 export get_dradii
 
 include("boundary_layers.jl")
-include("shape_functions.jl")
+include("tbl_te.jl")
+include("lbl_vs.jl")
+include("tip_vortex.jl")
 
 include("core.jl")
 export CompactSourceElement

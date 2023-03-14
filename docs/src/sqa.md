@@ -2023,11 +2023,17 @@ bpm = DelimitedFiles.readdlm(fname, ',')
 f_alpha = bpm[:, 1]
 SPL_alpha = bpm[:, 2]
 
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure45-a-LBL-VS.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+f_lbl_vs = bpm[:, 1]
+SPL_lbl_vs = bpm[:, 2]
+
 nu = 1.4529e-5  # kinematic viscosity, m^2/s
 L = 45.72e-2  # span in meters
 chord = 30.48e-2  # chord in meters
 U = 71.3  # freestream velocity in m/s
-M = 0.209  # Mach number, corresponds to U = 71.3 m/s in BPM report
+# M = 0.209  # Mach number, corresponds to U = 71.3 m/s in BPM report
+M = U/340.46
 r_e = 1.22 # radiation distance in meters
 θ_e = 90*pi/180 
 Φ_e = 90*pi/180
@@ -2058,6 +2064,8 @@ SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
 SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 3)
 tblte_branches = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 4)
 
+SPL_lbl_vs_jl = AcousticAnalogies.LBL_VS.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
+
 fig = Figure()
 ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
                        xscale=log10,
@@ -2074,12 +2082,505 @@ lines!(ax1, f_jl./1e3, SPL_p_jl; label="TBL-TE pressure side, Julia")
 scatter!(ax1, f_alpha, SPL_alpha; marker='△', label="separation, BPM")
 lines!(ax1, f_jl./1e3, SPL_alpha_jl; label="separation, Julia")
 
+scatter!(ax1, f_lbl_vs, SPL_lbl_vs; marker='◇', label="LBL-VS, BPM")
+scatterlines!(ax1, f_jl./1e3, SPL_lbl_vs_jl; marker='◇', label="LBL-VS, Julia")
+
 xlims!(ax1, 0.2, 20.0)
 ylims!(ax1, 40, 80)
 axislegend(ax1, position=:rt)
 save("19890016302-figure45-a.png", fig)
 ```
 ![](19890016302-figure45-a.png)
+
+```@example bpm_figure48_c
+using AcousticAnalogies: AcousticAnalogies
+using AcousticMetrics: ExactThirdOctaveCenterBands
+using DelimitedFiles: DelimitedFiles
+using GLMakie
+
+# https://docs.makie.org/stable/examples/blocks/axis/index.html#logticks
+struct IntegerTicks end
+Makie.get_tickvalues(::IntegerTicks, vmin, vmax) = ceil(Int, vmin) : floor(Int, vmax)
+
+# fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure48-c-TBL-TE-suction.csv")
+# bpm = DelimitedFiles.readdlm(fname, ',')
+# f_s = bpm[:, 1]
+# SPL_s = bpm[:, 2]
+# 
+# fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure48-c-TBL-TE-pressure.csv")
+# bpm = DelimitedFiles.readdlm(fname, ',')
+# f_p = bpm[:, 1]
+# SPL_p = bpm[:, 2]
+# 
+# fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure48-c-separation.csv")
+# bpm = DelimitedFiles.readdlm(fname, ',')
+# f_alpha = bpm[:, 1]
+# SPL_alpha = bpm[:, 2]
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure48-c-LBL-VS.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+f_lbl_vs = bpm[:, 1]
+SPL_lbl_vs = bpm[:, 2]
+
+nu = 1.4529e-5  # kinematic viscosity, m^2/s
+L = 45.72e-2  # span in meters
+chord = 22.86e-2  # chord in meters
+U = 39.6  # freestream velocity in m/s
+M = 0.116  # Mach number, corresponds to U = 39.6 m/s in BPM report
+r_e = 1.22 # radiation distance in meters
+θ_e = 90*pi/180 
+Φ_e = 90*pi/180
+M_c = 0.8*M
+alphastar = 0.0*pi/180
+f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
+alphastar0 = 12.5*pi/180
+SPL_lbl_vs_jl = AcousticAnalogies.LBL_VS.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
+
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
+                       xscale=log10,
+                       xminorticksvisible=true,
+                       xminorticks=IntervalsBetween(9),
+                       xticks=LogTicks(IntegerTicks()),
+                       title="Figure 48 (c) - U = $U m/s")
+# scatter!(ax1, f_s, SPL_s; marker='o', label="TBL-TE suction side, BPM")
+# lines!(ax1, f_jl./1e3, SPL_s_jl; label="TBL-TE suction side, Julia")
+# 
+# scatter!(ax1, f_p, SPL_p; marker='□', label="TBL-TE pressure side, BPM")
+# lines!(ax1, f_jl./1e3, SPL_p_jl; label="TBL-TE pressure side, Julia")
+# 
+# scatter!(ax1, f_alpha, SPL_alpha; marker='△', label="separation, BPM")
+# lines!(ax1, f_jl./1e3, SPL_alpha_jl; label="separation, Julia")
+
+scatter!(ax1, f_lbl_vs, SPL_lbl_vs; marker=:diamond, label="LBL-VS, BPM")
+lines!(ax1, f_jl./1e3, SPL_lbl_vs_jl; label="LBL-VS, Julia")
+
+xlims!(ax1, 0.2, 20.0)
+ylims!(ax1, 20, 60)
+axislegend(ax1, position=:rt)
+save("19890016302-figure48-c.png", fig)
+```
+![](19890016302-figure48-c.png)
+
+```@example bpm_figure54_a
+using AcousticAnalogies: AcousticAnalogies
+using AcousticMetrics: ExactThirdOctaveCenterBands
+using DelimitedFiles: DelimitedFiles
+using GLMakie
+
+# https://docs.makie.org/stable/examples/blocks/axis/index.html#logticks
+struct IntegerTicks end
+Makie.get_tickvalues(::IntegerTicks, vmin, vmax) = ceil(Int, vmin) : floor(Int, vmax)
+
+# fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure54-a-TBL-TE-suction.csv")
+# bpm = DelimitedFiles.readdlm(fname, ',')
+# f_s = bpm[:, 1]
+# SPL_s = bpm[:, 2]
+# 
+# fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure54-a-TBL-TE-pressure.csv")
+# bpm = DelimitedFiles.readdlm(fname, ',')
+# f_p = bpm[:, 1]
+# SPL_p = bpm[:, 2]
+# 
+# fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure54-a-separation.csv")
+# bpm = DelimitedFiles.readdlm(fname, ',')
+# f_alpha = bpm[:, 1]
+# SPL_alpha = bpm[:, 2]
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure54-a-LBL-VS.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+f_lbl_vs = bpm[:, 1]
+SPL_lbl_vs = bpm[:, 2]
+
+nu = 1.4529e-5  # kinematic viscosity, m^2/s
+L = 45.72e-2  # span in meters
+chord = 15.24e-2  # chord in meters
+U = 71.3  # freestream velocity in m/s
+M = 0.209  # Mach number, corresponds to U = 71.3 m/s in BPM report
+r_e = 1.22 # radiation distance in meters
+θ_e = 90*pi/180 
+Φ_e = 90*pi/180
+M_c = 0.8*M
+alphastar = 2.7*pi/180
+f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
+alphastar0 = 12.5*pi/180
+SPL_lbl_vs_jl = AcousticAnalogies.LBL_VS.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
+
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
+                       xscale=log10,
+                       xminorticksvisible=true,
+                       xminorticks=IntervalsBetween(9),
+                       xticks=LogTicks(IntegerTicks()),
+                       title="Figure 54 (a) - U = $U m/s")
+# scatter!(ax1, f_s, SPL_s; marker='o', label="TBL-TE suction side, BPM")
+# lines!(ax1, f_jl./1e3, SPL_s_jl; label="TBL-TE suction side, Julia")
+# 
+# scatter!(ax1, f_p, SPL_p; marker='□', label="TBL-TE pressure side, BPM")
+# lines!(ax1, f_jl./1e3, SPL_p_jl; label="TBL-TE pressure side, Julia")
+# 
+# scatter!(ax1, f_alpha, SPL_alpha; marker='△', label="separation, BPM")
+# lines!(ax1, f_jl./1e3, SPL_alpha_jl; label="separation, Julia")
+
+scatter!(ax1, f_lbl_vs, SPL_lbl_vs; marker=:diamond, label="LBL-VS, BPM")
+lines!(ax1, f_jl./1e3, SPL_lbl_vs_jl; label="LBL-VS, Julia")
+
+xlims!(ax1, 0.2, 20.0)
+ylims!(ax1, 50, 90)
+axislegend(ax1, position=:rt)
+save("19890016302-figure54-a.png", fig)
+```
+![](19890016302-figure54-a.png)
+
+```@example bpm_figure59_c
+using AcousticAnalogies: AcousticAnalogies
+using AcousticMetrics: ExactThirdOctaveCenterBands
+using DelimitedFiles: DelimitedFiles
+using GLMakie
+
+# https://docs.makie.org/stable/examples/blocks/axis/index.html#logticks
+struct IntegerTicks end
+Makie.get_tickvalues(::IntegerTicks, vmin, vmax) = ceil(Int, vmin) : floor(Int, vmax)
+
+# fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure59-c-TBL-TE-suction.csv")
+# bpm = DelimitedFiles.readdlm(fname, ',')
+# f_s = bpm[:, 1]
+# SPL_s = bpm[:, 2]
+# 
+# fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure59-c-TBL-TE-pressure.csv")
+# bpm = DelimitedFiles.readdlm(fname, ',')
+# f_p = bpm[:, 1]
+# SPL_p = bpm[:, 2]
+# 
+# fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure59-c-separation.csv")
+# bpm = DelimitedFiles.readdlm(fname, ',')
+# f_alpha = bpm[:, 1]
+# SPL_alpha = bpm[:, 2]
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure59-c-LBL-VS.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+f_lbl_vs = bpm[:, 1]
+SPL_lbl_vs = bpm[:, 2]
+
+nu = 1.4529e-5  # kinematic viscosity, m^2/s
+L = 45.72e-2  # span in meters
+chord = 10.16e-2  # chord in meters
+U = 39.6  # freestream velocity in m/s
+M = 0.116  # Mach number, corresponds to U = 39.6 m/s in BPM report
+r_e = 1.22 # radiation distance in meters
+θ_e = 90*pi/180 
+Φ_e = 90*pi/180
+M_c = 0.8*M
+alphastar = 0.0*pi/180
+f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
+alphastar0 = 12.5*pi/180
+SPL_lbl_vs_jl = AcousticAnalogies.LBL_VS.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
+
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
+                       xscale=log10,
+                       xminorticksvisible=true,
+                       xminorticks=IntervalsBetween(9),
+                       xticks=LogTicks(IntegerTicks()),
+                       title="Figure 59 (c) - U = $U m/s")
+# scatter!(ax1, f_s, SPL_s; marker='o', label="TBL-TE suction side, BPM")
+# lines!(ax1, f_jl./1e3, SPL_s_jl; label="TBL-TE suction side, Julia")
+# 
+# scatter!(ax1, f_p, SPL_p; marker='□', label="TBL-TE pressure side, BPM")
+# lines!(ax1, f_jl./1e3, SPL_p_jl; label="TBL-TE pressure side, Julia")
+# 
+# scatter!(ax1, f_alpha, SPL_alpha; marker='△', label="separation, BPM")
+# lines!(ax1, f_jl./1e3, SPL_alpha_jl; label="separation, Julia")
+
+scatter!(ax1, f_lbl_vs, SPL_lbl_vs; marker=:diamond, label="LBL-VS, BPM")
+lines!(ax1, f_jl./1e3, SPL_lbl_vs_jl; label="LBL-VS, Julia")
+
+xlims!(ax1, 0.2, 20.0)
+ylims!(ax1, 40, 80)
+axislegend(ax1, position=:rt)
+save("19890016302-figure59-c.png", fig)
+```
+![](19890016302-figure59-c.png)
+
+```@example bpm_figure60_c
+using AcousticAnalogies: AcousticAnalogies
+using AcousticMetrics: ExactThirdOctaveCenterBands
+using DelimitedFiles: DelimitedFiles
+using GLMakie
+
+# https://docs.makie.org/stable/examples/blocks/axis/index.html#logticks
+struct IntegerTicks end
+Makie.get_tickvalues(::IntegerTicks, vmin, vmax) = ceil(Int, vmin) : floor(Int, vmax)
+
+# fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure60-c-TBL-TE-suction.csv")
+# bpm = DelimitedFiles.readdlm(fname, ',')
+# f_s = bpm[:, 1]
+# SPL_s = bpm[:, 2]
+# 
+# fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure60-c-TBL-TE-pressure.csv")
+# bpm = DelimitedFiles.readdlm(fname, ',')
+# f_p = bpm[:, 1]
+# SPL_p = bpm[:, 2]
+# 
+# fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure60-c-separation.csv")
+# bpm = DelimitedFiles.readdlm(fname, ',')
+# f_alpha = bpm[:, 1]
+# SPL_alpha = bpm[:, 2]
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure60-c-LBL-VS.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+f_lbl_vs = bpm[:, 1]
+SPL_lbl_vs = bpm[:, 2]
+
+nu = 1.4529e-5  # kinematic viscosity, m^2/s
+L = 45.72e-2  # span in meters
+chord = 10.16e-2  # chord in meters
+U = 39.6  # freestream velocity in m/s
+M = 0.116  # Mach number, corresponds to U = 39.6 m/s in BPM report
+r_e = 1.22 # radiation distance in meters
+θ_e = 90*pi/180 
+Φ_e = 90*pi/180
+M_c = 0.8*M
+alphastar = 3.3*pi/180
+f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
+alphastar0 = 12.5*pi/180
+SPL_lbl_vs_jl = AcousticAnalogies.LBL_VS.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
+
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
+                       xscale=log10,
+                       xminorticksvisible=true,
+                       xminorticks=IntervalsBetween(9),
+                       xticks=LogTicks(IntegerTicks()),
+                       title="Figure 60 (c) - U = $U m/s")
+# scatter!(ax1, f_s, SPL_s; marker='o', label="TBL-TE suction side, BPM")
+# lines!(ax1, f_jl./1e3, SPL_s_jl; label="TBL-TE suction side, Julia")
+# 
+# scatter!(ax1, f_p, SPL_p; marker='□', label="TBL-TE pressure side, BPM")
+# lines!(ax1, f_jl./1e3, SPL_p_jl; label="TBL-TE pressure side, Julia")
+# 
+# scatter!(ax1, f_alpha, SPL_alpha; marker='△', label="separation, BPM")
+# lines!(ax1, f_jl./1e3, SPL_alpha_jl; label="separation, Julia")
+
+scatter!(ax1, f_lbl_vs, SPL_lbl_vs; marker=:diamond, label="LBL-VS, BPM")
+lines!(ax1, f_jl./1e3, SPL_lbl_vs_jl; label="LBL-VS, Julia")
+
+xlims!(ax1, 0.2, 20.0)
+ylims!(ax1, 40, 80)
+axislegend(ax1, position=:rt)
+save("19890016302-figure60-c.png", fig)
+```
+![](19890016302-figure60-c.png)
+
+```@example bpm_figure60_d
+using AcousticAnalogies: AcousticAnalogies
+using AcousticMetrics: ExactThirdOctaveCenterBands
+using DelimitedFiles: DelimitedFiles
+using GLMakie
+
+# https://docs.makie.org/stable/examples/blocks/axis/index.html#logticks
+struct IntegerTicks end
+Makie.get_tickvalues(::IntegerTicks, vmin, vmax) = ceil(Int, vmin) : floor(Int, vmax)
+
+# fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure60-d-TBL-TE-suction.csv")
+# bpm = DelimitedFiles.readdlm(fname, ',')
+# f_s = bpm[:, 1]
+# SPL_s = bpm[:, 2]
+# 
+# fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure60-d-TBL-TE-pressure.csv")
+# bpm = DelimitedFiles.readdlm(fname, ',')
+# f_p = bpm[:, 1]
+# SPL_p = bpm[:, 2]
+# 
+# fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure60-d-separation.csv")
+# bpm = DelimitedFiles.readdlm(fname, ',')
+# f_alpha = bpm[:, 1]
+# SPL_alpha = bpm[:, 2]
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure60-d-LBL-VS.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+f_lbl_vs = bpm[:, 1]
+SPL_lbl_vs = bpm[:, 2]
+
+nu = 1.4529e-5  # kinematic viscosity, m^2/s
+L = 45.72e-2  # span in meters
+chord = 10.16e-2  # chord in meters
+U = 31.7  # freestream velocity in m/s
+M = 0.093  # mach number, corresponds to u = 31.7 m/s in bpm report
+r_e = 1.22 # radiation distance in meters
+θ_e = 90*pi/180 
+Φ_e = 90*pi/180
+M_c = 0.8*M
+alphastar = 3.3*pi/180
+f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
+alphastar0 = 12.5*pi/180
+SPL_lbl_vs_jl = AcousticAnalogies.LBL_VS.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
+
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
+                       xscale=log10,
+                       xminorticksvisible=true,
+                       xminorticks=IntervalsBetween(9),
+                       xticks=LogTicks(IntegerTicks()),
+                       title="Figure 60 (d) - U = $U m/s")
+# scatter!(ax1, f_s, SPL_s; marker='o', label="TBL-TE suction side, BPM")
+# lines!(ax1, f_jl./1e3, SPL_s_jl; label="TBL-TE suction side, Julia")
+# 
+# scatter!(ax1, f_p, SPL_p; marker='□', label="TBL-TE pressure side, BPM")
+# lines!(ax1, f_jl./1e3, SPL_p_jl; label="TBL-TE pressure side, Julia")
+# 
+# scatter!(ax1, f_alpha, SPL_alpha; marker='△', label="separation, BPM")
+# lines!(ax1, f_jl./1e3, SPL_alpha_jl; label="separation, Julia")
+
+scatter!(ax1, f_lbl_vs, SPL_lbl_vs; marker=:diamond, label="LBL-VS, BPM")
+lines!(ax1, f_jl./1e3, SPL_lbl_vs_jl; label="LBL-VS, Julia")
+
+xlims!(ax1, 0.2, 20.0)
+ylims!(ax1, 40, 80)
+axislegend(ax1, position=:rt)
+save("19890016302-figure60-d.png", fig)
+```
+![](19890016302-figure60-d.png)
+
+```@example bpm_figure65_d
+using AcousticAnalogies: AcousticAnalogies
+using AcousticMetrics: ExactThirdOctaveCenterBands
+using DelimitedFiles: DelimitedFiles
+using GLMakie
+
+# https://docs.makie.org/stable/examples/blocks/axis/index.html#logticks
+struct IntegerTicks end
+Makie.get_tickvalues(::IntegerTicks, vmin, vmax) = ceil(Int, vmin) : floor(Int, vmax)
+
+# fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure65-d-TBL-TE-suction.csv")
+# bpm = DelimitedFiles.readdlm(fname, ',')
+# f_s = bpm[:, 1]
+# SPL_s = bpm[:, 2]
+# 
+# fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure65-d-TBL-TE-pressure.csv")
+# bpm = DelimitedFiles.readdlm(fname, ',')
+# f_p = bpm[:, 1]
+# SPL_p = bpm[:, 2]
+# 
+# fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure65-d-separation.csv")
+# bpm = DelimitedFiles.readdlm(fname, ',')
+# f_alpha = bpm[:, 1]
+# SPL_alpha = bpm[:, 2]
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure65-d-LBL-VS.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+f_lbl_vs = bpm[:, 1]
+SPL_lbl_vs = bpm[:, 2]
+
+nu = 1.4529e-5  # kinematic viscosity, m^2/s
+L = 45.72e-2  # span in meters
+chord = 5.08e-2  # chord in meters
+U = 31.7  # freestream velocity in m/s
+M = 0.093  # mach number, corresponds to u = 31.7 m/s in bpm report
+r_e = 1.22 # radiation distance in meters
+θ_e = 90*pi/180 
+Φ_e = 90*pi/180
+M_c = 0.8*M
+alphastar = 0.0*pi/180
+f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
+alphastar0 = 12.5*pi/180
+SPL_lbl_vs_jl = AcousticAnalogies.LBL_VS.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
+
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
+                       xscale=log10,
+                       xminorticksvisible=true,
+                       xminorticks=IntervalsBetween(9),
+                       xticks=LogTicks(IntegerTicks()),
+                       title="Figure 65 (d) - U = $U m/s")
+# scatter!(ax1, f_s, SPL_s; marker='o', label="TBL-TE suction side, BPM")
+# lines!(ax1, f_jl./1e3, SPL_s_jl; label="TBL-TE suction side, Julia")
+# 
+# scatter!(ax1, f_p, SPL_p; marker='□', label="TBL-TE pressure side, BPM")
+# lines!(ax1, f_jl./1e3, SPL_p_jl; label="TBL-TE pressure side, Julia")
+# 
+# scatter!(ax1, f_alpha, SPL_alpha; marker='△', label="separation, BPM")
+# lines!(ax1, f_jl./1e3, SPL_alpha_jl; label="separation, Julia")
+
+scatter!(ax1, f_lbl_vs, SPL_lbl_vs; marker=:diamond, label="LBL-VS, BPM")
+lines!(ax1, f_jl./1e3, SPL_lbl_vs_jl; label="LBL-VS, Julia")
+
+xlims!(ax1, 0.2, 20.0)
+ylims!(ax1, 50, 90)
+axislegend(ax1, position=:rt)
+save("19890016302-figure65-d.png", fig)
+```
+![](19890016302-figure65-d.png)
+
+```@example bpm_figure66_b
+using AcousticAnalogies: AcousticAnalogies
+using AcousticMetrics: ExactThirdOctaveCenterBands
+using DelimitedFiles: DelimitedFiles
+using GLMakie
+
+# https://docs.makie.org/stable/examples/blocks/axis/index.html#logticks
+struct IntegerTicks end
+Makie.get_tickvalues(::IntegerTicks, vmin, vmax) = ceil(Int, vmin) : floor(Int, vmax)
+
+# fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure66-b-TBL-TE-suction.csv")
+# bpm = DelimitedFiles.readdlm(fname, ',')
+# f_s = bpm[:, 1]
+# SPL_s = bpm[:, 2]
+# 
+# fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure66-b-TBL-TE-pressure.csv")
+# bpm = DelimitedFiles.readdlm(fname, ',')
+# f_p = bpm[:, 1]
+# SPL_p = bpm[:, 2]
+# 
+# fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure66-b-separation.csv")
+# bpm = DelimitedFiles.readdlm(fname, ',')
+# f_alpha = bpm[:, 1]
+# SPL_alpha = bpm[:, 2]
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure66-b-LBL-VS.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+f_lbl_vs = bpm[:, 1]
+SPL_lbl_vs = bpm[:, 2]
+
+nu = 1.4529e-5  # kinematic viscosity, m^2/s
+L = 45.72e-2  # span in meters
+chord = 5.08e-2  # chord in meters
+U = 39.6  # freestream velocity in m/s
+M = 0.116  # Mach number, corresponds to U = 39.6 m/s in BPM report
+r_e = 1.22 # radiation distance in meters
+θ_e = 90*pi/180 
+Φ_e = 90*pi/180
+M_c = 0.8*M
+alphastar = 4.2*pi/180
+f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
+alphastar0 = 12.5*pi/180
+SPL_lbl_vs_jl = AcousticAnalogies.LBL_VS.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
+
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
+                       xscale=log10,
+                       xminorticksvisible=true,
+                       xminorticks=IntervalsBetween(9),
+                       xticks=LogTicks(IntegerTicks()),
+                       title="Figure 66 (b) - U = $U m/s")
+# scatter!(ax1, f_s, SPL_s; marker='o', label="TBL-TE suction side, BPM")
+# lines!(ax1, f_jl./1e3, SPL_s_jl; label="TBL-TE suction side, Julia")
+# 
+# scatter!(ax1, f_p, SPL_p; marker='□', label="TBL-TE pressure side, BPM")
+# lines!(ax1, f_jl./1e3, SPL_p_jl; label="TBL-TE pressure side, Julia")
+# 
+# scatter!(ax1, f_alpha, SPL_alpha; marker='△', label="separation, BPM")
+# lines!(ax1, f_jl./1e3, SPL_alpha_jl; label="separation, Julia")
+
+scatter!(ax1, f_lbl_vs, SPL_lbl_vs; marker=:diamond, label="LBL-VS, BPM")
+scatterlines!(ax1, f_jl./1e3, SPL_lbl_vs_jl; label="LBL-VS, Julia")
+
+xlims!(ax1, 0.2, 20.0)
+ylims!(ax1, 30, 70)
+axislegend(ax1, position=:rt)
+save("19890016302-figure66-b.png", fig)
+```
+![](19890016302-figure66-b.png)
 
 ```@example bpm_figure69_a
 using AcousticAnalogies: AcousticAnalogies
@@ -2214,6 +2715,262 @@ axislegend(ax1, position=:rt)
 save("19890016302-figure69-b.png", fig)
 ```
 ![](19890016302-figure69-b.png)
+
+```@example bpm_St_1_prime
+using AcousticAnalogies: AcousticAnalogies
+using ColorSchemes: colorschemes
+using DelimitedFiles: DelimitedFiles
+# using FLOWMath: linear
+using GLMakie
+
+# https://docs.makie.org/stable/examples/blocks/axis/index.html#logticks
+struct IntegerTicks end
+Makie.get_tickvalues(::IntegerTicks, vmin, vmax) = ceil(Int, vmin) : floor(Int, vmax)
+
+colors = colorschemes[:tab10]
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig; xlabel="Re_c", ylabel="Peak Strouhal number, St'_peak",
+                       xscale=log10,
+                       xminorticksvisible=true,
+                       xminorticks=IntervalsBetween(9),
+                       xticks=LogTicks(IntegerTicks()),
+                       yscale=log10,
+                       yminorticksvisible=true,
+                       yminorticks=IntervalsBetween(9),
+                       yticks=LogTicks(IntegerTicks()))
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure86-St_1_prime.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+Re_c_bpm = bpm[:, 1]
+St_1_prime_bpm = bpm[:, 2]
+scatter!(ax1, Re_c_bpm, St_1_prime_bpm, color=colors[1], markersize=4, label="BPM")
+
+Re_c_jl = 10.0.^(range(4, 7; length=100))
+St_1_prime_jl = AcousticAnalogies.St_1_prime.(Re_c_jl)
+lines!(ax1, Re_c_jl, St_1_prime_jl, color=colors[1], label="Julia")
+
+xlims!(ax1, 1e4, 1e7)
+ylims!(ax1, 0.01, 1)
+axislegend(ax1, position=:lt)
+save("19890016302-figure86.png", fig)
+```
+![](19890016302-figure86.png)
+
+```@example bpm_lbl_vs_G1
+using AcousticAnalogies: AcousticAnalogies
+using ColorSchemes: colorschemes
+using DelimitedFiles: DelimitedFiles
+# using FLOWMath: linear
+using GLMakie
+
+# https://docs.makie.org/stable/examples/blocks/axis/index.html#logticks
+struct IntegerTicks end
+Makie.get_tickvalues(::IntegerTicks, vmin, vmax) = ceil(Int, vmin) : floor(Int, vmax)
+
+colors = colorschemes[:tab10]
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig; xlabel="St'/St'_peak", ylabel="Function G_1 level, dB",
+                       xscale=log10,
+                       xminorticksvisible=true,
+                       xminorticks=IntervalsBetween(9),
+                       xticks=LogTicks(IntegerTicks()))
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure85-G1.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+e_bpm = bpm[:, 1]
+G1_bpm = bpm[:, 2]
+scatter!(ax1, e_bpm, G1_bpm, color=colors[1], markersize=4, label="BPM")
+
+e_jl = 10.0.^(range(-1, 1; length=101))
+G1_jl = AcousticAnalogies.G1.(e_jl)
+
+lines!(ax1, e_jl, G1_jl, colors=colors[1], label="Julia")
+
+xlims!(ax1, 0.1, 10)
+ylims!(ax1, -30, 0)
+axislegend(ax1, position=:lt)
+save("19890016302-figure85.png", fig)
+```
+![](19890016302-figure85.png)
+
+```@example bpm_lbl_vs_St_peak_prime_alphastar
+using AcousticAnalogies: AcousticAnalogies
+using ColorSchemes: colorschemes
+using DelimitedFiles: DelimitedFiles
+# using FLOWMath: linear
+using GLMakie
+
+# https://docs.makie.org/stable/examples/blocks/axis/index.html#logticks
+struct IntegerTicks end
+Makie.get_tickvalues(::IntegerTicks, vmin, vmax) = ceil(Int, vmin) : floor(Int, vmax)
+
+colors = colorschemes[:tab10]
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig; xlabel="alpha^*, deg", ylabel="St'_peak/St'_1",
+                       yscale=log10,
+                       yminorticksvisible=true,
+                       yminorticks=IntervalsBetween(9),
+                       yticks=LogTicks(IntegerTicks()))
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure87.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+alphastar_bpm = bpm[:, 1]
+St_peak_ratio_bpm = bpm[:, 2]
+scatter!(ax1, alphastar_bpm, St_peak_ratio_bpm, color=colors[1], markersize=4, label="BPM")
+
+St_1_prime = 0.25  # Just make up a value, since we're multiplying and then dividing by it anyway.
+alphastar_jl = range(0.0*pi/180, 7.0*pi/180; length=21)
+St_peak_ratio_jl = AcousticAnalogies.St_peak_prime.(St_1_prime, alphastar_jl)./St_1_prime
+lines!(ax1, alphastar_jl.*180/pi, St_peak_ratio_jl, color=colors[1], label="Julia")
+
+xlims!(ax1, 0, 7)
+ylims!(ax1, 0.5, 2)
+axislegend(ax1, position=:lt)
+save("19890016302-figure87.png", fig)
+```
+![](19890016302-figure87.png)
+
+```@example bpm_lbl_vs_G2_alphastar
+using AcousticAnalogies: AcousticAnalogies
+using ColorSchemes: colorschemes
+using DelimitedFiles: DelimitedFiles
+# using FLOWMath: linear
+using GLMakie
+
+# https://docs.makie.org/stable/examples/blocks/axis/index.html#logticks
+struct IntegerTicks end
+Makie.get_tickvalues(::IntegerTicks, vmin, vmax) = ceil(Int, vmin) : floor(Int, vmax)
+
+colors = colorschemes[:tab10]
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig; xlabel="Re_c/Re_c0", ylabel="G2 + G3",
+                       xscale=log10,
+                       xminorticksvisible=true,
+                       xminorticks=IntervalsBetween(9),
+                       xticks=LogTicks(IntegerTicks()))
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure88-G2-alpha0.csv")
+alphastar = 0.0*pi/180
+bpm = DelimitedFiles.readdlm(fname, ',')
+Re_c_bpm = bpm[:, 1]
+G2_bpm = bpm[:, 2]
+scatter!(ax1, Re_c_bpm, G2_bpm, color=colors[1], markersize=4, label="BPM - α^* = $(alphastar*180/pi)°")
+
+Re_c_jl = 10.0.^range(log10(first(Re_c_bpm)), log10(last(Re_c_bpm)), length=51)
+Re_c0 = AcousticAnalogies.Re_c0(alphastar)
+Re_ratio_jl = Re_c_jl./Re_c0
+# G2_jl = AcousticAnalogies.G2.(Re_ratio_jl) .+ 171.04 .- 3.03*(alphastar*180/pi)
+G2_jl = AcousticAnalogies.G2.(Re_ratio_jl) .+ AcousticAnalogies.G3.(alphastar)
+lines!(ax1, Re_c_jl, G2_jl, color=colors[1], label="Julia - α^* = $(alphastar*180/pi)°")
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure88-G2-alpha6.csv")
+alphastar = 6.0*pi/180
+bpm = DelimitedFiles.readdlm(fname, ',')
+Re_c_bpm = bpm[:, 1]
+G2_bpm = bpm[:, 2]
+scatter!(ax1, Re_c_bpm, G2_bpm, color=colors[2], markersize=4, label="BPM - α^* = $(alphastar*180/pi)°")
+
+Re_c_jl = 10.0.^range(log10(first(Re_c_bpm)), log10(last(Re_c_bpm)), length=51)
+Re_c0 = AcousticAnalogies.Re_c0(alphastar)
+Re_ratio_jl = Re_c_jl./Re_c0
+# G2_jl = AcousticAnalogies.G2.(Re_ratio_jl) .+ 171.04 .- 3.03*(alphastar*180/pi)
+G2_jl = AcousticAnalogies.G2.(Re_ratio_jl) .+ AcousticAnalogies.G3.(alphastar)
+lines!(ax1, Re_c_jl, G2_jl, color=colors[2], label="Julia - α^* = $(alphastar*180/pi)°")
+
+xlims!(ax1, 10^4, 10^7)
+ylims!(ax1, 125, 175)
+axislegend(ax1, position=:lt)
+save("19890016302-figure88.png", fig)
+```
+![](19890016302-figure88.png)
+
+```@example bpm_lbl_vs_G2
+using AcousticAnalogies: AcousticAnalogies
+using ColorSchemes: colorschemes
+using DelimitedFiles: DelimitedFiles
+# using FLOWMath: linear
+using GLMakie
+
+# https://docs.makie.org/stable/examples/blocks/axis/index.html#logticks
+struct IntegerTicks end
+Makie.get_tickvalues(::IntegerTicks, vmin, vmax) = ceil(Int, vmin) : floor(Int, vmax)
+
+colors = colorschemes[:tab10]
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig; xlabel="Re_c/Re_c0", ylabel="G2",
+                       xscale=log10,
+                       xminorticksvisible=true,
+                       xminorticks=IntervalsBetween(9),
+                       xticks=LogTicks(IntegerTicks()))
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure89.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+Re_ratio_bpm = bpm[:, 1]
+G2_bpm = bpm[:, 2]
+scatter!(ax1, Re_ratio_bpm, G2_bpm, color=colors[1], markersize=4, label="BPM")
+
+Re_ratio_jl = 10.0.^range(-1, 1, length=51)
+G2_jl = AcousticAnalogies.G2.(Re_ratio_jl)
+lines!(ax1, Re_ratio_jl, G2_jl, color=colors[1], label="Julia")
+
+xlims!(ax1, 0.1, 100)
+ylims!(ax1, -45, 5)
+axislegend(ax1, position=:lt)
+save("19890016302-figure89.png", fig)
+```
+![](19890016302-figure89.png)
+
+```@example bpm_figure91
+using AcousticAnalogies: AcousticAnalogies
+using AcousticMetrics: ExactThirdOctaveCenterBands
+using DelimitedFiles: DelimitedFiles
+using GLMakie
+
+# https://docs.makie.org/stable/examples/blocks/axis/index.html#logticks
+struct IntegerTicks end
+Makie.get_tickvalues(::IntegerTicks, vmin, vmax) = ceil(Int, vmin) : floor(Int, vmax)
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure91-tip.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+f_tip = bpm[:, 1]
+SPL_tip = bpm[:, 2]
+
+# nu = 1.4529e-5  # kinematic viscosity, m^2/s
+# L = 30.48e-2  # span in meters
+chord = 15.24e-2  # chord in meters
+speedofsound = 340.46
+U = 71.3  # freestream velocity in m/s
+# M = 0.209  # Mach number, corresponds to U = 71.3 m/s in BPM report
+M = U/speedofsound
+M_c = 0.8*M
+# speedofsound = U/M
+r_e = 1.22 # radiation distance in meters
+θ_e = 90*pi/180 
+Φ_e = 90*pi/180
+alphatip = 10.8*pi/180
+alphatip_prime = 0.71*alphatip
+# Equation 64 in the BPM report.
+M_max = (1 + 0.036*(alphatip_prime*180/pi))*M
+U_max = M_max*speedofsound
+f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
+SPL_tip_jl = AcousticAnalogies.TIP.(f_jl, chord, M, M_c, U_max, M_max, r_e, θ_e, Φ_e, alphatip_prime, Ref(AcousticAnalogies.RoundedTip()))
+
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
+                       xscale=log10,
+                       xminorticksvisible=true,
+                       xminorticks=IntervalsBetween(9),
+                       xticks=LogTicks(IntegerTicks()),
+                       title="Figure 91")
+scatter!(ax1, f_tip, SPL_tip; marker='o', label="Tip, BPM")
+lines!(ax1, f_jl./1e3, SPL_tip_jl; label="Tip, Julia")
+
+xlims!(ax1, 0.2, 20.0)
+ylims!(ax1, 40, 90)
+axislegend(ax1, position=:rt)
+save("19890016302-figure91.png", fig)
+```
+![](19890016302-figure91.png)
 
 ## Signed Commits
 The AcousticAnalogies.jl GitHub repository requires all commits to the `main` branch to be signed.
