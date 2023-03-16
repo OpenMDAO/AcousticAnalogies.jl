@@ -18,6 +18,7 @@ include("boundary_layers.jl")
 include("tbl_te.jl")
 include("lbl_vs.jl")
 include("tip_vortex.jl")
+include("teb_vs.jl")
 
 include("core.jl")
 export CompactSourceElement
