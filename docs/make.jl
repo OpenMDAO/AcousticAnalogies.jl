@@ -14,7 +14,7 @@ function main()
                     "Software Quality Assurance"=>"sqa.md"])
 
     if IN_CI
-        deploydocs(repo="github.com/dingraha/AcousticAnalogies.jl.git", devbranch="main")
+        deploydocs(repo="github.com/OpenMDAO/AcousticAnalogies.jl.git", devbranch="main")
     end
 
 end
