@@ -3,7 +3,7 @@ module AcousticAnalogies
 using AcousticMetrics
 using CCBlade
 using ConcreteStructs: @concrete
-using FLOWMath: akima, linear, ksmax
+using FLOWMath: akima, linear, ksmax, dot_cs_safe, norm_cs_safe
 using Formatting: format
 using KinematicCoordinateTransformations
 using LinearAlgebra: cross, norm, mul!
