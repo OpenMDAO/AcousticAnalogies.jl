@@ -1,6 +1,7 @@
 # AcousticAnalogies.jl Documentation
 
 [![Tests](https://github.com/OpenMDAO/AcousticAnalogies.jl/actions/workflows/test.yaml/badge.svg)](https://github.com/OpenMDAO/AcousticAnalogies.jl/actions/workflows/test.yaml)
+[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://OpenMDAO.github.io/AcousticAnalogies.jl/dev)
 
 **Summary**: A pure-Julia package for propeller/rotor blade noise prediction with acoustic analogies.
 
@@ -49,6 +50,7 @@
 
 **Installation**
 ```julia-repl
+] registry add git@github.com:dingraha/DanielIngrahamRegistry.git  # Optional, but needed to resolve dependencies in the next step
 ] add AcousticAnalogies
 ```
 

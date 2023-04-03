@@ -1,0 +1,40 @@
+name: Documentation
+
+on:
+  push:
+    branches:
+      - main # update to match your development branch (master, main, dev, trunk, ...)
+    tags: '*'
+  pull_request:
+
+jobs:
+  build:
+    permissions:
+      contents: write
+      statuses: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: julia-actions/setup-julia@v1
+        with:
+          version: '1'
+      - name: Add General and DanielIngrahamRegistry
+        shell: julia --color=yes {0}
+        run: |
+          using Pkg
+          Pkg.Registry.add(RegistrySpec(url="https://github.com/JuliaRegistries/General"))
+          Pkg.Registry.add(RegistrySpec(url="https://github.com/dingraha/DanielIngrahamRegistry"))
+        env:
+              JULIA_PKG_USE_CLI_GIT: 'true'
+      - name: Install dependencies
+        shell: julia --project=docs/ --color=yes {0}
+        run: |
+          using Pkg
+          Pkg.develop(PackageSpec(path="."))
+          Pkg.instantiate()
+          Pkg.update()
+
+      - name: Build and deploy
+        env:
+          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }} # If authenticating with SSH deploy key
+        run: julia --project=docs/ docs/make.jl
