@@ -17,5 +17,11 @@ WriteVTK = "64499a7a-5c06-52f2-abe2-ccb03c286192"
 
 [compat]
 AcousticMetrics = "0.6.0"
+CCBlade = "0.2.4"
+ConcreteStructs = "0.2.3"
+FLOWMath = "0.3.3"
+Formatting = "0.4.2"
 KinematicCoordinateTransformations = "0.4.1"
 SingleFieldStructArrays = "0.3.0"
+StaticArrays = "1.5.19"
+WriteVTK = "1.17.1"
