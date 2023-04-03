@@ -33,8 +33,10 @@ jobs:
           Pkg.develop(PackageSpec(path="."))
           Pkg.instantiate()
           Pkg.update()
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
 
-      - name: Build and deploy
-        env:
-          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }} # If authenticating with SSH deploy key
-        run: julia --project=docs/ docs/make.jl
+      # - name: Build and deploy
+      #   env:
+      #     DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }} # If authenticating with SSH deploy key
+      #   run: julia --project=docs/ docs/make.jl
