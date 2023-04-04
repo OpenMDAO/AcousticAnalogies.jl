@@ -15,6 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Install binary dependencies
+        run: sudo apt-get update && sudo apt-get install -y xorg-dev mesa-utils xvfb libgl1 freeglut3-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev
       - uses: julia-actions/setup-julia@v1
         with:
           version: '1'
@@ -27,16 +29,15 @@ jobs:
         env:
               JULIA_PKG_USE_CLI_GIT: 'true'
       - name: Install dependencies
-        shell: julia --project=docs/ --color=yes {0}
+        shell: DISPLAY=:0 xvfb-run -s '-screen 0 1024x768x24' julia --project=docs/ --color=yes {0}
         run: |
           using Pkg
           Pkg.develop(PackageSpec(path="."))
           Pkg.instantiate()
           Pkg.update()
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-
-      # - name: Build and deploy
-      #   env:
-      #     DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }} # If authenticating with SSH deploy key
-      #   run: julia --project=docs/ docs/make.jl
+      # - name: Setup tmate session
+      #   uses: mxschmitt/action-tmate@v3
+      - name: Build and deploy
+        env:
+          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }} # If authenticating with SSH deploy key
+        run: DISPLAY=:0 xvfb-run -s '-screen 0 1024x768x24' julia --project=docs/ docs/make.jl
