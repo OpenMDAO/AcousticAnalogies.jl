@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Software Quality Assurance · AcousticAnalogies.jl</title><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">AcousticAnalogies.jl</a></span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Introduction</a></li><li><a class="tocitem" href="../guided_example/">Guided Example</a></li><li><a class="tocitem" href="../ccblade_example/">CCBlade.jl Example</a></li><li><a class="tocitem" href="../writevtk_support/">WriteVTK.jl Support</a></li><li><a class="tocitem" href="../api/">API Reference</a></li><li class="is-active"><a class="tocitem" href>Software Quality Assurance</a><ul class="internal"><li><a class="tocitem" href="#Tests"><span>Tests</span></a></li><li><a class="tocitem" href="#Signed-Commits"><span>Signed Commits</span></a></li><li><a class="tocitem" href="#Reporting-Bugs"><span>Reporting Bugs</span></a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Software Quality Assurance</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Software Quality Assurance</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/OpenMDAO/AcousticAnalogies.jl/blob/main/docs/src/sqa.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Software-Quality-Assurance"><a class="docs-heading-anchor" href="#Software-Quality-Assurance">Software Quality Assurance</a><a id="Software-Quality-Assurance-1"></a><a class="docs-heading-anchor-permalink" href="#Software-Quality-Assurance" title="Permalink"></a></h1><h2 id="Tests"><a class="docs-heading-anchor" href="#Tests">Tests</a><a id="Tests-1"></a><a class="docs-heading-anchor-permalink" href="#Tests" title="Permalink"></a></h2><p>AcousticAnalogies.jl uses the usual Julia testing framework to implement and run tests. The tests can be run locally after installing AcousticAnalogies.jl, and are also run automatically on GitHub Actions.</p><p>To run the tests locally, from the Julia REPL, type <code>]</code> to enter the Pkg prompt, then</p><pre><code class="language-julia-repl hljs">(jl_jncZ1E) pkg&gt; test AcousticAnalogies
+     Testing Running tests...
+Test Summary:       | Pass  Total  Time
+Advanced time tests |    2      2  7.0s
+Test Summary:           | Pass  Total  Time
+Combine F1AOutput tests |    8      8  2.7s
+Test Summary: | Pass  Total  Time
+F1A tests     |    2      2  5.9s
+Test Summary:               | Pass  Total  Time
+CCBlade private utils tests |    1      1  0.3s
+Test Summary:                     | Pass  Total  Time
+CCBlade CompactSourceElement test |   12     12  3.4s
+Test Summary:     | Pass  Total  Time
+ANOPP2 Comparison |  176    176  5.9s
+Test Summary:    | Time
+ForwardDiff test | None  14.1s
+     Testing AcousticAnalogies tests passed
+
+(jl_jncZ1E) pkg&gt; </code></pre><p>(The output associated with installing all the dependencies the tests need isn&#39;t shown above.)</p><p>Here is a description of each category of test:</p><h3 id="Advanced-Time-Tests"><a class="docs-heading-anchor" href="#Advanced-Time-Tests">Advanced Time Tests</a><a id="Advanced-Time-Tests-1"></a><a class="docs-heading-anchor-permalink" href="#Advanced-Time-Tests" title="Permalink"></a></h3><p>The F1A calculation is concerned with roughly two types of objects: acoustic sources and acoustic observers. Acoustic sources are things that make noise, and, for AcousticAnalogies.jl, would typically be a portion of some type of aerodynamic lifting surface (like a propeller blade). An acoustic observer is just a fancy name for a person or microphone that will hear the noise emitted by the source. Both the source and observer may be stationary, but more likely will be moving.</p><p>During the F1A calculation, we need to know the time at which an acoustic wave emitted by the source encounters the observer. Mathematically, we need to solve the equation</p><p class="math-container">\[R(t) = t - \left( \tau + \frac{|\vec{x}(t) - \vec{y}(τ)|}{c_0} \right) = 0\]</p><p>whereon</p><ul><li><span>$τ$</span> is the time the source has emitted an acoustic disturbance</li><li><span>$t$</span> is the time the observer encounters the acoustic disturbance</li><li><span>$\vec{y}$</span> is the position of the source</li><li><span>$\vec{x}$</span> is the position of the observer</li><li><span>$c_0$</span> is the speed of sound</li></ul><p>AcousticAnalogies.jl currently uses an advanced time approach to solving this equation. This means we start with knowledge of <span>$\tau$</span> and then calculate <span>$t$</span>—we &quot;advance&quot; the source time to the observer time by adding the amount of time it takes for the acoustic disturbance to travel from <span>$y$</span> to <span>$x$</span>.</p><p>Now, the <span>$R(t) = 0$</span> equation is quite easy to solve if the observer is stationary. In that case, <span>$x$</span> is not a function of <span>$t$</span>, and so solving for <span>$t$</span> just involves moving everything in the parenthesis to the right-hand side. But if the observer is moving, things are more complicated. It may be impossible to solve for <span>$t$</span> explicitly in that case. It turns out, however, that there is an explicit solution for <span>$t$</span> in the advanced time approach if the observer is moving at a constant rate (see D. Casolino <a href="http://dx.doi.org/10.1016/S0022-460X(02)00986-0">http://dx.doi.org/10.1016/S0022-460X(02)00986-0</a>). The constant velocity case is actually quite handy, since it&#39;s what we need to compare to wind tunnel data.</p><p>So, how do we test that we&#39;ve implemented the solution to the <span>$R(t) = 0$</span> advanced time equation correctly? In AcousticAnalogies.jl, we just use the nonlinear solver provided by <a href="https://github.com/JuliaNLSolvers/NLsolve.jl">NLsolve.jl</a>, and compare its solution to AcousticAnalogies.jl. Here&#39;s how to do that:</p><pre><code class="language-julia hljs">using AcousticAnalogies: AcousticAnalogies
+using LinearAlgebra: norm
+using NLsolve: NLsolve
+using StaticArrays
+
+# Create a source element for the test.
+# The only things about the source element that matters to the advanced # time calculation is the time and position, and the speed of sound.
+# So everything else will be take on dummy values.
+τ = 2.5
+y = @SVector [-4.0, 3.0, 6.0]
+c0 = 2.0
+dummy0 = 1.0
+dummy3 = @SVector [0.0, 0.0, 0.0]
+se = AcousticAnalogies.CompactSourceElement(dummy0, c0, dummy0, dummy0, y, dummy3, dummy3, dummy3, dummy3, dummy3, τ, dummy3)
+
+# Define a function that solves the advanced time equation using `nlsolve.
+function adv_time_nlsolve(se, obs)
+    # Create the residual equation that we&#39;ll solve.
+    # nlsolve assumes the residual function takes in and returns arrays.
+    R(t) = [t[1] - (se.τ + norm(obs(t[1]) .- se.y0dot)/se.c0)]
+
+    # Solve the advanced time equation.
+    result = NLsolve.nlsolve(R, [1.0], autodiff=:forward)
+    if !NLsolve.converged(result)
+        @error &quot;nlsolve advanced time calculation did not converge:\n$(result)&quot;
+    end
+    t_obs = result.zero[1]
+    return t_obs
+end
+
+# Let&#39;s try it out.
+
+# First, a stationary observer:
+x0 = @SVector [-3.0, 2.0, 8.5]
+obs = AcousticAnalogies.StationaryAcousticObserver(x0)
+t_exact = AcousticAnalogies.adv_time(se, obs)
+t_nlsolve = adv_time_nlsolve(se, obs)
+println(&quot;stationary observer, exact: $(t_exact), nlsorve: $(t_nlsolve), difference = $(t_exact - t_nlsolve)&quot;)
+
+# Next, a constant velocity observer:
+t0 = 3.5
+x0 = @SVector [-2.0, 3.5, 6.25]
+v = @SVector [-1.5, 1.5, 3.25]
+obs = AcousticAnalogies.ConstVelocityAcousticObserver(t0, x0, v)
+t_exact = AcousticAnalogies.adv_time(se, obs)
+t_nlsolve = adv_time_nlsolve(se, obs)
+println(&quot;constant velocity observer, exact: $(t_exact), nlsorve: $(t_nlsolve), difference = $(t_exact - t_nlsolve)&quot;)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">stationary observer, exact: 3.936140661634507, nlsorve: 3.936140661634507, difference = 0.0
+constant velocity observer, exact: 3.529628622915939, nlsorve: 3.5296286229017424, difference = 1.4196643860486802e-11</code></pre><p>Almost identical results, so things are good!</p><h3 id="Combine-F1AOutput-Tests"><a class="docs-heading-anchor" href="#Combine-F1AOutput-Tests">Combine <code>F1AOutput</code> Tests</a><a id="Combine-F1AOutput-Tests-1"></a><a class="docs-heading-anchor-permalink" href="#Combine-F1AOutput-Tests" title="Permalink"></a></h3><p>The function <code>f1a(se::CompactSourceElement, obs::AcousticObserver)</code> uses Farassat&#39;s formulation 1A to perform a prediction of the noise experienced by one observer <code>obs</code> due to one acoustic source <code>se</code>. Typically we will not have just one source, however. For example, the <a href="../guided_example/#guided_example">guided example in the docs</a> uses 30 &quot;source elements&quot; to model each propeller blade. But we&#39;re interested in the acoustics experienced by <code>obs</code> due to <strong>all</strong> of the source elements, not just one. So, we need to combine the output of <code>f1a</code> for one observer and all of the source elements. In AcousticAnalogies.jl, this is done by interpolating the time history of each source element&#39;s acoustics (the &quot;pressure time history&quot;) onto a common chunk of time, and then adding them up. No big deal.</p><p>But, how do we test the &quot;interpolating and adding&quot; routine, aka <a href="../api/#AcousticAnalogies.combine"><code>AcousticAnalogies.combine</code></a>? That&#39;s pretty simple, actually: we just define some arbitrary functions that we&#39;ll use to create some pressure time histories, add them using the <code>combine</code> routine, and then compare that result to those created via evaluating those arbitrary functions on the same time grid used by the <code>combine</code> routine. If those match, then the test passes, and everything in the <code>combine</code> routine should be good. Let&#39;s try that:</p><pre><code class="language-julia hljs">using AcousticAnalogies: AcousticAnalogies
+using AcousticMetrics: AcousticMetrics
+using GLMakie
+using Random
+
+# Goal is to verify that the code can faithfully combine two acoustic pressures on different time &quot;grids&quot; onto a single common grid.
+# These will be our made up functions:
+fa(t) = sin(2*pi*t) + 0.2*cos(4*pi*(t-0.1))
+fb(t) = cos(6*pi*t) + 0.3*sin(8*pi*(t-0.2))
+
+# Now we&#39;ll make some made up time grids.
+n = 101
+t1 = collect(range(0.0, 1.0, length=n))
+dt = t1[2] - t1[1]
+# Add a bit of random noise to the time grid.
+# Make sure that the amount of # randomness isn&#39;t large enough to make the time values non-monotonically increasing (i.e., they don&#39;t overlap).
+noise = 0.49.*dt.*(1 .- 2 .* rand(size(t1)...))
+t1 .+= noise
+
+t2 = collect(range(0.1, 1.1, length=n))
+dt = t2[2] - t2[1]
+t2 .+= 0.49.*dt.*(1 .- 2 .* rand(size(t2)...))
+
+# Now let&#39;s create a bunch of pressure time histories on the time grids we just defined.
+apth1 = @. AcousticAnalogies.F1AOutput(t1, fa(t1), 2*fa(t1))
+apth2 = @. AcousticAnalogies.F1AOutput(t2, fb(t2), 3*fb(t2))
+
+# Calculate the &quot;exact&quot; answer by coming up with a common time, then evaluating the test functions directly on the common time grid.
+period = 0.5
+n_out = 51
+t_start = max(t1[1], t2[1])
+t_common = t_start .+ (0:n_out-1).*(period/n_out)
+
+p_m = @. fa(t_common)+fb(t_common)
+p_d = @. 2*fa(t_common)+3*fb(t_common)
+
+even_length = iseven(n_out)
+apth_test = AcousticAnalogies.F1APressureTimeHistory{even_length}(p_m, p_d, step(t_common), first(t_common))
+
+# Put all the acoustic pressures in one array.
+apth = hcat(apth1, apth2)
+
+# Combine.
+apth_out = AcousticAnalogies.combine(apth, period, n_out)
+
+# Plot the two solutions.
+fig2 = Figure()
+ax2_1 = fig2[1, 1] = Axis(fig2, xlabel=&quot;time&quot;, ylabel=&quot;acoustic pressure, monopole&quot;)
+ax2_2 = fig2[2, 1] = Axis(fig2, xlabel=&quot;time&quot;, ylabel=&quot;acoustic pressure, dipole&quot;)
+scatter!(ax2_1, AcousticMetrics.time(apth_out), AcousticAnalogies.pressure_monopole(apth_out); marker=:x, label=&quot;AcousticAnalogies.combine&quot;)
+scatter!(ax2_2, AcousticMetrics.time(apth_out), AcousticAnalogies.pressure_dipole(apth_out); marker=:x)
+lines!(ax2_1, AcousticMetrics.time(apth_test), AcousticAnalogies.pressure_monopole(apth_test); label=&quot;Exact&quot;)
+lines!(ax2_2, AcousticMetrics.time(apth_test), AcousticAnalogies.pressure_dipole(apth_test))
+hidexdecorations!(ax2_1, grid=false)
+axislegend(ax2_1; merge=true, unique=true, framevisible=false, bgcolor=:transparent, position=:rt)
+save(&quot;combine_test.png&quot;, fig2)</code></pre><p><img src="../combine_test.png" alt/></p><p>Right on top of each other.</p><h3 id="F1A-Tests"><a class="docs-heading-anchor" href="#F1A-Tests">F1A Tests</a><a id="F1A-Tests-1"></a><a class="docs-heading-anchor-permalink" href="#F1A-Tests" title="Permalink"></a></h3><p>The most complicated part of AcousticAnalogies.jl is the implementation of the F1A calculation itself. For example, the compact form of the F1A dipole term as implemented in AcousticAnalogies.jl (neglecting surface deformation) is</p><p class="math-container">\[4 \pi c_0 p_d = \int_{L=0} \left[ \left( \dot{\vec{f}} \cdot \vec{D}_{1A} + \vec{f} \cdot \vec{E}_{1A} \right) dr \right]\]</p><p>where </p><ul><li><span>$p_d$</span> is the &quot;dipole&quot; part of the acoustic pressure</li><li><span>$\vec{f}$</span> is the loading per unit span on the source element</li><li><span>$\vec{\dot{f}}$</span> is the source-time derivative of the loading per unit span on the source element</li><li><span>$dr$</span> is the differential length of the source element</li><li><span>$c_0$</span> is the ambient speed of sound</li><li><span>$\vec{D}_{1A}$</span> and <span>$\vec{E}_{1A}$</span> are complicated functions of the position, velocity, and acceleration of the source element</li><li><span>$L = 0$</span> indicates the integration is performed over some curve defined by <span>$L = 0$</span>.</li></ul><p>How are we going to test that we have all that implemented properly? Well, it turns out that Farassat&#39;s original formulation (F1) is much simpler than F1A:</p><p class="math-container">\[4 \pi c_0 p_d = \frac{\partial}{\partial t} \int_{L=0} \left( \vec{f} \cdot \vec{B}_{1}\right) dr + \int_{L=0}\left( \vec{f} \cdot \vec{C}_1 \right) dr\]</p><p>where <span>$\vec{B}_1$</span> and <span>$\vec{C}_1$</span> are again functions of the position of the source element and time derivatives of the same. It might not look that much simpler, but it is, because:</p><ul><li>The F1 integrands don&#39;t depend on <span>$\dot{\vec{f}}$</span></li><li><span>$\vec{D}_{1A}$</span> and <span>$\vec{E}_{1A}$</span> from F1A are more complicated than <span>$\vec{B}_1$</span> and <span>$\vec{C}_1$</span>, and involve higher-order time derivatives</li></ul><p>But the key thing to understand about F1 and F1A is that they are equivalent—going from F1A to F1 involves some fancy math (moving the derivative with respect to the observer time <span>$t$</span> inside the integral), but should give the same answer. The only trick is this: how will we evaluate the derivatives with respect to the observer time <span>$t$</span> in the F1 expressions? What we&#39;ll do here is just use standard second-order-accurate finite difference approximations, i.e.,</p><p class="math-container">\[\frac{\partial g}{\partial t} = \frac{g(t+\Delta t) - g(t-\Delta t)}{2 \Delta t} + \mathcal{O}(\Delta t^2)\]</p><p>where the notation <span>$\mathcal{O}(\Delta t^2)$</span> indicates that the error associated with the finite difference approximation should be proportional to <span>$\Delta t^2$</span>. But this means that we can&#39;t expect our F1 calculation to exactly match F1A. So, what to do about that? What we can expect is that, if F1A and F1 have been implemented properly, the difference between them should go to zero at a second-order rate. So we can systematically reduce the time step size <span>$\Delta t$</span> used to evaluate F1, and check that goes to zero at the expected rate. If it does, that proves that the only error between the two codes is due to the finite difference approximation, and gives us strong evidence that both F1A and F1 have been implemented properly.</p><p>So, let&#39;s try it out! First we&#39;ll need a function that evaluates the f1 integrands</p><pre><code class="language-julia hljs">using AcousticAnalogies
+using LinearAlgebra: norm
+using NLsolve
+using Polynomials
+using GLMakie
+
+function f1_integrand(se, obs, t)
+    c0 = se.c0
+
+    # Need to get the retarded time.
+    R(τ) = [t - (τ[1] + norm(obs(t) .- se.y0dot(τ[1]))/c0)]
+    result = nlsolve(R, [-0.1], autodiff=:forward)
+    if !converged(result)
+        @error &quot;nlsolve retarded time calculation did not converge:\n$(result)&quot;
+    end
+    τ = result.zero[1]
+
+    # Position of source at the retarted time.
+    y = se.y0dot(τ)
+
+    # Position vector from source to observer.
+    rv = obs(t) .- y
+
+    # Distance from source to observer.
+    r = AcousticAnalogies.norm_cs_safe(rv)
+
+    # Unit vector pointing from source to observer.
+    rhat = rv./r
+
+    # First time derivative of rv.
+    rv1dot = -se.y1dot(τ)
+
+    # Mach number of the velocity of the source in the direction of the
+    # observer.
+    Mr = AcousticAnalogies.dot_cs_safe(-rv1dot/se.c0, rhat)
+
+    # Now evaluate the integrand.
+    p_m_integrand = se.ρ0/(4*pi)*se.Λ*se.Δr/(r*(1 - Mr))
+
+    # Loading at the retarded time.
+    f0dot = se.f0dot(τ)
+
+    p_d_integrand_ff = (1/(4*pi*c0))*AcousticAnalogies.dot_cs_safe(f0dot, rhat)/(r*(1 - Mr))*se.Δr
+    p_d_integrand_nf = (1/(4*pi*c0))*AcousticAnalogies.dot_cs_safe(f0dot, rhat)*c0/(r^2*(1 - Mr))*se.Δr
+
+    return τ, p_m_integrand, p_d_integrand_ff, p_d_integrand_nf
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">f1_integrand (generic function with 1 method)</code></pre><p>The <code>f1_integrand</code> function takes a source element <code>se</code>, and acoustic observer <code>obs</code>, and an observer time <code>t</code> and finds the source time and intermediate stuff that will eventually want to differentiate using the finite difference approximation.</p><p>Now we need to make up a source and observer that we can test this out with:</p><pre><code class="language-julia hljs"># https://docs.makie.org/v0.19/examples/blocks/axis/index.html#logticks
+struct IntegerTicks end
+Makie.get_tickvalues(::IntegerTicks, vmin, vmax) = ceil(Int, vmin) : floor(Int, vmax)
+
+function doit()
+    # Scale up the density to make the error bigger.
+    rho = 1.226e6  # kg/m^3
+    c0 = 340.0  # m/s
+    Rtip = 1.1684  # meters
+    radii = 0.99932*Rtip
+    dradii = (0.99932 - 0.99660)*Rtip  # m
+    area_over_chord_squared = 0.064
+    chord = 0.47397E-02 * Rtip
+    Λ = area_over_chord_squared * chord^2
+
+    theta = 90.0*pi/180.0
+    x0 = [cos(theta), 0.0, sin(theta)].*100.0.*12.0.*0.0254  # 100 ft in meters
+    obs = StationaryAcousticObserver(x0)
+
+    # Need the position and velocity of the source as a function of
+    # source/retarded time. How do I want it to move? I want it to rotate around
+    # an axis on the origin, pointing in the x direction.
+    rpm = 2200
+    omega = 2*pi/60*rpm
+    period = 60/rpm
+    fn = 180.66763939805125
+    fc = 19.358679206883078
+    y0dot(τ) = [0,  radii*cos(omega*τ), radii*sin(omega*τ)]
+    y1dot(τ) = [0, -omega*radii*sin(omega*τ), omega*radii*cos(omega*τ)]
+    y2dot(τ) = [0, -omega^2*radii*cos(omega*τ), -omega^2*radii*sin(omega*τ)]
+    y3dot(τ) = [0, omega^3*radii*sin(omega*τ), -omega^3*radii*cos(omega*τ)]
+    f0dot(τ) = [-fn, -sin(omega*τ)*fc, cos(omega*τ)*fc]
+    f1dot(τ) = [0, -omega*cos(omega*τ)*fc, -omega*sin(omega*τ)*fc]
+    u(τ) = y0dot(τ)./radii
+    sef1 = CompactSourceElement(rho, c0, dradii, Λ, y0dot, y1dot, nothing, nothing, f0dot, nothing, 0.0, u)
+
+    t = 0.0
+    dt = period*0.5^4
+
+    τ0, pmi0, pdiff0, pdinf0 = f1_integrand(sef1, obs, t)
+    sef1a = CompactSourceElement(rho, c0, dradii, Λ, y0dot(τ0), y1dot(τ0), y2dot(τ0), y3dot(τ0), f0dot(τ0), f1dot(τ0), τ0, u(τ0))
+    apth = f1a(sef1a, obs)
+
+    err_prev_pm = nothing
+    err_prev_pd = nothing
+    dt_prev = nothing
+    dt_curr = dt
+    first_time = true
+
+    err_pm = Vector{Float64}()
+    err_pd = Vector{Float64}()
+    dts = Vector{Float64}()
+    ooa_pm = Vector{Float64}()
+    ooa_pd = Vector{Float64}()
+    # Gradually reduce time step size, recording the error and order-of-accuracy each time.
+    for n in 1:7
+        τ_1, pmi_1, pdiff_1, pdinf_1 = f1_integrand(sef1, obs, t-dt_curr)
+        τ1, pmi1, pdiff1, pdinf1 = f1_integrand(sef1, obs, t+dt_curr)
+
+        p_m_f1 = (pmi_1 - 2*pmi0 + pmi1)/(dt_curr^2)
+        p_d_f1 = (pdiff1 - pdiff_1)/(2*dt_curr) + pdinf0
+
+        err_curr_pm = abs(p_m_f1 - apth.p_m)
+        err_curr_pd = abs(p_d_f1 - apth.p_d)
+
+        if first_time
+            first_time = false
+        else
+            push!(ooa_pm, log(err_curr_pm/err_prev_pm)/log(dt_curr/dt_prev))
+            push!(ooa_pd, log(err_curr_pd/err_prev_pd)/log(dt_curr/dt_prev))
+        end
+
+        push!(dts, dt_curr)
+        push!(err_pm, err_curr_pm)
+        push!(err_pd, err_curr_pd)
+
+        dt_prev = dt_curr
+        err_prev_pm = err_curr_pm
+        err_prev_pd = err_curr_pd
+        dt_curr = 0.5*dt_curr
+    end
+
+    # Fit a line through the errors on a log-log plot, then check that the slope
+    # is second-order.
+    l = fit(log.(dts), log.(err_pm), 1)
+    println(&quot;monopole term convergence rate = $(l.coeffs[2])&quot;)
+
+    l = fit(log.(dts), log.(err_pd), 1)
+    println(&quot;dipole term convergence rate = $(l.coeffs[2])&quot;)
+
+    # Plot the error and observered order of accuracy.
+    fig = Figure()
+    ax1 = fig[1, 1] = Axis(fig, xlabel=&quot;time step size&quot;, ylabel=&quot;error&quot;, xscale=log10, xticks=LogTicks(IntegerTicks()), yscale=log10)
+    ax2 = fig[2, 1] = Axis(fig, xlabel=&quot;time step size&quot;, ylabel=&quot;convergence rate&quot;, xscale=log10, xticks=LogTicks(IntegerTicks()))
+    linkxaxes!(ax2, ax1)
+    lines!(ax1, dts, err_pm, label=&quot;monopole term&quot;)
+    lines!(ax1, dts, err_pd, label=&quot;dipole term&quot;)
+    lines!(ax2, dts[2:end], ooa_pm, label=&quot;monopole term&quot;)
+    lines!(ax2, dts[2:end], ooa_pd, label=&quot;dipole term&quot;)
+    ylims!(ax2, -0.1, 3.1)
+    axislegend(ax1; merge=true, unique=true, framevisible=false, bgcolor=:transparent, position=:lt)
+    save(&quot;f1a_test.png&quot;, fig)
+end
+
+doit()</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">monopole term convergence rate = 2.0140161622812207
+dipole term convergence rate = 2.0091613413451026</code></pre><p><img src="../f1a_test.png" alt/></p><p>The convergence rate of the error (the bottom plot) is extremely close to 2, which is what we&#39;re looking for.</p><h3 id="ANOPP2-Comparisons"><a class="docs-heading-anchor" href="#ANOPP2-Comparisons">ANOPP2 Comparisons</a><a id="ANOPP2-Comparisons-1"></a><a class="docs-heading-anchor-permalink" href="#ANOPP2-Comparisons" title="Permalink"></a></h3><p>The AcousticAnalogies.jl test suite includes comparisons to ANOPP2 predictions. Tests for a hypothetical isolated rotor are performed over a range of RPMs, with both stationary and moving observers. Here is an example using a moving observer:</p><pre><code class="language-julia hljs">using GLMakie
+using FLOWMath: akima
+include(joinpath(@__DIR__, &quot;..&quot;, &quot;..&quot;, &quot;test&quot;, &quot;anopp2_run.jl&quot;))
+using .ANOPP2Run
+rpm = 2200.0
+t, p_thickness, p_loading, p_monopole_a2, p_dipole_a2 = ANOPP2Run.get_results(;
+    stationary_observer=false, theta=0.0, f_interp=akima, rpm=rpm, irpm=11)
+
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig, xlabel=&quot;time, blade passes&quot;, ylabel=&quot;acoustic pressure, monopole, Pa&quot;)
+ax2 = fig[2, 1] = Axis(fig, xlabel=&quot;time, blade passes&quot;, ylabel=&quot;acoustic pressure, dipole, Pa&quot;)
+lines!(ax1, t, p_thickness, label=&quot;AcousticAnalogies.jl&quot;)
+scatter!(ax1, t, p_monopole_a2, label=&quot;ANOPP2&quot;, markersize=6)
+lines!(ax2, t, p_loading)
+scatter!(ax2, t, p_dipole_a2, markersize=6)
+hidexdecorations!(ax1, grid=false)
+axislegend(ax1; merge=true, unique=true, framevisible=false, bgcolor=:transparent, position=:lt)
+save(&quot;anopp2_comparison.png&quot;, fig)</code></pre><p><img src="../anopp2_comparison.png" alt/></p><p>The difference between the two codes&#39; predictions is very small (less than 1% error).</p><h2 id="Signed-Commits"><a class="docs-heading-anchor" href="#Signed-Commits">Signed Commits</a><a id="Signed-Commits-1"></a><a class="docs-heading-anchor-permalink" href="#Signed-Commits" title="Permalink"></a></h2><p>The AcousticAnalogies.jl GitHub repository requires all commits to the <code>main</code> branch to be signed. See the <a href="https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification">GitHub docs on signing commits</a> for more information.</p><h2 id="Reporting-Bugs"><a class="docs-heading-anchor" href="#Reporting-Bugs">Reporting Bugs</a><a id="Reporting-Bugs-1"></a><a class="docs-heading-anchor-permalink" href="#Reporting-Bugs" title="Permalink"></a></h2><p>Users can use the <a href="https://docs.github.com/en/issues/tracking-your-work-with-issues/about-issues">GitHub Issues</a> feature to report bugs and submit feature requests.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../api/">« API Reference</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.24 on <span class="colophon-date" title="Tuesday 4 April 2023 01:13">Tuesday 4 April 2023</span>. Using Julia version 1.8.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
