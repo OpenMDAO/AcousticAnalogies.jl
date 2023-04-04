@@ -32,10 +32,10 @@ jobs:
         run: >
           DISPLAY=:0 xvfb-run -s '-screen 0 1024x768x24'
           julia --project=docs/ --color=yes
-          -e "using Pkg"
-          -e "Pkg.develop(PackageSpec(path="."))"
-          -e "Pkg.instantiate()"
-          -e "Pkg.update()"
+          -e 'using Pkg'
+          -e 'Pkg.develop(PackageSpec(path="."))'
+          -e 'Pkg.instantiate()'
+          -e 'Pkg.update()'
       # - name: Setup tmate session
       #   uses: mxschmitt/action-tmate@v3
       - name: Build and deploy
