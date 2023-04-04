@@ -29,12 +29,13 @@ jobs:
         env:
               JULIA_PKG_USE_CLI_GIT: 'true'
       - name: Install dependencies
-        shell: DISPLAY=:0 xvfb-run -s '-screen 0 1024x768x24' julia --project=docs/ --color=yes {0}
-        run: |
-          using Pkg
-          Pkg.develop(PackageSpec(path="."))
-          Pkg.instantiate()
-          Pkg.update()
+        run: >
+          DISPLAY=:0 xvfb-run -s '-screen 0 1024x768x24'
+          julia --project=docs/ --color=yes
+          -e "using Pkg"
+          -e "Pkg.develop(PackageSpec(path="."))"
+          -e "Pkg.instantiate()"
+          -e "Pkg.update()"
       # - name: Setup tmate session
       #   uses: mxschmitt/action-tmate@v3
       - name: Build and deploy
