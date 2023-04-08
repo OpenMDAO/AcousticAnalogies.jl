@@ -1154,6 +1154,76 @@ end
             @test maximum(err[1:22]) < 0.31
             @test maximum(err[23:end]) < 0.087
         end
+
+        @testset "G5, Psi = 0°" begin
+            fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure97-Psi0-h_over_deltastar0p25.csv")
+            bpm = DelimitedFiles.readdlm(fname, ',')
+            St_3prime_over_St_3prime_peak_0p25 = bpm[:, 1]
+            G5_0Psi_h_over_deltastar_avg0p25 = bpm[:, 2]
+
+            fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure97-Psi0-h_over_deltastar0p43.csv")
+            bpm = DelimitedFiles.readdlm(fname, ',')
+            St_3prime_over_St_3prime_peak_0p43 = bpm[:, 1]
+            G5_0Psi_h_over_deltastar_avg0p43 = bpm[:, 2]
+
+            fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure97-Psi0-h_over_deltastar0p50.csv")
+            bpm = DelimitedFiles.readdlm(fname, ',')
+            St_3prime_over_St_3prime_peak_0p50 = bpm[:, 1]
+            G5_0Psi_h_over_deltastar_avg0p50 = bpm[:, 2]
+
+            fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure97-Psi0-h_over_deltastar0p54.csv")
+            bpm = DelimitedFiles.readdlm(fname, ',')
+            St_3prime_over_St_3prime_peak_0p54 = bpm[:, 1]
+            G5_0Psi_h_over_deltastar_avg0p54 = bpm[:, 2]
+
+            # fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure97-Psi0-h_over_deltastar0p62.csv")
+            # bpm = DelimitedFiles.readdlm(fname, ',')
+            # St_3prime_over_St_3prime_peak_0p62 = bpm[:, 1]
+            # G5_0Psi_h_over_deltastar_avg0p62 = bpm[:, 2]
+
+            fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure97-Psi0-h_over_deltastar1p20.csv")
+            bpm = DelimitedFiles.readdlm(fname, ',')
+            St_3prime_over_St_3prime_peak_1p20 = bpm[:, 1]
+            G5_0Psi_h_over_deltastar_avg1p20 = bpm[:, 2]
+
+            St_3prime_over_St_3prime_peak_jl = 10.0.^(range(-1, 10; length=1001))
+            G5_0Psi_h_over_deltastar_avg0p25_jl = AcousticAnalogies.G5_Psi0.(0.25, St_3prime_over_St_3prime_peak_jl)
+            G5_0Psi_h_over_deltastar_avg0p43_jl = AcousticAnalogies.G5_Psi0.(0.43, St_3prime_over_St_3prime_peak_jl)
+            G5_0Psi_h_over_deltastar_avg0p50_jl = AcousticAnalogies.G5_Psi0.(0.50, St_3prime_over_St_3prime_peak_jl)
+            G5_0Psi_h_over_deltastar_avg0p54_jl = AcousticAnalogies.G5_Psi0.(0.54, St_3prime_over_St_3prime_peak_jl)
+            # G5_0Psi_h_over_deltastar_avg0p62_jl = AcousticAnalogies.G5_Psi0.(0.62, St_3prime_over_St_3prime_peak_jl)
+            G5_0Psi_h_over_deltastar_avg1p20_jl = AcousticAnalogies.G5_Psi0.(1.20, St_3prime_over_St_3prime_peak_jl)
+
+            interp = linear(St_3prime_over_St_3prime_peak_jl, G5_0Psi_h_over_deltastar_avg0p25_jl, St_3prime_over_St_3prime_peak_0p25)
+            vmin, vmax = extrema(G5_0Psi_h_over_deltastar_avg0p25)
+            err = abs.(interp .- G5_0Psi_h_over_deltastar_avg0p25)/(vmax - vmin)
+            @test maximum(err) < 0.030
+
+            interp = linear(St_3prime_over_St_3prime_peak_jl, G5_0Psi_h_over_deltastar_avg0p43_jl, St_3prime_over_St_3prime_peak_0p43)
+            vmin, vmax = extrema(G5_0Psi_h_over_deltastar_avg0p43)
+            err = abs.(interp .- G5_0Psi_h_over_deltastar_avg0p43)/(vmax - vmin)
+            @test maximum(err) < 0.026
+
+            interp = linear(St_3prime_over_St_3prime_peak_jl, G5_0Psi_h_over_deltastar_avg0p50_jl, St_3prime_over_St_3prime_peak_0p50)
+            vmin, vmax = extrema(G5_0Psi_h_over_deltastar_avg0p50)
+            err = abs.(interp .- G5_0Psi_h_over_deltastar_avg0p50)/(vmax - vmin)
+            @test maximum(err) < 0.037
+
+            interp = linear(St_3prime_over_St_3prime_peak_jl, G5_0Psi_h_over_deltastar_avg0p54_jl, St_3prime_over_St_3prime_peak_0p54)
+            vmin, vmax = extrema(G5_0Psi_h_over_deltastar_avg0p54)
+            err = abs.(interp .- G5_0Psi_h_over_deltastar_avg0p54)/(vmax - vmin)
+            @test maximum(err) < 0.037
+
+            # interp = linear(St_3prime_over_St_3prime_peak_jl, G5_0Psi_h_over_deltastar_avg0p62_jl, St_3prime_over_St_3prime_peak_0p62)
+            # vmin, vmax = extrema(G5_0Psi_h_over_deltastar_avg0p62)
+            # err = abs.(interp .- G5_0Psi_h_over_deltastar_avg0p62)/(vmax - vmin)
+            # @test maximum(err) < 0.073
+
+            interp = linear(St_3prime_over_St_3prime_peak_jl, G5_0Psi_h_over_deltastar_avg1p20_jl, St_3prime_over_St_3prime_peak_1p20)
+            vmin, vmax = extrema(G5_0Psi_h_over_deltastar_avg1p20)
+            err = abs.(interp .- G5_0Psi_h_over_deltastar_avg1p20)/(vmax - vmin)
+            @test maximum(err) < 0.045
+        end
     end
 
 end

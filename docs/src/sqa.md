@@ -3148,6 +3148,162 @@ save("19890016302-figure97a.png", fig)
 ```
 ![](19890016302-figure97a.png)
 
+```@example bpm_figure97b
+using AcousticAnalogies: AcousticAnalogies
+using AcousticMetrics: ExactThirdOctaveCenterBands
+using DelimitedFiles: DelimitedFiles
+using GLMakie
+
+# https://docs.makie.org/stable/examples/blocks/axis/index.html#logticks
+struct IntegerTicks end
+Makie.get_tickvalues(::IntegerTicks, vmin, vmax) = ceil(Int, vmin) : floor(Int, vmax)
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure97-Psi0-h_over_deltastar0p25.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+St_3prime_over_St_3prime_peak_0p25 = bpm[:, 1]
+G5_0Psi_h_over_deltastar_avg0p25 = bpm[:, 2]
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure97-Psi0-h_over_deltastar0p43.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+St_3prime_over_St_3prime_peak_0p43 = bpm[:, 1]
+G5_0Psi_h_over_deltastar_avg0p43 = bpm[:, 2]
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure97-Psi0-h_over_deltastar0p50.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+St_3prime_over_St_3prime_peak_0p50 = bpm[:, 1]
+G5_0Psi_h_over_deltastar_avg0p50 = bpm[:, 2]
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure97-Psi0-h_over_deltastar0p54.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+St_3prime_over_St_3prime_peak_0p54 = bpm[:, 1]
+G5_0Psi_h_over_deltastar_avg0p54 = bpm[:, 2]
+
+# fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure97-Psi0-h_over_deltastar0p62.csv")
+# bpm = DelimitedFiles.readdlm(fname, ',')
+# St_3prime_over_St_3prime_peak_0p62 = bpm[:, 1]
+# G5_0Psi_h_over_deltastar_avg0p62 = bpm[:, 2]
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure97-Psi0-h_over_deltastar1p20.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+St_3prime_over_St_3prime_peak_1p20 = bpm[:, 1]
+G5_0Psi_h_over_deltastar_avg1p20 = bpm[:, 2]
+
+St_3prime_over_St_3prime_peak_jl = 10.0.^(range(-1, 10; length=1001))
+G5_0Psi_h_over_deltastar_avg0p25_jl = AcousticAnalogies.G5_Psi0.(0.25, St_3prime_over_St_3prime_peak_jl)
+G5_0Psi_h_over_deltastar_avg0p43_jl = AcousticAnalogies.G5_Psi0.(0.43, St_3prime_over_St_3prime_peak_jl)
+G5_0Psi_h_over_deltastar_avg0p50_jl = AcousticAnalogies.G5_Psi0.(0.50, St_3prime_over_St_3prime_peak_jl)
+G5_0Psi_h_over_deltastar_avg0p54_jl = AcousticAnalogies.G5_Psi0.(0.54, St_3prime_over_St_3prime_peak_jl)
+# G5_0Psi_h_over_deltastar_avg0p62_jl = AcousticAnalogies.G5_Psi0.(0.62, St_3prime_over_St_3prime_peak_jl)
+G5_0Psi_h_over_deltastar_avg1p20_jl = AcousticAnalogies.G5_Psi0.(1.20, St_3prime_over_St_3prime_peak_jl)
+ 
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig; xlabel="Strouhal ratio, St'''/St'''_peak", ylabel="G_5, Ψ=0°",
+                       xscale=log10,
+                       xminorticksvisible=true,
+                       xminorticks=IntervalsBetween(9),
+                       xticks=LogTicks(IntegerTicks()),
+                       title="Figure 97b")
+
+scatter!(ax1, St_3prime_over_St_3prime_peak_0p25, G5_0Psi_h_over_deltastar_avg0p25; label="h/δ^* = 0.25, BPM", marker='o')
+lines!(ax1, St_3prime_over_St_3prime_peak_jl, G5_0Psi_h_over_deltastar_avg0p25_jl; label="h/δ^* = 0.25, Julia")
+
+scatter!(ax1, St_3prime_over_St_3prime_peak_0p43, G5_0Psi_h_over_deltastar_avg0p43; label="h/δ^* = 0.43, BPM", marker='o')
+lines!(ax1, St_3prime_over_St_3prime_peak_jl, G5_0Psi_h_over_deltastar_avg0p43_jl; label="h/δ^* = 0.43, Julia")
+
+scatter!(ax1, St_3prime_over_St_3prime_peak_0p50, G5_0Psi_h_over_deltastar_avg0p50; label="h/δ^* = 0.50, BPM", marker='o')
+lines!(ax1, St_3prime_over_St_3prime_peak_jl, G5_0Psi_h_over_deltastar_avg0p50_jl; label="h/δ^* = 0.50, Julia")
+
+scatter!(ax1, St_3prime_over_St_3prime_peak_0p54, G5_0Psi_h_over_deltastar_avg0p54; label="h/δ^* = 0.54, BPM", marker='o')
+lines!(ax1, St_3prime_over_St_3prime_peak_jl, G5_0Psi_h_over_deltastar_avg0p54_jl; label="h/δ^* = 0.54, Julia")
+
+# scatter!(ax1, St_3prime_over_St_3prime_peak_0p62, G5_0Psi_h_over_deltastar_avg0p62; label="h/δ^* = 0.62, BPM", marker='o')
+# lines!(ax1, St_3prime_over_St_3prime_peak_jl, G5_0Psi_h_over_deltastar_avg0p62_jl; label="h/δ^* = 0.62, Julia")
+
+scatter!(ax1, St_3prime_over_St_3prime_peak_1p20, G5_0Psi_h_over_deltastar_avg1p20; label="h/δ^* = 1.20, BPM", marker='o')
+lines!(ax1, St_3prime_over_St_3prime_peak_jl, G5_0Psi_h_over_deltastar_avg1p20_jl; label="h/δ^* = 1.20, Julia")
+
+xlims!(ax1, 0.1, 10.0)
+ylims!(ax1, -30, 10)
+axislegend(ax1, position=:rt)
+save("19890016302-figure97b.png", fig)
+```
+![](19890016302-figure97b.png)
+
+```@example bpm_figure98_b
+using AcousticAnalogies: AcousticAnalogies
+using AcousticMetrics: ExactThirdOctaveCenterBands
+using DelimitedFiles: DelimitedFiles
+using GLMakie
+
+# https://docs.makie.org/stable/examples/blocks/axis/index.html#logticks
+struct IntegerTicks end
+Makie.get_tickvalues(::IntegerTicks, vmin, vmax) = ceil(Int, vmin) : floor(Int, vmax)
+
+# Figures 98 a-d only differ in trailing edge bluntness, so the other sources are all the same.
+# And TBL-TE is the only significant source, other than bluntness.
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure98-a-TBL-TE-suction.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+f_s = bpm[:, 1]
+SPL_s = bpm[:, 2]
+
+# Suction and pressure are the same for zero angle of attack.
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure98-a-TBL-TE-suction.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+f_p = bpm[:, 1]
+SPL_p = bpm[:, 2]
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure98-b-bluntness.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+f_teb_vs = bpm[:, 1]
+SPL_teb_vs = bpm[:, 2]
+
+nu = 1.4529e-5  # kinematic viscosity, m^2/s
+L = 45.72e-2  # span in meters
+chord = 60.96e-2  # chord in meters
+U = 69.5  # freestream velocity in m/s
+M = U/340.46
+h = 1.1e-3  # trailing edge bluntness in meters
+r_e = 1.22 # radiation distance in meters
+θ_e = 90*pi/180 
+Φ_e = 90*pi/180
+M_c = 0.8*M
+alphastar = 0.0*pi/180
+alphastar0 = 12.5*pi/180
+
+f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
+SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+
+SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
+SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
+
+h = 1.1e-3  # bluntness in meters
+Psi = 14*pi/180  # bluntness angle in radians
+SPL_teb_vs_jl = AcousticAnalogies.BLUNT.(f_jl, nu, L, chord, h, Psi, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+
+
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
+                       xscale=log10,
+                       xminorticksvisible=true,
+                       xminorticks=IntervalsBetween(9),
+                       xticks=LogTicks(IntegerTicks()),
+                       title="Figure 98 (b) - U = $U m/s")
+scatter!(ax1, f_s, SPL_s; marker='o', label="TBL-TE suction side, BPM")
+lines!(ax1, f_jl./1e3, SPL_s_jl; label="TBL-TE suction side, Julia")
+
+scatter!(ax1, f_p, SPL_p; marker='□', label="TBL-TE pressure side, BPM")
+lines!(ax1, f_jl./1e3, SPL_p_jl; label="TBL-TE pressure side, Julia")
+
+scatter!(ax1, f_teb_vs, SPL_teb_vs; marker='◺', label="Bluntness, BPM")
+lines!(ax1, f_jl./1e3, SPL_teb_vs_jl; label="Bluntness, Julia")
+
+xlims!(ax1, 0.2, 20.0)
+ylims!(ax1, 40, 80)
+axislegend(ax1, position=:rt)
+save("19890016302-figure98-b.png", fig)
+```
+![](19890016302-figure98-b.png)
+
 ## Signed Commits
 The AcousticAnalogies.jl GitHub repository requires all commits to the `main` branch to be signed.
 See the [GitHub docs on signing commits](https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification) for more information.

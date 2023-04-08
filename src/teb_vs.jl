@@ -1,20 +1,20 @@
-function St_3prime_peak(h_over_deltastar_avg, Phi)
-    Phi_deg = Phi*180/pi
+function St_3prime_peak(h_over_deltastar_avg, Psi)
+    Psi_deg = Psi*180/pi
     # Equation 72 from the BPM report.
     if h_over_deltastar_avg < 0.2
-        return 0.1*(h_over_deltastar_avg) + 0.095 - 0.00243*Phi_deg
+        return 0.1*(h_over_deltastar_avg) + 0.095 - 0.00243*Psi_deg
     else
-        return (0.212 - 0.0045*Phi_deg)/(1 + 0.235/h_over_deltastar_avg - 0.0132/(h_over_deltastar_avg)^2)
+        return (0.212 - 0.0045*Psi_deg)/(1 + 0.235/h_over_deltastar_avg - 0.0132/(h_over_deltastar_avg^2))
     end
 end
 
-function G4(h_over_deltastar_avg, Phi)
-    Phi_deg = Phi*180/pi
+function G4(h_over_deltastar_avg, Psi)
+    Psi_deg = Psi*180/pi
     # Equation 74 from the BPM report.
     if h_over_deltastar_avg ≤ 5
-        return 17.5*log10(h_over_deltastar_avg) + 157.5 - 1.114*Phi_deg
+        return 17.5*log10(h_over_deltastar_avg) + 157.5 - 1.114*Psi_deg
     else
-        return 169.7 - 1.114*Phi_deg
+        return 169.7 - 1.114*Psi_deg
     end
 end
 
@@ -68,4 +68,40 @@ function G5_Psi14(h_over_deltastar_avg, St_3prime_over_St_3prime_peak)
     else
         return -155.543*η + 4.375*one(h_over_deltastar_avg)
     end
+end
+
+function G5_Psi0(h_over_deltastar_avg, St_3prime_over_St_3prime_peak)
+    # Equation 82 from the BPM report.
+    h_over_deltastar_avg_prime = 6.724*h_over_deltastar_avg^2 - 4.019*h_over_deltastar_avg + 1.107
+    return G5_Psi14(h_over_deltastar_avg_prime, St_3prime_over_St_3prime_peak)
+end
+
+function G5(h_over_deltastar_avg, Psi, St_3prime_over_St_3prime_peak)
+    Psi_deg = 180/pi*Psi
+    # Equation 75 from the BPM report.
+    G5_0 = G5_Psi0(h_over_deltastar_avg, St_3prime_over_St_3prime_peak)
+    G5_14 = G5_Psi14(h_over_deltastar_avg, St_3prime_over_St_3prime_peak)
+    return G5_0 + 0.0714*Psi_deg*(G5_14 - G5_0)
+end
+
+function BLUNT(freq, nu, L, chord, h, Psi, U, M, M_c, r_e, theta_e, phi_e, alphastar, bl)
+    Re_c = U*chord/nu
+    deltastar_s = disp_thickness_s(bl, Re_c, alphastar)*chord
+    deltastar_p = disp_thickness_p(bl, Re_c, alphastar)*chord
+
+    # Equation 73 from the BPM report.
+    deltastar_avg = 0.5*(deltastar_p + deltastar_s)
+
+    h_over_deltastar_avg = h/deltastar_avg
+    D = Dbar_h(theta_e, phi_e, M, M_c)
+
+    # Equation 71 from the BPM report.
+    St_3p = freq*h/U
+
+    St_3prime_over_St_3prime_peak = St_3p/St_3prime_peak(h_over_deltastar_avg, Psi)
+
+    # Equation 70 from the BPM report.
+    SPL_blunt = 10*log10((h*(M^5.5)*L*D)/(r_e^2)) + G4(h_over_deltastar_avg, Psi) + G5(h_over_deltastar_avg, Psi, St_3prime_over_St_3prime_peak)
+
+    return SPL_blunt
 end
