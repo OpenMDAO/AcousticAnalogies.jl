@@ -1224,6 +1224,189 @@ end
             err = abs.(interp .- G5_0Psi_h_over_deltastar_avg1p20)/(vmax - vmin)
             @test maximum(err) < 0.045
         end
+
+        @testset "BPM Figure 98b" begin
+            # Figures 98 a-d only differ in trailing edge bluntness, so the other sources are all the same.
+            # And TBL-TE is the only significant source, other than bluntness.
+            fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure98-a-TBL-TE-suction.csv")
+            bpm = DelimitedFiles.readdlm(fname, ',')
+            f_s = bpm[:, 1]
+            SPL_s = bpm[:, 2]
+
+            # Suction and pressure are the same for zero angle of attack.
+            fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure98-a-TBL-TE-suction.csv")
+            bpm = DelimitedFiles.readdlm(fname, ',')
+            f_p = bpm[:, 1]
+            SPL_p = bpm[:, 2]
+
+            fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure98-b-bluntness.csv")
+            bpm = DelimitedFiles.readdlm(fname, ',')
+            f_teb_vs = bpm[:, 1]
+            SPL_teb_vs = bpm[:, 2]
+
+            nu = 1.4529e-5  # kinematic viscosity, m^2/s
+            L = 45.72e-2  # span in meters
+            chord = 60.96e-2  # chord in meters
+            U = 69.5  # freestream velocity in m/s
+            M = U/340.46
+            h = 1.1e-3  # trailing edge bluntness in meters
+            Psi = 14*pi/180  # bluntness angle in radians
+            r_e = 1.22 # radiation distance in meters
+            θ_e = 90*pi/180 
+            Φ_e = 90*pi/180
+            M_c = 0.8*M
+            alphastar = 0.0*pi/180
+            alphastar0 = 12.5*pi/180
+
+            f_jl = AcousticMetrics.ExactThirdOctaveCenterBands(0.2e3, 20e3)
+            SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+
+            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
+            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
+
+            SPL_teb_vs_jl = AcousticAnalogies.BLUNT.(f_jl, nu, L, chord, h, Psi, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+
+            SPL_s_jl_interp = linear(f_jl, SPL_s_jl, f_s.*1e3)
+            vmin, vmax = extrema(SPL_s)
+            err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
+            @test maximum(err) < 0.053
+
+            SPL_p_jl_interp = linear(f_jl, SPL_p_jl, f_p.*1e3)
+            vmin, vmax = extrema(SPL_p)
+            err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
+            @test maximum(err) < 0.053
+
+            SPL_teb_vs_jl_interp = linear(f_jl, SPL_teb_vs_jl, f_teb_vs.*1e3)
+            vmin, vmax = extrema(SPL_teb_vs)
+            err = abs.(SPL_teb_vs_jl_interp .- SPL_teb_vs)./(vmax - vmin)
+            # Last two points are off.
+            # Not sure why.
+            @test maximum(err[1:end-2]) < 0.045
+            @test maximum(err[1:end-1]) < 0.060
+            @test maximum(err) < 0.171
+        end
+
+        @testset "BPM Figure 98c" begin
+            # Figures 98 a-d only differ in trailing edge bluntness, so the other sources are all the same.
+            # And TBL-TE is the only significant source, other than bluntness.
+            fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure98-a-TBL-TE-suction.csv")
+            bpm = DelimitedFiles.readdlm(fname, ',')
+            f_s = bpm[:, 1]
+            SPL_s = bpm[:, 2]
+
+            # Suction and pressure are the same for zero angle of attack.
+            fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure98-a-TBL-TE-suction.csv")
+            bpm = DelimitedFiles.readdlm(fname, ',')
+            f_p = bpm[:, 1]
+            SPL_p = bpm[:, 2]
+
+            fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure98-c-bluntness.csv")
+            bpm = DelimitedFiles.readdlm(fname, ',')
+            f_teb_vs = bpm[:, 1]
+            SPL_teb_vs = bpm[:, 2]
+
+            nu = 1.4529e-5  # kinematic viscosity, m^2/s
+            L = 45.72e-2  # span in meters
+            chord = 60.96e-2  # chord in meters
+            U = 69.5  # freestream velocity in m/s
+            M = U/340.46
+            h = 1.9e-3  # trailing edge bluntness in meters
+            Psi = 14*pi/180  # bluntness angle in radians
+            r_e = 1.22 # radiation distance in meters
+            θ_e = 90*pi/180 
+            Φ_e = 90*pi/180
+            M_c = 0.8*M
+            alphastar = 0.0*pi/180
+            alphastar0 = 12.5*pi/180
+
+            f_jl = AcousticMetrics.ExactThirdOctaveCenterBands(0.2e3, 20e3)
+            SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+
+            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
+            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
+
+            SPL_teb_vs_jl = AcousticAnalogies.BLUNT.(f_jl, nu, L, chord, h, Psi, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+
+            SPL_s_jl_interp = linear(f_jl, SPL_s_jl, f_s.*1e3)
+            vmin, vmax = extrema(SPL_s)
+            err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
+            @test maximum(err) < 0.053
+
+            SPL_p_jl_interp = linear(f_jl, SPL_p_jl, f_p.*1e3)
+            vmin, vmax = extrema(SPL_p)
+            err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
+            @test maximum(err) < 0.053
+
+            SPL_teb_vs_jl_interp = linear(f_jl, SPL_teb_vs_jl, f_teb_vs.*1e3)
+            vmin, vmax = extrema(SPL_teb_vs)
+            err = abs.(SPL_teb_vs_jl_interp .- SPL_teb_vs)./(vmax - vmin)
+            # Last two points are off.
+            # Not sure why.
+            @test maximum(err[1:end-2]) < 0.040
+            @test maximum(err[1:end-1]) < 0.189
+            @test err[end] < 0.111
+        end
+
+        @testset "BPM Figure 98d" begin
+            # Figures 98 a-d only differ in trailing edge bluntness, so the other sources are all the same.
+            # And TBL-TE is the only significant source, other than bluntness.
+            fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure98-a-TBL-TE-suction.csv")
+            bpm = DelimitedFiles.readdlm(fname, ',')
+            f_s = bpm[:, 1]
+            SPL_s = bpm[:, 2]
+
+            # Suction and pressure are the same for zero angle of attack.
+            fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure98-a-TBL-TE-suction.csv")
+            bpm = DelimitedFiles.readdlm(fname, ',')
+            f_p = bpm[:, 1]
+            SPL_p = bpm[:, 2]
+
+            fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure98-d-bluntness.csv")
+            bpm = DelimitedFiles.readdlm(fname, ',')
+            f_teb_vs = bpm[:, 1]
+            SPL_teb_vs = bpm[:, 2]
+
+            nu = 1.4529e-5  # kinematic viscosity, m^2/s
+            L = 45.72e-2  # span in meters
+            chord = 60.96e-2  # chord in meters
+            U = 69.5  # freestream velocity in m/s
+            M = U/340.46
+            h = 2.5e-3  # trailing edge bluntness in meters
+            Psi = 14*pi/180  # bluntness angle in radians
+            r_e = 1.22 # radiation distance in meters
+            θ_e = 90*pi/180 
+            Φ_e = 90*pi/180
+            M_c = 0.8*M
+            alphastar = 0.0*pi/180
+            alphastar0 = 12.5*pi/180
+
+            f_jl = AcousticMetrics.ExactThirdOctaveCenterBands(0.2e3, 20e3)
+            SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+
+            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
+            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
+
+            SPL_teb_vs_jl = AcousticAnalogies.BLUNT.(f_jl, nu, L, chord, h, Psi, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+
+            SPL_s_jl_interp = linear(f_jl, SPL_s_jl, f_s.*1e3)
+            vmin, vmax = extrema(SPL_s)
+            err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
+            @test maximum(err) < 0.053
+
+            SPL_p_jl_interp = linear(f_jl, SPL_p_jl, f_p.*1e3)
+            vmin, vmax = extrema(SPL_p)
+            err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
+            @test maximum(err) < 0.053
+
+            SPL_teb_vs_jl_interp = linear(f_jl, SPL_teb_vs_jl, f_teb_vs.*1e3)
+            vmin, vmax = extrema(SPL_teb_vs)
+            err = abs.(SPL_teb_vs_jl_interp .- SPL_teb_vs)./(vmax - vmin)
+            # Last two points are off.
+            # Not sure why.
+            @test maximum(err[1:end-2]) < 0.044
+            @test err[end-1] < 0.089
+            @test err[end] < 0.089
+        end
     end
 
 end

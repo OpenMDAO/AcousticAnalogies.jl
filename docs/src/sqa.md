@@ -3263,6 +3263,7 @@ chord = 60.96e-2  # chord in meters
 U = 69.5  # freestream velocity in m/s
 M = U/340.46
 h = 1.1e-3  # trailing edge bluntness in meters
+Psi = 14*pi/180  # bluntness angle in radians
 r_e = 1.22 # radiation distance in meters
 θ_e = 90*pi/180 
 Φ_e = 90*pi/180
@@ -3276,8 +3277,6 @@ SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, c
 SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
 SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
 
-h = 1.1e-3  # bluntness in meters
-Psi = 14*pi/180  # bluntness angle in radians
 SPL_teb_vs_jl = AcousticAnalogies.BLUNT.(f_jl, nu, L, chord, h, Psi, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
 
@@ -3303,6 +3302,154 @@ axislegend(ax1, position=:rt)
 save("19890016302-figure98-b.png", fig)
 ```
 ![](19890016302-figure98-b.png)
+
+```@example bpm_figure98_c
+using AcousticAnalogies: AcousticAnalogies
+using AcousticMetrics: ExactThirdOctaveCenterBands
+using DelimitedFiles: DelimitedFiles
+using GLMakie
+
+# https://docs.makie.org/stable/examples/blocks/axis/index.html#logticks
+struct IntegerTicks end
+Makie.get_tickvalues(::IntegerTicks, vmin, vmax) = ceil(Int, vmin) : floor(Int, vmax)
+
+# Figures 98 a-d only differ in trailing edge bluntness, so the other sources are all the same.
+# And TBL-TE is the only significant source, other than bluntness.
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure98-a-TBL-TE-suction.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+f_s = bpm[:, 1]
+SPL_s = bpm[:, 2]
+
+# Suction and pressure are the same for zero angle of attack.
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure98-a-TBL-TE-suction.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+f_p = bpm[:, 1]
+SPL_p = bpm[:, 2]
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure98-c-bluntness.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+f_teb_vs = bpm[:, 1]
+SPL_teb_vs = bpm[:, 2]
+
+nu = 1.4529e-5  # kinematic viscosity, m^2/s
+L = 45.72e-2  # span in meters
+chord = 60.96e-2  # chord in meters
+U = 69.5  # freestream velocity in m/s
+M = U/340.46
+h = 1.9e-3  # trailing edge bluntness in meters
+Psi = 14*pi/180  # bluntness angle in radians
+r_e = 1.22 # radiation distance in meters
+θ_e = 90*pi/180 
+Φ_e = 90*pi/180
+M_c = 0.8*M
+alphastar = 0.0*pi/180
+alphastar0 = 12.5*pi/180
+
+f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
+SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+
+SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
+SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
+
+SPL_teb_vs_jl = AcousticAnalogies.BLUNT.(f_jl, nu, L, chord, h, Psi, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+
+
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
+                       xscale=log10,
+                       xminorticksvisible=true,
+                       xminorticks=IntervalsBetween(9),
+                       xticks=LogTicks(IntegerTicks()),
+                       title="Figure 98 (c) - U = $U m/s")
+scatter!(ax1, f_s, SPL_s; marker='o', label="TBL-TE suction side, BPM")
+lines!(ax1, f_jl./1e3, SPL_s_jl; label="TBL-TE suction side, Julia")
+
+scatter!(ax1, f_p, SPL_p; marker='□', label="TBL-TE pressure side, BPM")
+lines!(ax1, f_jl./1e3, SPL_p_jl; label="TBL-TE pressure side, Julia")
+
+scatter!(ax1, f_teb_vs, SPL_teb_vs; marker='◺', label="Bluntness, BPM")
+lines!(ax1, f_jl./1e3, SPL_teb_vs_jl; label="Bluntness, Julia")
+
+xlims!(ax1, 0.2, 20.0)
+ylims!(ax1, 40, 80)
+axislegend(ax1, position=:rt)
+save("19890016302-figure98-c.png", fig)
+```
+![](19890016302-figure98-c.png)
+
+```@example bpm_figure98_d
+using AcousticAnalogies: AcousticAnalogies
+using AcousticMetrics: ExactThirdOctaveCenterBands
+using DelimitedFiles: DelimitedFiles
+using GLMakie
+
+# https://docs.makie.org/stable/examples/blocks/axis/index.html#logticks
+struct IntegerTicks end
+Makie.get_tickvalues(::IntegerTicks, vmin, vmax) = ceil(Int, vmin) : floor(Int, vmax)
+
+# Figures 98 a-d only differ in trailing edge bluntness, so the other sources are all the same.
+# And TBL-TE is the only significant source, other than bluntness.
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure98-a-TBL-TE-suction.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+f_s = bpm[:, 1]
+SPL_s = bpm[:, 2]
+
+# Suction and pressure are the same for zero angle of attack.
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure98-a-TBL-TE-suction.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+f_p = bpm[:, 1]
+SPL_p = bpm[:, 2]
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure98-d-bluntness.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+f_teb_vs = bpm[:, 1]
+SPL_teb_vs = bpm[:, 2]
+
+nu = 1.4529e-5  # kinematic viscosity, m^2/s
+L = 45.72e-2  # span in meters
+chord = 60.96e-2  # chord in meters
+U = 69.5  # freestream velocity in m/s
+M = U/340.46
+h = 2.5e-3  # trailing edge bluntness in meters
+Psi = 14*pi/180  # bluntness angle in radians
+r_e = 1.22 # radiation distance in meters
+θ_e = 90*pi/180 
+Φ_e = 90*pi/180
+M_c = 0.8*M
+alphastar = 0.0*pi/180
+alphastar0 = 12.5*pi/180
+
+f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
+SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+
+SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
+SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
+
+SPL_teb_vs_jl = AcousticAnalogies.BLUNT.(f_jl, nu, L, chord, h, Psi, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+
+
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
+                       xscale=log10,
+                       xminorticksvisible=true,
+                       xminorticks=IntervalsBetween(9),
+                       xticks=LogTicks(IntegerTicks()),
+                       title="Figure 98 (d) - U = $U m/s")
+scatter!(ax1, f_s, SPL_s; marker='o', label="TBL-TE suction side, BPM")
+lines!(ax1, f_jl./1e3, SPL_s_jl; label="TBL-TE suction side, Julia")
+
+scatter!(ax1, f_p, SPL_p; marker='□', label="TBL-TE pressure side, BPM")
+lines!(ax1, f_jl./1e3, SPL_p_jl; label="TBL-TE pressure side, Julia")
+
+scatter!(ax1, f_teb_vs, SPL_teb_vs; marker='◺', label="Bluntness, BPM")
+lines!(ax1, f_jl./1e3, SPL_teb_vs_jl; label="Bluntness, Julia")
+
+xlims!(ax1, 0.2, 20.0)
+ylims!(ax1, 40, 80)
+axislegend(ax1, position=:rt)
+save("19890016302-figure98-d.png", fig)
+```
+![](19890016302-figure98-d.png)
 
 ## Signed Commits
 The AcousticAnalogies.jl GitHub repository requires all commits to the `main` branch to be signed.
