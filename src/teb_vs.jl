@@ -81,7 +81,13 @@ function G5(h_over_deltastar_avg, Psi, St_3prime_over_St_3prime_peak)
     # Equation 75 from the BPM report.
     G5_0 = G5_Psi0(h_over_deltastar_avg, St_3prime_over_St_3prime_peak)
     G5_14 = G5_Psi14(h_over_deltastar_avg, St_3prime_over_St_3prime_peak)
-    return G5_0 + 0.0714*Psi_deg*(G5_14 - G5_0)
+    g5 = G5_0 + 0.0714*Psi_deg*(G5_14 - G5_0)
+    # This check is in the code listing in the BPM report appendix:
+    if g5 > 0
+        return zero(g5)
+    else
+        return g5
+    end
 end
 
 function BLUNT(freq, nu, L, chord, h, Psi, U, M, M_c, r_e, theta_e, phi_e, alphastar, bl)
@@ -100,8 +106,17 @@ function BLUNT(freq, nu, L, chord, h, Psi, U, M, M_c, r_e, theta_e, phi_e, alpha
 
     St_3prime_over_St_3prime_peak = St_3p/St_3prime_peak(h_over_deltastar_avg, Psi)
 
+    g5 = G5(h_over_deltastar_avg, Psi, St_3prime_over_St_3prime_peak)
+
+    # This next check is in the code listing in the BPM report appendix.
+    # Need to find G5 for h_over_deltastar_avg = 0.25 for the F4TEMP variable.
+    f4temp = G5_Psi14(0.25, St_3prime_over_St_3prime_peak)
+    if g5 > f4temp
+        g5 = f4temp
+    end
+
     # Equation 70 from the BPM report.
-    SPL_blunt = 10*log10((h*(M^5.5)*L*D)/(r_e^2)) + G4(h_over_deltastar_avg, Psi) + G5(h_over_deltastar_avg, Psi, St_3prime_over_St_3prime_peak)
+    SPL_blunt = 10*log10((h*(M^5.5)*L*D)/(r_e^2)) + G4(h_over_deltastar_avg, Psi) + g5
 
     return SPL_blunt
 end
