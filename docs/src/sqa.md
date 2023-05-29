@@ -1976,20 +1976,20 @@ SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 3)
 tblte_branches = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 4)
 
 fig = Figure()
-ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, khz", ylabel="spl_1/3, db",
+ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
                        xscale=log10,
                        xminorticksvisible=true,
                        xminorticks=IntervalsBetween(9),
                        xticks=LogTicks(IntegerTicks()),
                        title="figure 28 (d) - U = $U m/s")
-scatter!(ax1, f_s, SPL_s; marker='o', label="TBL-TE suction side, bpm")
-lines!(ax1, f_jl./1e3, SPL_s_jl; label="TBL-TE suction side, julia")
+scatter!(ax1, f_s, SPL_s; marker='o', label="TBL-TE suction side, BPM")
+lines!(ax1, f_jl./1e3, SPL_s_jl; label="TBL-TE suction side, Julia")
 
-scatter!(ax1, f_p, SPL_p; marker='□', label="TBL-TE pressure side, bpm")
-lines!(ax1, f_jl./1e3, SPL_p_jl; label="TBL-TE pressure side, julia")
+scatter!(ax1, f_p, SPL_p; marker='□', label="TBL-TE pressure side, BPM")
+lines!(ax1, f_jl./1e3, SPL_p_jl; label="TBL-TE pressure side, Julia")
 
-scatter!(ax1, f_alpha, SPL_alpha; marker='△', label="separation, bpm")
-lines!(ax1, f_jl./1e3, SPL_alpha_jl; label="separation, julia")
+scatter!(ax1, f_alpha, SPL_alpha; marker='△', label="separation, BPM")
+lines!(ax1, f_jl./1e3, SPL_alpha_jl; label="separation, Julia")
 
 xlims!(ax1, 0.2, 20.0)
 ylims!(ax1, 30, 70)
@@ -1997,6 +1997,140 @@ axislegend(ax1, position=:rt)
 save("19890016302-figure28-d.png", fig)
 ```
 ![](19890016302-figure28-d.png)
+
+```@example bpm_figure38_d
+using AcousticAnalogies: AcousticAnalogies
+using AcousticMetrics: ExactThirdOctaveCenterBands
+using DelimitedFiles: DelimitedFiles
+using GLMakie
+
+# https://docs.makie.org/stable/examples/blocks/axis/index.html#logticks
+struct IntegerTicks end
+Makie.get_tickvalues(::IntegerTicks, vmin, vmax) = ceil(Int, vmin) : floor(Int, vmax)
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure38-d-TBL-TE-suction.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+f_s = bpm[:, 1]
+SPL_s = bpm[:, 2]
+
+# fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure38-d-TBL-TE-pressure.csv")
+# bpm = DelimitedFiles.readdlm(fname, ',')
+# f_p = bpm[:, 1]
+# SPL_p = bpm[:, 2]
+# 
+# fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure38-d-separation.csv")
+# bpm = DelimitedFiles.readdlm(fname, ',')
+# f_alpha = bpm[:, 1]
+# SPL_alpha = bpm[:, 2]
+
+nu = 1.4529e-5  # kinematic viscosity, m^2/s
+L = 45.72e-2  # span in meters
+chord = 2.54e-2  # chord in meters
+U = 31.7  # freestream velocity in m/s
+M = 0.093  # mach number, corresponds to u = 31.7 m/s in bpm report
+r_e = 1.22 # radiation distance in meters
+θ_e = 90*pi/180 
+Φ_e = 90*pi/180
+M_c = 0.8*M
+alphastar = 0.0*pi/180
+f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
+alphastar0 = 12.5*pi/180
+SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+
+SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
+SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
+SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 3)
+tblte_branches = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 4)
+
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
+                       xscale=log10,
+                       xminorticksvisible=true,
+                       xminorticks=IntervalsBetween(9),
+                       xticks=LogTicks(IntegerTicks()),
+                       title="figure 38 (d) - U = $U m/s")
+scatter!(ax1, f_s, SPL_s; marker='o', label="TBL-TE suction side, BPM")
+lines!(ax1, f_jl./1e3, SPL_s_jl; label="TBL-TE suction side, Julia")
+
+# scatter!(ax1, f_p, SPL_p; marker='□', label="TBL-TE pressure side, BPM")
+# lines!(ax1, f_jl./1e3, SPL_p_jl; label="TBL-TE pressure side, Julia")
+# 
+# scatter!(ax1, f_alpha, SPL_alpha; marker='△', label="separation, BPM")
+# lines!(ax1, f_jl./1e3, SPL_alpha_jl; label="separation, Julia")
+
+xlims!(ax1, 0.2, 20.0)
+ylims!(ax1, 20, 60)
+axislegend(ax1, position=:rt)
+save("19890016302-figure38-d.png", fig)
+```
+![](19890016302-figure38-d.png)
+
+```@example bpm_figure39_d
+using AcousticAnalogies: AcousticAnalogies
+using AcousticMetrics: ExactThirdOctaveCenterBands
+using DelimitedFiles: DelimitedFiles
+using GLMakie
+
+# https://docs.makie.org/stable/examples/blocks/axis/index.html#logticks
+struct IntegerTicks end
+Makie.get_tickvalues(::IntegerTicks, vmin, vmax) = ceil(Int, vmin) : floor(Int, vmax)
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure39-d-TBL-TE-suction.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+f_s = bpm[:, 1]
+SPL_s = bpm[:, 2]
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure39-d-TBL-TE-pressure.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+f_p = bpm[:, 1]
+SPL_p = bpm[:, 2]
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure39-d-separation.csv")
+bpm = DelimitedFiles.readdlm(fname, ',')
+f_alpha = bpm[:, 1]
+SPL_alpha = bpm[:, 2]
+
+nu = 1.4529e-5  # kinematic viscosity, m^2/s
+L = 45.72e-2  # span in meters
+chord = 2.54e-2  # chord in meters
+U = 31.7  # freestream velocity in m/s
+M = 0.093  # mach number, corresponds to u = 31.7 m/s in bpm report
+r_e = 1.22 # radiation distance in meters
+θ_e = 90*pi/180 
+Φ_e = 90*pi/180
+M_c = 0.8*M
+alphastar = 4.8*pi/180
+f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
+alphastar0 = 12.5*pi/180
+SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+
+SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
+SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
+SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 3)
+tblte_branches = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 4)
+
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
+                       xscale=log10,
+                       xminorticksvisible=true,
+                       xminorticks=IntervalsBetween(9),
+                       xticks=LogTicks(IntegerTicks()),
+                       title="figure 39 (d) - U = $U m/s")
+scatter!(ax1, f_s, SPL_s; marker='o', label="TBL-TE suction side, BPM")
+lines!(ax1, f_jl./1e3, SPL_s_jl; label="TBL-TE suction side, Julia")
+
+scatter!(ax1, f_p, SPL_p; marker='□', label="TBL-TE pressure side, BPM")
+lines!(ax1, f_jl./1e3, SPL_p_jl; label="TBL-TE pressure side, Julia")
+
+scatter!(ax1, f_alpha, SPL_alpha; marker='△', label="separation, BPM")
+lines!(ax1, f_jl./1e3, SPL_alpha_jl; label="separation, Julia")
+
+xlims!(ax1, 0.2, 20.0)
+ylims!(ax1, 20, 60)
+axislegend(ax1, position=:rt)
+save("19890016302-figure39-d.png", fig)
+```
+![](19890016302-figure39-d.png)
 
 ```@example bpm_figure45_a
 using AcousticAnalogies: AcousticAnalogies
