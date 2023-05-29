@@ -404,19 +404,10 @@ end
 
             f_jl = AcousticMetrics.ExactThirdOctaveCenterBands(0.2, 20e3)
             alphastar0 = 12.5*pi/180
-            SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
-            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
-            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
-            SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 3)
-            tblte_branches = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 4)
-
-            @test all(getproperty.(tblte_branches, :K_1) .== 3)
-            @test all(getproperty.(tblte_branches, :DeltaK_1) .== 2)
-            @test all(getproperty.(tblte_branches, :A_s) .== 3)
-            @test all(getproperty.(tblte_branches, :A_p) .== 3)
-            @test all(getproperty.(tblte_branches, :B) .== 3)
-            @test all(getproperty.(tblte_branches, :St_2) .== 1)
-            @test all(getproperty.(tblte_branches, :K_2) .== 1)
+            SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
+            SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
 
             SPL_s_jl_interp = linear(f_jl, SPL_s_jl, f_s.*1e3)
             vmin, vmax = extrema(SPL_s)
@@ -427,26 +418,6 @@ end
             vmin, vmax = extrema(SPL_p)
             err = abs.(SPL_p_jl_interp .- SPL_s)./(vmax - vmin)
             @test maximum(err) < 0.029
-
-            # Make sure predictions for Figure 11b take all the same branches as Figure 11a.
-            U = 55.5  # freestream velocity in m/s
-            M = 0.163  # Mach number, corresponds to U = 55.5 m/s in BPM report
-            M_c = 0.8*M
-
-            alphastar0 = 12.5*pi/180
-            SPL_s_SPL_p_SPL_alpha_branches_11b = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
-            SPL_s_11b_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches_11b, 1)
-            SPL_p_11b_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches_11b, 2)
-            SPL_alpha_11b_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches_11b, 3)
-            tblte_branches_11b = getindex.(SPL_s_SPL_p_SPL_alpha_branches_11b, 4)
-
-            @test all(getproperty.(tblte_branches_11b, :K_1) .== getproperty.(tblte_branches, :K_1))
-            @test all(getproperty.(tblte_branches_11b, :DeltaK_1) .== getproperty.(tblte_branches, :DeltaK_1))
-            @test all(getproperty.(tblte_branches_11b, :A_s) .== getproperty.(tblte_branches, :A_s))
-            @test all(getproperty.(tblte_branches_11b, :A_p) .== getproperty.(tblte_branches, :A_p))
-            @test all(getproperty.(tblte_branches_11b, :B) .== getproperty.(tblte_branches, :B))
-            @test all(getproperty.(tblte_branches_11b, :St_2) .== getproperty.(tblte_branches, :St_2))
-            @test all(getproperty.(tblte_branches_11b, :K_2) .== getproperty.(tblte_branches, :K_2))
 
         end
 
@@ -473,19 +444,10 @@ end
 
             f_jl = AcousticMetrics.ExactThirdOctaveCenterBands(0.2, 20e3)
             alphastar0 = 12.5*pi/180
-            SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
-            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
-            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
-            SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 3)
-            tblte_branches = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 4)
-
-            @test all(getproperty.(tblte_branches, :K_1) .== 2)
-            @test all(getproperty.(tblte_branches, :DeltaK_1) .== 2)
-            @test all(getproperty.(tblte_branches, :A_s) .== 2)
-            @test all(getproperty.(tblte_branches, :A_p) .== 2)
-            @test all(getproperty.(tblte_branches, :B) .== 2)
-            @test all(getproperty.(tblte_branches, :St_2) .== 1)
-            @test all(getproperty.(tblte_branches, :K_2) .== 1)
+            SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
+            SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
 
             SPL_s_jl_interp = linear(f_jl, SPL_s_jl, f_s.*1e3)
             vmin, vmax = extrema(SPL_s)
@@ -496,26 +458,6 @@ end
             vmin, vmax = extrema(SPL_p)
             err = abs.(SPL_p_jl_interp .- SPL_s)./(vmax - vmin)
             @test maximum(err) < 0.015
-
-            # # Check if all the predictions for Figure 11c also take the same branches as 11d.
-            # U = 39.6  # freestream velocity in m/s
-            # M = 0.116  # Mach number, corresponds to U = 36.6 m/s in BPM report
-            # M_c = 0.8*M
-
-            # alphastar0 = 12.5*pi/180
-            # SPL_s_SPL_p_SPL_alpha_branches_11c = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
-            # SPL_s_11c_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches_11c, 1)
-            # SPL_p_11c_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches_11c, 2)
-            # SPL_alpha_11c_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches_11c, 3)
-            # tblte_branches_11c = getindex.(SPL_s_SPL_p_SPL_alpha_branches_11c, 4)
-
-            # @show getproperty.(tblte_branches_11c, :K_1)
-            # @show getproperty.(tblte_branches_11c, :DeltaK_1)
-            # @show getproperty.(tblte_branches_11c, :A_s)
-            # @show getproperty.(tblte_branches_11c, :A_p)
-            # @show getproperty.(tblte_branches_11c, :B)
-            # @show getproperty.(tblte_branches_11c, :St_2)
-            # @show getproperty.(tblte_branches_11c, :K_2)
 
         end
 
@@ -548,19 +490,10 @@ end
 
             f_jl = AcousticMetrics.ExactThirdOctaveCenterBands(0.2e3, 20e3)
             alphastar0 = 12.5*pi/180
-            SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
-            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
-            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
-            SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 3)
-            tblte_branches = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 4)
-
-            @test all(getproperty.(tblte_branches, :K_1) .== 3)
-            @test all(getproperty.(tblte_branches, :DeltaK_1) .== 2)
-            @test all(getproperty.(tblte_branches, :A_s) .== 3)
-            @test all(getproperty.(tblte_branches, :A_p) .== 3)
-            @test all(getproperty.(tblte_branches, :B) .== 3)
-            @test all(getproperty.(tblte_branches, :St_2) .== 2)
-            @test all(getproperty.(tblte_branches, :K_2) .== 2)
+            SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
+            SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
 
             SPL_s_jl_interp = linear(f_jl, SPL_s_jl, f_s.*1e3)
             vmin, vmax = extrema(SPL_s)
@@ -600,46 +533,16 @@ end
             alphastar = 0.0*pi/180
             f_jl = AcousticMetrics.ExactThirdOctaveCenterBands(0.2e3, 20e3)
             alphastar0 = 12.5*pi/180
-            SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+            SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
-            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
-            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
-            SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 3)
-            tblte_branches = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 4)
+            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
+            SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
 
             SPL_s_jl_interp = linear(f_jl, SPL_s_jl, f_s.*1e3)
             vmin, vmax = extrema(SPL_s)
             err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
             @test maximum(err) < 0.015
-
-            @test all(getproperty.(tblte_branches, :K_1) .== 2)
-            @test all(getproperty.(tblte_branches, :DeltaK_1) .== 2)
-            @test all(getproperty.(tblte_branches, :A_s) .== 2)
-            @test all(getproperty.(tblte_branches, :A_p) .== 2)
-            @test all(getproperty.(tblte_branches, :B) .== 2)
-            @test all(getproperty.(tblte_branches, :St_2) .== 1)
-            @test all(getproperty.(tblte_branches, :K_2) .== 1)
-
-            # Inputs for Figure 26b, which doesn't match the report as well as 26a.
-            U = 55.5  # freestream velocity in m/s
-            M = 0.163  # Mach number, corresponds to U = 55.5 m/s in BPM report
-            M_c = 0.8*M
-            alphastar0 = 12.5*pi/180
-            SPL_s_SPL_p_SPL_alpha_branches_26b = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
-
-            # SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches_26b, 1)
-            # SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches_26b, 2)
-            # SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches_26b, 3)
-            tblte_branches_26b = getindex.(SPL_s_SPL_p_SPL_alpha_branches_26b, 4)
-
-            # Check that Figure 26b takes all the same branches as 26a.
-            @test all(getproperty.(tblte_branches, :K_1) .== getproperty.(tblte_branches_26b, :K_1))
-            @test all(getproperty.(tblte_branches, :DeltaK_1) .== getproperty.(tblte_branches_26b, :DeltaK_1))
-            @test all(getproperty.(tblte_branches, :A_s) .== getproperty.(tblte_branches_26b, :A_s))
-            @test all(getproperty.(tblte_branches, :A_p) .== getproperty.(tblte_branches_26b, :A_p))
-            @test all(getproperty.(tblte_branches, :B) .== getproperty.(tblte_branches_26b, :B))
-            @test all(getproperty.(tblte_branches, :St_2) .== getproperty.(tblte_branches_26b, :St_2))
-            @test all(getproperty.(tblte_branches, :K_2) .== getproperty.(tblte_branches_26b, :K_2))
         end
 
         @testset "BPM Figure 26d" begin
@@ -664,21 +567,11 @@ end
             alphastar = 0.0*pi/180
             f_jl = AcousticMetrics.ExactThirdOctaveCenterBands(0.2e3, 20e3)
             alphastar0 = 12.5*pi/180
-            SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+            SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
-            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
-            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
-            SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 3)
-            tblte_branches = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 4)
-
-            @test all(getproperty.(tblte_branches, :K_1) .== 1)
-            @test all(getproperty.(tblte_branches, :DeltaK_1) .== 1)
-            @test all(getproperty.(tblte_branches, :A_s) .== 2)
-            @test all(getproperty.(tblte_branches, :A_p) .== 2)
-            @test all(getproperty.(tblte_branches, :B) .== 2)
-            @test all(getproperty.(tblte_branches, :St_2) .== 1)
-            @test all(getproperty.(tblte_branches, :K_2) .== 1)
-
+            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
+            SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
 
             SPL_s_jl_interp = linear(f_jl, SPL_s_jl, f_s.*1e3)
             vmin, vmax = extrema(SPL_s)
@@ -716,20 +609,11 @@ end
 
             f_jl = AcousticMetrics.ExactThirdOctaveCenterBands(0.2e3, 20e3)
             alphastar0 = 12.5*pi/180
-            SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+            SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
-            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
-            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
-            SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 3)
-            tblte_branches = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 4)
-
-            @test all(getproperty.(tblte_branches, :K_1) .== 2)
-            @test all(getproperty.(tblte_branches, :DeltaK_1) .== 1)
-            @test all(getproperty.(tblte_branches, :A_s) .== 2)
-            @test all(getproperty.(tblte_branches, :A_p) .== 2)
-            @test all(getproperty.(tblte_branches, :B) .== 2)
-            @test all(getproperty.(tblte_branches, :St_2) .== 2)
-            @test all(getproperty.(tblte_branches, :K_2) .== 2)
+            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
+            SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
 
             SPL_s_jl_interp = linear(f_jl, SPL_s_jl, f_s.*1e3)
             vmin, vmax = extrema(SPL_s)
@@ -776,20 +660,11 @@ end
             alphastar = 6.7*pi/180
             f_jl = AcousticMetrics.ExactThirdOctaveCenterBands(0.2e3, 20e3)
             alphastar0 = 12.5*pi/180
-            SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+            SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
-            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
-            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
-            SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 3)
-            tblte_branches = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 4)
-
-            @test all(getproperty.(tblte_branches, :K_1) .== 1)
-            @test all(getproperty.(tblte_branches, :DeltaK_1) .== 1)
-            @test all(getproperty.(tblte_branches, :A_s) .== 2)
-            @test all(getproperty.(tblte_branches, :A_p) .== 2)
-            @test all(getproperty.(tblte_branches, :B) .== 2)
-            @test all(getproperty.(tblte_branches, :St_2) .== 2)
-            @test all(getproperty.(tblte_branches, :K_2) .== 2)
+            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
+            SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
 
             SPL_s_jl_interp = linear(f_jl, SPL_s_jl, f_s.*1e3)
             vmin, vmax = extrema(SPL_s)
@@ -832,28 +707,11 @@ end
             alphastar = 0.0*pi/180
             f_jl = AcousticMetrics.ExactThirdOctaveCenterBands(0.2e3, 20e3)
             alphastar0 = 12.5*pi/180
-            SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+            SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
-            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
-            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
-            SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 3)
-            tblte_branches = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 4)
-
-            # @show getproperty.(tblte_branches, :K_1)
-            # @show getproperty.(tblte_branches, :DeltaK_1)
-            # @show getproperty.(tblte_branches, :A_s)
-            # @show getproperty.(tblte_branches, :A_p)
-            # @show getproperty.(tblte_branches, :B)
-            # @show getproperty.(tblte_branches, :St_2)
-            # @show getproperty.(tblte_branches, :K_2)
-
-            @test all(getproperty.(tblte_branches, :K_1) .== 1)
-            @test all(getproperty.(tblte_branches, :DeltaK_1) .== 1)
-            @test all(getproperty.(tblte_branches, :A_s) .== 1)
-            @test all(getproperty.(tblte_branches, :A_p) .== 1)
-            @test all(getproperty.(tblte_branches, :B) .== 1)
-            @test all(getproperty.(tblte_branches, :St_2) .== 1)
-            @test all(getproperty.(tblte_branches, :K_2) .== 1)
+            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
+            SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
 
             SPL_s_jl_interp = linear(f_jl, SPL_s_jl, f_s.*1e3)
             vmin, vmax = extrema(SPL_s)
@@ -902,28 +760,11 @@ end
             alphastar = 4.8*pi/180
             f_jl = AcousticMetrics.ExactThirdOctaveCenterBands(0.2e3, 20e3)
             alphastar0 = 12.5*pi/180
-            SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+            SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
-            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
-            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
-            SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 3)
-            tblte_branches = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 4)
-
-            # @show getproperty.(tblte_branches, :K_1)
-            # @show getproperty.(tblte_branches, :DeltaK_1)
-            # @show getproperty.(tblte_branches, :A_s)
-            # @show getproperty.(tblte_branches, :A_p)
-            # @show getproperty.(tblte_branches, :B)
-            # @show getproperty.(tblte_branches, :St_2)
-            # @show getproperty.(tblte_branches, :K_2)
-
-            @test all(getproperty.(tblte_branches, :K_1) .== 1)
-            @test all(getproperty.(tblte_branches, :DeltaK_1) .== 1)
-            @test all(getproperty.(tblte_branches, :A_s) .== 1)
-            @test all(getproperty.(tblte_branches, :A_p) .== 1)
-            @test all(getproperty.(tblte_branches, :B) .== 1)
-            @test all(getproperty.(tblte_branches, :St_2) .== 2)
-            @test all(getproperty.(tblte_branches, :K_2) .== 2)
+            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
+            SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
 
             SPL_s_jl_interp = linear(f_jl, SPL_s_jl, f_s.*1e3)
             vmin, vmax = extrema(SPL_s)
@@ -979,20 +820,11 @@ end
             f_jl = AcousticMetrics.ExactThirdOctaveCenterBands(0.2e3, 20e3)
 
             alphastar0 = 12.5*pi/180
-            SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
+            SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
 
-            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
-            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
-            SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 3)
-            tblte_branches = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 4)
-
-            @test all(getproperty.(tblte_branches, :K_1) .== 3)
-            @test all(getproperty.(tblte_branches, :DeltaK_1) .== 1)
-            @test all(getproperty.(tblte_branches, :A_s) .== 3)
-            @test all(getproperty.(tblte_branches, :A_p) .== 3)
-            @test all(getproperty.(tblte_branches, :B) .== 3)
-            @test all(getproperty.(tblte_branches, :St_2) .== 2)
-            @test all(getproperty.(tblte_branches, :K_2) .== 2)
+            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
+            SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
 
             SPL_lbl_vs_jl = AcousticAnalogies.LBL_VS.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
 
@@ -1037,59 +869,19 @@ end
             alphastar = 15.4*pi/180
             f_jl = AcousticMetrics.ExactThirdOctaveCenterBands(0.2e3, 20e3)
             alphastar0 = 12.5*pi/180
-            SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
+            SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
 
-            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
-            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
-            SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 3)
-            tblte_branches = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 4)
+            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
+            SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
 
             @test all(SPL_s_jl .≈ -100)
             @test all(SPL_p_jl .≈ -100)
-            @test all(getproperty.(tblte_branches, :K_1) .== 0)
-            @test all(getproperty.(tblte_branches, :DeltaK_1) .== 0)
-            @test all(getproperty.(tblte_branches, :A_min_a0_p) .== 0)
-            @test all(getproperty.(tblte_branches, :A_max_a0_p) .== 0)
-            @test all(getproperty.(tblte_branches, :A_min_a_p) .== 0)
-            @test all(getproperty.(tblte_branches, :A_max_a_p) .== 0)
-            @test all(getproperty.(tblte_branches, :A_p) .== 0)
-            @test all(getproperty.(tblte_branches, :B_min_b0) .== 0)
-            @test all(getproperty.(tblte_branches, :B_max_b0) .== 0)
-            @test all(getproperty.(tblte_branches, :B_min_b) .== 0)
-            @test all(getproperty.(tblte_branches, :B_max_b) .== 0)
-            @test all(getproperty.(tblte_branches, :B) .== 0)
 
             SPL_alpha_jl_interp = linear(f_jl, SPL_alpha_jl, f_alpha.*1e3)
             vmin, vmax = extrema(SPL_alpha)
             err = abs.(SPL_alpha_jl_interp .- SPL_alpha)./(vmax - vmin)
             @test maximum(err) < 0.033
-
-            # Now try 69b, which doesn't have as good agreement with the BPM report.
-            U = 39.6  # freestream velocity in m/s
-            M = 0.116  # Mach number, corresponds to U = 36.6 m/s in BPM report
-            SPL_s_SPL_p_SPL_alpha_branches_69b = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
-            tblte_branches_69b = getindex.(SPL_s_SPL_p_SPL_alpha_branches_69b, 4)
-            
-            # Test that all the branches taken in 69b are also taken with 69a, which has good aggreement with the BPM report.
-            branch_69a = getproperty.(tblte_branches, :A_min_a0_s)
-            branch_69b = getproperty.(tblte_branches_69b, :A_min_a0_s)
-            @test all(in.(branch_69b, Ref(branch_69a)))
-
-            branch_69a = getproperty.(tblte_branches, :A_max_a0_s)
-            branch_69b = getproperty.(tblte_branches_69b, :A_max_a0_s)
-            @test all(in.(branch_69b, Ref(branch_69a)))
-
-            branch_69a = getproperty.(tblte_branches, :A_min_a_s)
-            branch_69b = getproperty.(tblte_branches_69b, :A_min_a_s)
-            @test all(in.(branch_69b, Ref(branch_69a)))
-
-            branch_69a = getproperty.(tblte_branches, :A_max_a_s)
-            branch_69b = getproperty.(tblte_branches_69b, :A_max_a_s)
-            @test all(in.(branch_69b, Ref(branch_69a)))
-
-            branch_69a = getproperty.(tblte_branches, :A_s)
-            branch_69b = getproperty.(tblte_branches_69b, :A_s)
-            @test all(in.(branch_69b, Ref(branch_69a)))
         end
     end
 
@@ -1533,10 +1325,10 @@ end
             alphastar0 = 12.5*pi/180
 
             f_jl = AcousticMetrics.ExactThirdOctaveCenterBands(0.2e3, 20e3)
-            SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+            SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
-            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
-            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
+            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
 
             SPL_teb_vs_jl = AcousticAnalogies.BLUNT.(f_jl, nu, L, chord, h, Psi, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
@@ -1594,10 +1386,10 @@ end
             alphastar0 = 12.5*pi/180
 
             f_jl = AcousticMetrics.ExactThirdOctaveCenterBands(0.2e3, 20e3)
-            SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+            SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
-            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
-            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
+            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
 
             SPL_teb_vs_jl = AcousticAnalogies.BLUNT.(f_jl, nu, L, chord, h, Psi, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
@@ -1655,10 +1447,10 @@ end
             alphastar0 = 12.5*pi/180
 
             f_jl = AcousticMetrics.ExactThirdOctaveCenterBands(0.2e3, 20e3)
-            SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+            SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
-            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
-            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
+            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
 
             SPL_teb_vs_jl = AcousticAnalogies.BLUNT.(f_jl, nu, L, chord, h, Psi, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
@@ -1716,10 +1508,10 @@ end
             alphastar0 = 12.5*pi/180
 
             f_jl = AcousticMetrics.ExactThirdOctaveCenterBands(0.2e3, 20e3)
-            SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+            SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
-            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
-            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
+            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
 
             SPL_teb_vs_jl = AcousticAnalogies.BLUNT.(f_jl, nu, L, chord, h, Psi, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
@@ -1777,10 +1569,10 @@ end
             alphastar0 = 12.5*pi/180
 
             f_jl = AcousticMetrics.ExactThirdOctaveCenterBands(0.2e3, 20e3)
-            SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+            SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
-            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
-            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
+            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
 
             SPL_teb_vs_jl = AcousticAnalogies.BLUNT.(f_jl, nu, L, chord, h, Psi, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
@@ -1838,10 +1630,10 @@ end
             alphastar0 = 12.5*pi/180
 
             f_jl = AcousticMetrics.ExactThirdOctaveCenterBands(0.2e3, 20e3)
-            SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+            SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
-            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
-            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
+            SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+            SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
 
             SPL_teb_vs_jl = AcousticAnalogies.BLUNT.(f_jl, nu, L, chord, h, Psi, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 

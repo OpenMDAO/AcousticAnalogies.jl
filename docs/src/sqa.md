@@ -1072,14 +1072,10 @@ M_c = 0.8*M
 alphastar = 0.0
 alphastar0 = 12.5*pi/180
 f_jl = ExactThirdOctaveCenterBands(0.2, 20e3)
-SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
-SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
-SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
-SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 3)
-tblte_branches = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 4)
-
-# Now, I want to know what branches were actually used.
-# @show getproperty.(tblte_branches, :K_1) getproperty.(tblte_branches, :DeltaK_1) getproperty.(tblte_branches, :A_s) getproperty.(tblte_branches, :A_p) getproperty.(tblte_branches, :B) getproperty.(tblte_branches, :St_2) getproperty.(tblte_branches, :K_2)
+SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
+SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
 
 fig = Figure()
 ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
@@ -1157,14 +1153,10 @@ f_jl = ExactThirdOctaveCenterBands(0.2, 20e3)
 # @show AcousticAnalogies.St_1(M)
 
 alphastar0 = 12.5*pi/180
-SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
-SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
-SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
-SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 3)
-tblte_branches = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 4)
-
-# Now, I want to know what branches were actually used.
-@show getproperty.(tblte_branches, :K_1) getproperty.(tblte_branches, :DeltaK_1) getproperty.(tblte_branches, :A_s) getproperty.(tblte_branches, :A_p) getproperty.(tblte_branches, :B) getproperty.(tblte_branches, :St_2) getproperty.(tblte_branches, :K_2)
+SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
+SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
 
 # K_1_table = 128.0  # Value from line 11(b) in Table (1), BPM appendix.
 
@@ -1520,12 +1512,11 @@ M_c = 0.8*M
 alphastar = 0.0*pi/180
 f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
 alphastar0 = 12.5*pi/180
-SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
-SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
-SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
-SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 3)
-tblte_branches = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 4)
+SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
+SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
 
 fig = Figure()
 ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
@@ -1581,12 +1572,11 @@ M_c = 0.8*M
 alphastar = 0.0*pi/180
 f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
 alphastar0 = 12.5*pi/180
-SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
-SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
-SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
-SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 3)
-tblte_branches = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 4)
+SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
+SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
 
 fig = Figure()
 ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
@@ -1642,12 +1632,11 @@ M_c = 0.8*M
 alphastar = 0.0*pi/180
 f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
 alphastar0 = 12.5*pi/180
-SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
-SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
-SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
-SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 3)
-tblte_branches = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 4)
+SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
+SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
 
 fig = Figure()
 ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
@@ -1700,12 +1689,11 @@ M_c = 0.8*M
 alphastar = 0.0*pi/180
 f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
 alphastar0 = 12.5*pi/180
-SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
-SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
-SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
-SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 3)
-tblte_branches = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 4)
+SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
+SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
 
 fig = Figure()
 ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
@@ -1767,12 +1755,11 @@ M_c = 0.8*M
 alphastar = 6.7*pi/180
 f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
 alphastar0 = 12.5*pi/180
-SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
-SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
-SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
-SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 3)
-tblte_branches = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 4)
+SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
+SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
 
 fig = Figure()
 ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
@@ -1834,12 +1821,11 @@ M_c = 0.8*M
 alphastar = 6.7*pi/180
 f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
 alphastar0 = 12.5*pi/180
-SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
-SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
-SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
-SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 3)
-tblte_branches = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 4)
+SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
+SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
 
 fig = Figure()
 ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
@@ -1901,12 +1887,11 @@ M_c = 0.8*M
 alphastar = 6.7*pi/180
 f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
 alphastar0 = 12.5*pi/180
-SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
-SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
-SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
-SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 3)
-tblte_branches = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 4)
+SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
+SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
 
 fig = Figure()
 ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
@@ -1968,12 +1953,11 @@ M_c = 0.8*M
 alphastar = 6.7*pi/180
 f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
 alphastar0 = 12.5*pi/180
-SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
-SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
-SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
-SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 3)
-tblte_branches = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 4)
+SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
+SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
 
 fig = Figure()
 ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
@@ -2035,12 +2019,11 @@ M_c = 0.8*M
 alphastar = 0.0*pi/180
 f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
 alphastar0 = 12.5*pi/180
-SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
-SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
-SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
-SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 3)
-tblte_branches = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 4)
+SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
+SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
 
 fig = Figure()
 ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
@@ -2102,12 +2085,11 @@ M_c = 0.8*M
 alphastar = 4.8*pi/180
 f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
 alphastar0 = 12.5*pi/180
-SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
-SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
-SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
-SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 3)
-tblte_branches = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 4)
+SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
+SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
 
 fig = Figure()
 ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
@@ -2191,12 +2173,11 @@ f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
 # K_2 = AcousticAnalogies.K_2(Re_c, M, alphastar)
 # SPL_alpha_jl = @. 10*log10((deltastar_s*M^5*L*D_h)/(r_e^2)) + B + K_2
 alphastar0 = 12.5*pi/180
-SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
+SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
 
-SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
-SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
-SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 3)
-tblte_branches = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 4)
+SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
+SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
 
 SPL_lbl_vs_jl = AcousticAnalogies.LBL_VS.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
 
@@ -2753,12 +2734,11 @@ M_c = 0.8*M
 alphastar = 15.4*pi/180
 f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
 alphastar0 = 12.5*pi/180
-SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
+SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
 
-SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
-SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
-SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 3)
-tblte_branches = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 4)
+SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
+SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
 
 fig = Figure()
 ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
@@ -2820,12 +2800,11 @@ M_c = 0.8*M
 alphastar = 15.4*pi/180
 f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
 alphastar0 = 12.5*pi/180
-SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
+SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
 
-SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
-SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
-SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 3)
-tblte_branches = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 4)
+SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
+SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
 
 fig = Figure()
 ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
@@ -3406,10 +3385,10 @@ alphastar = 0.0*pi/180
 alphastar0 = 12.5*pi/180
 
 f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
-SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
-SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
-SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
+SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
 
 SPL_teb_vs_jl = AcousticAnalogies.BLUNT.(f_jl, nu, L, chord, h, Psi, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
@@ -3480,10 +3459,10 @@ alphastar = 0.0*pi/180
 alphastar0 = 12.5*pi/180
 
 f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
-SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
-SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
-SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
+SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
 
 SPL_teb_vs_jl = AcousticAnalogies.BLUNT.(f_jl, nu, L, chord, h, Psi, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
@@ -3554,10 +3533,10 @@ alphastar = 0.0*pi/180
 alphastar0 = 12.5*pi/180
 
 f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
-SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
-SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
-SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
+SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
 
 SPL_teb_vs_jl = AcousticAnalogies.BLUNT.(f_jl, nu, L, chord, h, Psi, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
@@ -3628,10 +3607,10 @@ alphastar = 0.0*pi/180
 alphastar0 = 12.5*pi/180
 
 f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
-SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
-SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
-SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
+SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
 
 SPL_teb_vs_jl = AcousticAnalogies.BLUNT.(f_jl, nu, L, chord, h, Psi, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
@@ -3702,10 +3681,10 @@ alphastar = 0.0*pi/180
 alphastar0 = 12.5*pi/180
 
 f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
-SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
-SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
-SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
+SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
 
 SPL_teb_vs_jl = AcousticAnalogies.BLUNT.(f_jl, nu, L, chord, h, Psi, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
@@ -3776,10 +3755,10 @@ alphastar = 0.0*pi/180
 alphastar0 = 12.5*pi/180
 
 f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
-SPL_s_SPL_p_SPL_alpha_branches = AcousticAnalogies.TBL_TE_branch.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
-SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 1)
-SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha_branches, 2)
+SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
 
 SPL_teb_vs_jl = AcousticAnalogies.BLUNT.(f_jl, nu, L, chord, h, Psi, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 
