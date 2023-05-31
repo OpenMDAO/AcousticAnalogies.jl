@@ -116,7 +116,10 @@ function BLUNT(freq, nu, L, chord, h, Psi, U, M, M_c, r_e, theta_e, phi_e, alpha
     end
 
     # Equation 70 from the BPM report.
-    SPL_blunt = 10*log10((h*(M^5.5)*L*D)/(r_e^2)) + G4(h_over_deltastar_avg, Psi) + g5
-
+    # SPL_blunt = 10*log10((h*(M^5.5)*L*D)/(r_e^2)) + G4(h_over_deltastar_avg, Psi) + g5
+    # Brooks and Burley AIAA 2001-2210 style.
+    H_b = 10^(0.1*(G4(h_over_deltastar_avg, Psi) + g5))
+    G_bte = (h*(M^5.5)*L*D)/(r_e^2)*H_b
+    SPL_blunt = 10*log10(G_bte)
     return SPL_blunt
 end

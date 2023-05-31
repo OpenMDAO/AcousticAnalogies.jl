@@ -204,7 +204,8 @@ function TBL_TE_s(freq, nu, L, chord, U, M, M_c, r_e, theta_e, phi_e, alphastar,
 
     gamma0_deg = gamma0(M)
     if alphastar*180/pi > min(gamma0_deg, alphastar0*180/pi)
-        SPL_s = -100*one(T)
+        # SPL_s = -100*one(T)
+        G_s = 10^(0.1*(-100))*one(T)
     else
         D = Dbar_h(theta_e, phi_e, M, M_c)
         Re_c = U*chord/nu
@@ -219,9 +220,13 @@ function TBL_TE_s(freq, nu, L, chord, U, M, M_c, r_e, theta_e, phi_e, alphastar,
 
         k_1 = K_1(Re_c)
 
-        SPL_s = 10*log10((deltastar_s*M^5*L*D)/(r_e^2)) + A_s + k_1 - 3
+        # SPL_s = 10*log10((deltastar_s*M^5*L*D)/(r_e^2)) + A_s + k_1 - 3
+        # Brooks and Burley AIAA 2001-2210 style.
+        H_s = 10^(0.1*(A_s + k_1 - 3))
+        G_s = (deltastar_s*M^5*L*D)/(r_e^2)*H_s
     end
 
+    SPL_s = 10*log10(G_s)
     return SPL_s
 end
 
@@ -231,7 +236,8 @@ function TBL_TE_p(freq, nu, L, chord, U, M, M_c, r_e, theta_e, phi_e, alphastar,
     gamma0_deg = gamma0(M)
 
     if alphastar*180/pi > min(gamma0_deg, alphastar0*180/pi)
-        SPL_p = -100*one(T)
+        # SPL_p = -100*one(T)
+        G_p = 10^(0.1*(-100))*one(T)
     else
         D = Dbar_h(theta_e, phi_e, M, M_c)
         Re_c = U*chord/nu
@@ -246,9 +252,13 @@ function TBL_TE_p(freq, nu, L, chord, U, M, M_c, r_e, theta_e, phi_e, alphastar,
         Re_deltastar_p = U*deltastar_p/nu
         ΔK_1 = DeltaK_1(alphastar, Re_deltastar_p)
 
-        SPL_p = 10*log10((deltastar_p*M^5*L*D)/(r_e^2)) + A_p + k_1 - 3 + ΔK_1
+        # SPL_p = 10*log10((deltastar_p*M^5*L*D)/(r_e^2)) + A_p + k_1 - 3 + ΔK_1
+        # Brooks and Burley AIAA 2001-2210 style.
+        H_p = 10^(0.1*(A_p + k_1 - 3 + ΔK_1))
+        G_p = (deltastar_p*M^5*L*D)/(r_e^2)*H_p
     end
 
+    SPL_p = 10*log10(G_p)
     return SPL_p
 end
 
@@ -264,63 +274,22 @@ function TBL_TE_alpha(freq, nu, L, chord, U, M, M_c, r_e, theta_e, phi_e, alphas
     if alphastar*180/pi > min(gamma0_deg, alphastar0*180/pi)
         D = Dbar_l(theta_e, phi_e, M)
         A_prime = A(St_s/St_peak_alpha, 3*Re_c)
-        SPL_alpha = 10*log10((deltastar_s*M^5*L*D)/(r_e^2)) + A_prime + k2
+        # SPL_alpha = 10*log10((deltastar_s*M^5*L*D)/(r_e^2)) + A_prime + k2
+        # Brooks and Burley AIAA 2001-2210 style.
+        H_alpha = 10^(0.1*(A_prime + k2))
+        G_alpha = (deltastar_s*M^5*L*D)/(r_e^2)*H_alpha
     else
         D = Dbar_h(theta_e, phi_e, M, M_c)
         B_alpha = B(St_s/St_peak_alpha, Re_c)
-        SPL_alpha = 10*log10((deltastar_s*M^5*L*D)/(r_e^2)) + B_alpha + k2
+        # SPL_alpha = 10*log10((deltastar_s*M^5*L*D)/(r_e^2)) + B_alpha + k2
+        # Brooks and Burley AIAA 2001-2210 style.
+        H_alpha = 10^(0.1*(B_alpha + k2))
+        G_alpha = (deltastar_s*M^5*L*D)/(r_e^2)*H_alpha
     end
 
+    SPL_alpha = 10*log10(G_alpha)
     return SPL_alpha
 end
-
-# function TBL_TE(freq, nu, L, chord, U, M, M_c, r_e, theta_e, phi_e, alphastar, alphastar0, bl)
-#     T = promote_type(typeof(freq), typeof(nu), typeof(L), typeof(chord), typeof(U), typeof(M), typeof(M_c), typeof(r_e), typeof(theta_e), typeof(phi_e), typeof(alphastar), typeof(alphastar0))
-#     Re_c = U*chord/nu
-
-#     gamma0_deg = gamma0(M)
-#     deltastar_s = disp_thickness_s(bl, Re_c, alphastar)*chord
-#     St_s = freq*deltastar_s/U
-
-#     if alphastar*180/pi > min(gamma0_deg, alphastar0*180/pi)
-#         SPL_s = -100*one(T)
-#         SPL_p = -100*one(T)
-#         D = Dbar_l(theta_e, phi_e, M)
-#         St_peak_p = St_1(M)
-#         St_peak_alpha = St_2(St_peak_p, alphastar)
-#         A_prime = A(St_s/St_peak_alpha, 3*Re_c)
-#         k2 = K_2(Re_c, M, alphastar)
-#         SPL_alpha = 10*log10((deltastar_s*M^5*L*D)/(r_e^2)) + A_prime + k2
-
-#     else
-#         D = Dbar_h(theta_e, phi_e, M, M_c)
-
-#         St_peak_p = St_1(M)
-#         St_peak_alpha = St_2(St_peak_p, alphastar)
-#         St_peak_s = 0.5*(St_peak_p + St_peak_alpha)
-
-#         A_s = A(St_s/St_peak_s, Re_c)
-
-#         k_1 = K_1(Re_c)
-#         SPL_s = 10*log10((deltastar_s*M^5*L*D)/(r_e^2)) + A_s + k_1 - 3
-
-#         deltastar_p = disp_thickness_p(bl, Re_c, alphastar)*chord
-
-#         St_p = freq*deltastar_p/U
-#         A_p = A(St_p/St_peak_p, Re_c)
-
-#         Re_deltastar_p = U*deltastar_p/nu
-#         ΔK_1 = DeltaK_1(alphastar, Re_deltastar_p)
-
-#         SPL_p = 10*log10((deltastar_p*M^5*L*D)/(r_e^2)) + A_p + k_1 - 3 + ΔK_1
-
-#         B_alpha = B(St_s/St_peak_alpha, Re_c)
-#         k2 = K_2(Re_c, M, alphastar)
-#         SPL_alpha = 10*log10((deltastar_s*M^5*L*D)/(r_e^2)) + B_alpha + k2
-#     end
-
-#     return SPL_s, SPL_p, SPL_alpha
-# end
 
 function TBL_TE(freq, nu, L, chord, U, M, M_c, r_e, theta_e, phi_e, alphastar, alphastar0, bl)
     SPL_s = TBL_TE_s(freq, nu, L, chord, U, M, M_c, r_e, theta_e, phi_e, alphastar, alphastar0, bl)

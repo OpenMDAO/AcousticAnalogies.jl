@@ -1369,13 +1369,13 @@ f_jl = ExactThirdOctaveCenterBands(0.2, 20e3)
 # K_1 = AcousticAnalogies.K_1(Re_c)
 # SPL_s_jl = @. 10*log10((deltastar_s*M^5*L*D_h)/(r_e^2)) + A_s + K_1 - 3
 alphastar0 = 12.5*pi/180
-SPL_s_jl = AcousticAnalogies.TBL_TE_s.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+SPL_s_jl = AcousticAnalogies.TBL_TE_s.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 # SPL_p_jl = @. 10*log10((deltastar_p*M^5*L*D_h)/(r_e^2)) + A_p + K_1 - 3 + ΔK_1
-SPL_p_jl = AcousticAnalogies.TBL_TE_p.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+SPL_p_jl = AcousticAnalogies.TBL_TE_p.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 # B = AcousticAnalogies.B.(St_s./AcousticAnalogies.St_2(AcousticAnalogies.St_1(M), alphastar), Re_c)
 # K_2 = AcousticAnalogies.K_2(Re_c, M, alphastar)
 # SPL_alpha_jl = @. 10*log10((deltastar_s*M^5*L*D_h)/(r_e^2)) + B + K_2
-SPL_alpha_jl = AcousticAnalogies.TBL_TE_alpha.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+SPL_alpha_jl = AcousticAnalogies.TBL_TE_alpha.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 gamma0 = 23.43*M + 4.651
 println("gamma0 = $gamma0 deg, alphastar = $(alphastar*180/pi) deg")
 
@@ -1451,10 +1451,10 @@ f_jl = ExactThirdOctaveCenterBands(0.2, 20e3)
 # K_1 = AcousticAnalogies.K_1(Re_c)
 # SPL_s_jl = @. 10*log10((deltastar_s*M^5*L*D_h)/(r_e^2)) + A_s + K_1 - 3
 alphastar0 = 12.5*pi/180
-SPL_s_jl = AcousticAnalogies.TBL_TE_s.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+SPL_s_jl = AcousticAnalogies.TBL_TE_s.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 # SPL_p_jl = @. 10*log10((deltastar_p*M^5*L*D_h)/(r_e^2)) + A_p + K_1 - 3 + ΔK_1
-SPL_p_jl = AcousticAnalogies.TBL_TE_p.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
-SPL_alpha_jl = AcousticAnalogies.TBL_TE_alpha.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+SPL_p_jl = AcousticAnalogies.TBL_TE_p.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+SPL_alpha_jl = AcousticAnalogies.TBL_TE_alpha.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, alphastar0, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
 @show maximum(SPL_s_jl)
 # @show Re_c
 

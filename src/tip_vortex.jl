@@ -27,6 +27,10 @@ function TIP(freq, chord, M, M_c, U_max, M_max, r_e, theta_e, phi_e, alphatip, b
     D = Dbar_h(theta_e, phi_e, M, M_c)
 
     # Equation 61 in the BPM report.
-    SPL_tip = 10*log10(M^2*M_max^3*l^2*D/r_e^2) - 30.5*(log10(St_pp) + 0.3)^2 + 126
+    # SPL_tip = 10*log10(M^2*M_max^3*l^2*D/r_e^2) - 30.5*(log10(St_pp) + 0.3)^2 + 126
+    # Brooks and Burley AIAA 2001-2210 style.
+    H_t = 10^(0.1*(-30.5*(log10(St_pp) + 0.3)^2 + 126))
+    G_tip = (M^2*M_max^3*l^2*D/r_e^2)*H_t
+    SPL_tip = 10*log10(G_tip)
     return SPL_tip
 end

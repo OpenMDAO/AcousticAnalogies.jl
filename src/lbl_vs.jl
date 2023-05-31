@@ -72,6 +72,10 @@ function LBL_VS(freq, nu, L, chord, U, M, M_c, r_e, theta_e, phi_e, alphastar, b
 
     St_prime_over_St_peak_prime = St_prime/St_p_p
     Re_c_over_Re_c0 = Re_c / Re_c0(alphastar)
-    SPL = 10*log10(delta_p*M^5*L*Dbar_h(theta_e, phi_e, M, M_c)/r_e^2) + G1(St_prime_over_St_peak_prime) + G2(Re_c_over_Re_c0) + G3(alphastar)
+    # SPL = 10*log10(delta_p*M^5*L*Dbar_h(theta_e, phi_e, M, M_c)/r_e^2) + G1(St_prime_over_St_peak_prime) + G2(Re_c_over_Re_c0) + G3(alphastar)
+    # Brooks and Burley AIAA 2001-2210 style.
+    H_l = 10^(0.1*(G1(St_prime_over_St_peak_prime) + G2(Re_c_over_Re_c0) + G3(alphastar)))
+    G_lbl_vs = (delta_p*M^5*L*Dbar_h(theta_e, phi_e, M, M_c))/(r_e^2)*H_l
+    SPL = 10*log10(G_lbl_vs)
     return SPL
 end
