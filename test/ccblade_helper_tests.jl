@@ -96,7 +96,6 @@ end
         end
 
         for field in fieldnames(CompactSourceElement)
-            @show field (getproperty.(ses_helper, field) .≈ getproperty.(ses, field))
             @test all(getproperty.(ses_helper, field) .≈ getproperty.(ses, field))
         end
     end
