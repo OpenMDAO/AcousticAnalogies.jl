@@ -1,7 +1,18 @@
 abstract type AbstractBoundaryLayer end
 
-struct TrippedN0012BoundaryLayer <: AbstractBoundaryLayer end
-struct UntrippedN0012BoundaryLayer <: AbstractBoundaryLayer end
+@concrete struct TrippedN0012BoundaryLayer <: AbstractBoundaryLayer
+    alphastar0
+end
+
+TrippedN0012BoundaryLayer() = TrippedN0012BoundaryLayer(12.5*pi/180)
+
+@concrete struct UntrippedN0012BoundaryLayer <: AbstractBoundaryLayer
+    alphastar0
+end
+
+UntrippedN0012BoundaryLayer() = UntrippedN0012BoundaryLayer(12.5*pi/180)
+
+stall_alpha(bl::Union{TrippedN0012BoundaryLayer,UntrippedN0012BoundaryLayer}, Re_c) = bl.alphastar0
 
 function bl_thickness_0(::TrippedN0012BoundaryLayer, Re_c)
     # Equation 2 from the BPM report.

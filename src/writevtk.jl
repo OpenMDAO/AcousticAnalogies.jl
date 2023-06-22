@@ -3,20 +3,20 @@
 
 Return the Tuple containing the endpoint locations of the compact source element `se`.
 """
-function endpoints(se::CompactSourceElement)
-    p1 = se.y0dot - 0.5*se.Δr*se.u
-    p2 = se.y0dot + 0.5*se.Δr*se.u
+function endpoints(se::AbstractCompactSourceElement)
+    p1 = se.y0dot - 0.5*se.Δr*orientation(se)
+    p2 = se.y0dot + 0.5*se.Δr*orientation(se)
     # Don't like the idea of having a billion SVectors, so convert them to plain
     # Vectors. Maybe not necessary.
     return (Vector(p1), Vector(p2))
 end
 
 """
-    to_vtp(name::AbstractString, ses::AbstractArray{<:CompactSourceElement})
+    to_vtp(name::AbstractString, ses::AbstractArray{<:AbstractCompactSourceElement})
 
-Construct and return a VTK polygonal (.vtp) data file object for an array of `CompactSourceElement` with name `name.vtp` (i.e., the `name` argument should not contain a file extension).
+Construct and return a VTK polygonal (.vtp) data file object for an array of `AbstractCompactSourceElement` with name `name.vtp` (i.e., the `name` argument should not contain a file extension).
 """
-function to_vtp(name, ses::AbstractArray{<:CompactSourceElement})
+function to_vtp(name, ses::AbstractArray{<:AbstractCompactSourceElement})
     # This will be an array of the same size as ses, with each entry a
     # length-two tuple of the endpoints.
     points_all = AcousticAnalogies.endpoints.(ses)
@@ -53,6 +53,12 @@ function to_vtp(name, ses::AbstractArray{<:CompactSourceElement})
 
     vtkfile = vtk_grid(name, points, lines)
 
+    _write_data_to_vtk!(vtkfile, ses)
+
+    return vtkfile
+end
+
+function _write_data_to_vtk!(vtkfile, ses::AbstractArray{<:CompactSourceElement})
     # Now need to add the cell data. I would have expected to have to flatten
     # these arrays, but apparently that's not necessary.
     vtkfile["Length", VTKCellData()] = SingleFieldStructArray(ses, Val{:Δr})
@@ -63,8 +69,18 @@ function to_vtp(name, ses::AbstractArray{<:CompactSourceElement})
     vtkfile["Jerk", VTKCellData()] = hcat(SingleFieldStructArray(ses, Val{:y3dot})...)
     vtkfile["Loading", VTKCellData()] = hcat(SingleFieldStructArray(ses, Val{:f0dot})...)
     vtkfile["LoadingDot", VTKCellData()] = hcat(SingleFieldStructArray(ses, Val{:f1dot})...)
+end
 
-    return vtkfile
+function _write_data_to_vtk!(vtkfile, ses::AbstractArray{<:TBLTESourceElement})
+    # Now need to add the cell data. I would have expected to have to flatten
+    # these arrays, but apparently that's not necessary.
+    vtkfile["Length", VTKCellData()] = SingleFieldStructArray(ses, Val{:Δr})
+    vtkfile["Chord", VTKCellData()] = SingleFieldStructArray(ses, Val{:chord})
+    vtkfile["Position", VTKCellData()] = hcat(SingleFieldStructArray(ses, Val{:y0dot})...)
+    vtkfile["Velocity", VTKCellData()] = hcat(SingleFieldStructArray(ses, Val{:y1dot})...)
+    vtkfile["FluidVelocity", VTKCellData()] = hcat(SingleFieldStructArray(ses, Val{:y1dot_fluid})...)
+    vtkfile["SpanUnitVector", VTKCellData()] = hcat(SingleFieldStructArray(ses, Val{:span_uvec})...)
+    vtkfile["ChordUnitVector", VTKCellData()] = hcat(SingleFieldStructArray(ses, Val{:chord_uvec})...)
 end
 
 """

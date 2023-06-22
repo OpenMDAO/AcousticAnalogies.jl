@@ -1,4 +1,4 @@
-@concrete struct CompactSourceElement
+@concrete struct CompactSourceElement <: AbstractCompactSourceElement
     # Density.
     ρ0
     # Speed of sound.
@@ -24,8 +24,10 @@
     u
 end
 
+orientation(se::CompactSourceElement) = se.u
+
 """
-    CompactSourceElement(ρ0, c0, r, θ, Δr, Λ, fn, fc, τ)
+    CompactSourceElement(ρ0, c0, r, θ, Δr, Λ, fn, fr, fc, τ)
 
 Construct a source element to be used with the compact form of Farassat's formulation 1A.
 
@@ -111,21 +113,21 @@ function (obs::ConstVelocityAcousticObserver)(t)
 end
 
 """
-    adv_time(se::CompactSourceElement, obs::AcousticObserver)
+    adv_time(se::AbstractCompactSourceElement, obs::AcousticObserver)
 
 Calculate the time an acoustic wave emmited by source `se` at time `se.τ` is
 recieved by observer `obs`.
 """
-adv_time(se::CompactSourceElement, obs::AcousticObserver)
+adv_time(se::AbstractCompactSourceElement, obs::AcousticObserver)
 
-function adv_time(se::CompactSourceElement, obs::StationaryAcousticObserver)
+function adv_time(se::AbstractCompactSourceElement, obs::StationaryAcousticObserver)
     rv = obs(se.τ) .- se.y0dot
     r = norm_cs_safe(rv)
     t = se.τ + r/se.c0
     return t
 end
 
-function adv_time(se::CompactSourceElement, obs::ConstVelocityAcousticObserver)
+function adv_time(se::AbstractCompactSourceElement, obs::ConstVelocityAcousticObserver)
     # Location of the observer at the source time.
     x = obs(se.τ)
 
