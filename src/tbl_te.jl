@@ -328,13 +328,14 @@ end
     chord_uvec
     # Boundary layer struct, i.e. an AbstractBoundaryLayer.
     bl
+    # `Bool` indicating chord_uvec×span_uvec will give a vector pointing from pressure side to suction side if `true`, or the opposite if `false`.
     chord_cross_span_to_get_suction_uvec
 end
 
 orientation(se::TBLTESourceElement) = se.span_uvec
 
 """
-    TBLTESourceElement(c0, nu, r, θ, Δr, chord, vn, vr, vc, τ, Δτ, bl)
+    TBLTESourceElement(c0, nu, r, θ, Δr, chord, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y=true)
 
 Construct a source element for predicting turbulent boundary layer-trailing edge (TBLTE) noise using the BPM/Brooks and Burley method.
 
@@ -362,9 +363,14 @@ function TBLTESourceElement(c0, nu, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ,
     y1dot = @SVector zeros(T, 3)
     y1dot_fluid = @SVector [vn, vr*cθ - vc*sθ, vr*sθ + vc*cθ]
     span_uvec = @SVector [0, cθ, sθ]
-    chord_uvec = @SVector [-sϕ, cϕ*sθ, -cϕ*cθ]
+    if twist_about_positive_y
+        chord_uvec = @SVector [-sϕ, cϕ*sθ, -cϕ*cθ]
+    else
+        chord_uvec = @SVector [-sϕ, cϕ*sθ, -cϕ*cθ]
+    end
 
-    return TBLTESourceElement(c0, nu, Δr, chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl)
+    chord_cross_span_to_get_suction_uvec = twist_about_positive_y
+    return TBLTESourceElement(c0, nu, Δr, chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_suction_uvec)
 end
 
 function Dbar_l(se::TBLTESourceElement, obs::AcousticObserver, t_obs)
@@ -510,7 +516,7 @@ function (trans::KinematicTransformation)(se::TBLTESourceElement)
     span_uvec = trans(se.τ, se.span_uvec, linear_only)
     chord_uvec = trans(se.τ, se.chord_uvec, linear_only)
 
-    return TBLTESourceElement(se.c0, se.nu, se.Δr, se.chord, y0dot, y1dot, y1dot_fluid, se.τ, se.Δτ, span_uvec, chord_uvec, se.bl)
+    return TBLTESourceElement(se.c0, se.nu, se.Δr, se.chord, y0dot, y1dot, y1dot_fluid, se.τ, se.Δτ, span_uvec, chord_uvec, se.bl, se.chord_cross_span_to_get_suction_uvec)
 end
 
 function bpm(se::TBLTESourceElement, obs::AcousticObserver, t_obs)

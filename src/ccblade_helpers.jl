@@ -1,4 +1,4 @@
-function _standard_ccblade_transform(rotor, sections, ops, period, num_src_times, positive_x_rotation=true)
+function _standard_ccblade_transform(rotor, sections, ops, period, num_src_times, positive_x_rotation)
     # Assume the rotor is traveling in the positive x direction, with the first
     # blade aligned with the positive y axis. Rotor hub is initially at the origin.
     rot_axis = @SVector [1.0, 0.0, 0.0]
@@ -54,7 +54,7 @@ where `y0dot` is the position of the source element.
 - `Δr`: length of the element.
 - `area_per_chord2`: cross-sectional area divided by the chord squared of the element.
 - `τ`: source time of the element.
-- `positive_x_rotation=true`: assume blade rotates around the positive-x axis.
+- `positive_x_rotation=true`: rotate blade around the positive-x axis if `true`, negative-x axis otherwise.
 """
 function CompactSourceElement(rotor::CCBlade.Rotor, section::CCBlade.Section, op::CCBlade.OperatingPoint, out::CCBlade.Outputs, θ, Δr, area_per_chord2, τ, positive_x_rotation=true)
     ρ0 = op.rho
@@ -142,7 +142,7 @@ Construct and return an array of CompactSourceElement objects from CCBlade struc
 - `area_per_chord2`: cross-sectional area divided by the chord squared of the element at each CCBlade.section. Should be a Vector{AbstractFloat}, same length as `sections`, `ops`, `outputs`.
 - `period`: length of the source time over which the returned source elements will evaluated.
 - `num_src_times`: number of source times.
-- `positive_x_rotation=true`: assume blade rotates around the positive-x axis.
+- `positive_x_rotation=true`: rotate blade around the positive-x axis if `true`, negative-x axis otherwise.
 """
 function source_elements_ccblade(rotor, sections, ops, outputs, area_per_chord2, period, num_src_times, positive_x_rotation=true)
     # Need to know the radial spacing. (CCBlade doesn't use this—when
@@ -180,7 +180,7 @@ end
 
 
 """
-    TBLTESourceElement(rotor::CCBlade.Rotor, section::CCBlade.Section, op::CCBlade.OperatingPoint, out::CCBlade.Outputs, θ, Δr, τ, Δτ, bl::AbstractBoundaryLayer)
+    TBLTESourceElement(rotor::CCBlade.Rotor, section::CCBlade.Section, op::CCBlade.OperatingPoint, out::CCBlade.Outputs, θ, Δr, τ, Δτ, bl::AbstractBoundaryLayer, positive_x_rotation=true)
 
 Construct a source element to be used with the compact form of Farassat's formulation 1A from CCBlade objects.
 
@@ -202,8 +202,9 @@ where `y0dot` is the position of the source element.
 - `τ`: source time of the element, in seconds.
 - `Δτ`: source time duration, in seconds.
 - `bl`: `AcousticAnalogies.AbstractBoundaryLayer`, needed for boundary layer properties.
+- `positive_x_rotation=true`: rotate blade around the positive-x axis if `true`, negative-x axis otherwise.
 """
-function TBLTESourceElement(rotor::CCBlade.Rotor, section::CCBlade.Section, op::CCBlade.OperatingPoint, out::CCBlade.Outputs, θ, Δr, τ, Δτ, bl::AbstractBoundaryLayer)
+function TBLTESourceElement(rotor::CCBlade.Rotor, section::CCBlade.Section, op::CCBlade.OperatingPoint, out::CCBlade.Outputs, θ, Δr, τ, Δτ, bl::AbstractBoundaryLayer, positive_x_rotation=true)
     ρ0 = op.rho
     c0 = op.asound
     r = section.r
@@ -294,55 +295,94 @@ function TBLTESourceElement(rotor::CCBlade.Rotor, section::CCBlade.Section, op::
     # So that's just the same as the position vector, but without the r factor.
     span_uvec = @SVector [spc, cpc*cθ, cpc*sθ]
 
-    # Finally the `chord_uvec` is a unit vector pointing from the leading edge to the trailing edge.
-    # In our initial coordinate system (i.e., not accounting for the precone or
-    # θ rotations) we're imagining the blade is rotating about the x axis,
-    # aligned with the y axis, and so is moving in the direction of the z axis.
-    # So that means if the twist is zero, then the leading edge is headed in the
-    # z axis direction, and a vector pointing from leading edge to trailing edge
-    # would be in the negative z axis direction. Then, to account for the twist,
-    # we would rotate it about the positive y axis. And then do the usual
-    # precone and θ rotations.
-    # So, a rotation about the y axis is 
-    #
-    # [ cos(twist) 0 sin(twist) ]
-    # [ 0          1       0    ]
-    # [-sin(twist) 0 cos(twist) ]
-    #
-    # So, start with
-    #
-    # [ 0 ]
-    # [ 0 ]
-    # [-1 ]
-    #
-    # then
-    #
-    # [ cos(twist) 0 sin(twist) ] [ 0 ]   [-sin(twist) ]
-    # [ 0          1       0    ] [ 0 ] = [    0       ]
-    # [-sin(twist) 0 cos(twist) ] [-1 ]   [-cos(twist) ]
-    #
-    # Now do the precone transformation
-    #
-    # [ cos(precone), sin(precone), 0 ] [-sin(twist) ]   [-sin(twist)*cos(precone) ]
-    # [-sin(precone), cos(precone), 0 ] [    0       ] = [ sin(twist)*sin(precone) ]
-    # [     0,             0,       1 ] [-cos(twist) ]   [-cos(twist)              ]
-    #
-    # Finally do the θ transformation
-    #
-    # [ 1,    0  ,    0    ] [-sin(twist)*cos(precone) ]   [-sin(twist)*cos(precone)                            ]
-    # [ 0, cos(θ), -sin(θ) ] [ sin(twist)*sin(precone) ] = [ sin(twist)*sin(precone)*cos(θ) + cos(twist)*sin(θ) ]
-    # [ 0, sin(θ),  cos(θ) ] [-cos(twist)              ]   [ sin(twist)*sin(precone)*sin(θ) - cos(twist)*cos(θ) ]
-    chord_uvec = @SVector [-stwist*cpc, stwist*spc*cθ + ctwist*sθ, stwist*spc*sθ - ctwist*cθ]
+    if positive_x_rotation
+        # Finally the `chord_uvec` is a unit vector pointing from the leading edge to the trailing edge.
+        # In our initial coordinate system (i.e., not accounting for the precone or
+        # θ rotations) we're imagining the blade is rotating about the x axis,
+        # aligned with the y axis, and so is moving in the direction of the z axis.
+        # So that means if the twist is zero, then the leading edge is headed in the
+        # z axis direction, and a vector pointing from leading edge to trailing edge
+        # would be in the negative z axis direction. Then, to account for the twist,
+        # we would rotate it about the positive y axis. And then do the usual
+        # precone and θ rotations.
+        # So, a rotation about the y axis is 
+        #
+        # [ cos(twist) 0 sin(twist) ]
+        # [ 0          1       0    ]
+        # [-sin(twist) 0 cos(twist) ]
+        #
+        # So, start with
+        #
+        # [ 0 ]
+        # [ 0 ]
+        # [-1 ]
+        #
+        # then
+        #
+        # [ cos(twist) 0 sin(twist) ] [ 0 ]   [-sin(twist) ]
+        # [ 0          1       0    ] [ 0 ] = [    0       ]
+        # [-sin(twist) 0 cos(twist) ] [-1 ]   [-cos(twist) ]
+        #
+        # Now do the precone transformation
+        #
+        # [ cos(precone), sin(precone), 0 ] [-sin(twist) ]   [-sin(twist)*cos(precone) ]
+        # [-sin(precone), cos(precone), 0 ] [    0       ] = [ sin(twist)*sin(precone) ]
+        # [     0,             0,       1 ] [-cos(twist) ]   [-cos(twist)              ]
+        #
+        # Finally do the θ transformation
+        #
+        # [ 1,    0  ,    0    ] [-sin(twist)*cos(precone) ]   [-sin(twist)*cos(precone)                            ]
+        # [ 0, cos(θ), -sin(θ) ] [ sin(twist)*sin(precone) ] = [ sin(twist)*sin(precone)*cos(θ) + cos(twist)*sin(θ) ]
+        # [ 0, sin(θ),  cos(θ) ] [-cos(twist)              ]   [ sin(twist)*sin(precone)*sin(θ) - cos(twist)*cos(θ) ]
+        chord_uvec = @SVector [-stwist*cpc, stwist*spc*cθ + ctwist*sθ, stwist*spc*sθ - ctwist*cθ]
+
+    else
+
+        # But, what if I want to assume that the blade is rotating in the opposite direction, i.e., about the negative x axis?
+        # Then I want to start with a unit vector pointing in the positive z axis, then do a negative-twist rotation about the positive y axis.
+        # So start with
+        #
+        # [ 0 ]
+        # [ 0 ]
+        # [ 1 ]
+        #
+        # then
+        #
+        # [ cos(-twist) 0 sin(-twist) ] [ 0 ]   [ sin(-twist) ]
+        # [ 0            1       0    ] [ 0 ] = [      0      ]
+        # [-sin(-twist) 0 cos(-twist) ] [ 1 ]   [ cos(-twist) ]
+        #
+        # Now do the precone transformation
+        #
+        # [ cos(precone), sin(precone), 0 ] [ sin(-twist) ]   [ sin(-twist)*cos(precone) ]
+        # [-sin(precone), cos(precone), 0 ] [     0       ] = [-sin(-twist)*sin(precone) ]
+        # [     0,             0,       1 ] [ cos(-twist) ]   [ cos(-twist)              ]
+        #
+        # Finally do the θ transformation
+        #
+        # [ 1,    0  ,    0    ] [ sin(-twist)*cos(precone) ]   [ sin(-twist)*cos(precone)                             ]
+        # [ 0, cos(θ), -sin(θ) ] [-sin(-twist)*sin(precone) ] = [-sin(-twist)*sin(precone)*cos(θ) - cos(-twist)*sin(θ) ]
+        # [ 0, sin(θ),  cos(θ) ] [ cos(-twist)              ]   [-sin(-twist)*sin(precone)*sin(θ) + cos(-twist)*cos(θ) ]
+        #
+        # Now handle the `-twist`,
+        #
+        # [ sin(-twist)*cos(precone)                             ]   [-sin(twist)*cos(precone)                            ]
+        # [-sin(-twist)*sin(precone)*cos(θ) - cos(-twist)*sin(θ) ] = [ sin(twist)*sin(precone)*cos(θ) - cos(twist)*sin(θ) ]
+        # [-sin(-twist)*sin(precone)*sin(θ) + cos(-twist)*cos(θ) ]   [ sin(twist)*sin(precone)*sin(θ) + cos(twist)*cos(θ) ]
+        
+        chord_uvec = @SVector [-stwist*cpc, stwist*spc*cθ - ctwist*sθ, stwist*spc*sθ + ctwist*cθ]
+    end
 
     c0 = op.asound
     nu = op.mu/op.rho
     chord = section.chord
 
-    return TBLTESourceElement(c0, nu, Δr, chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl)
+    chord_cross_span_to_get_suction_uvec = positive_x_rotation
+    return TBLTESourceElement(c0, nu, Δr, chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_suction_uvec)
 end
 
 """
-    tblte_source_elements_ccblade(rotor::CCBlade.Rotor, sections::Vector{CCBlade.Section}, ops::Vector{CCBlade.OperatingPoint}, outputs::Vector{CCBlade.Outputs}, bls::Vector{AbstractBoundaryLayer}, period, num_src_times)
+    tblte_source_elements_ccblade(rotor::CCBlade.Rotor, sections::Vector{CCBlade.Section}, ops::Vector{CCBlade.OperatingPoint}, outputs::Vector{CCBlade.Outputs}, bls::Vector{AbstractBoundaryLayer}, period, num_src_times, positive_x_rotation=true)
 
 Construct and return an array of CompactSourceElement objects from CCBlade structs.
 
@@ -354,8 +394,9 @@ Construct and return an array of CompactSourceElement objects from CCBlade struc
 - `bls`::`Vector` of boundary layer `AbstractBoundaryLayer` `structs`.
 - `period`: length of the source time over which the returned source elements will evaluated.
 - `num_src_times`: number of source times.
+- `positive_x_rotation=true`: rotate blade around the positive-x axis if `true`, negative-x axis otherwise.
 """
-function tblte_source_elements_ccblade(rotor, sections, ops, outputs, bls, period, num_src_times)
+function tblte_source_elements_ccblade(rotor, sections, ops, outputs, bls, period, num_src_times, positive_x_rotation=true)
     # Need to know the radial spacing. (CCBlade doesn't use this—when
     # integrating stuff [loading to get torque and thrust] it uses the
     # trapezoidal rule and passes in the radial locations, and assumes that
@@ -365,7 +406,7 @@ function tblte_source_elements_ccblade(rotor, sections, ops, outputs, bls, perio
     dradii = get_ccblade_dradii(rotor, sections)
 
     # Get the transformation that will put the source elements in the "standard" CCBlade.jl reference frame (moving axially in the positive x axis direction, rotating about the positive x axis, first blade initially aligned with the positive y axis).
-    src_times, dt, trans = _standard_ccblade_transform(rotor, sections, ops, period, num_src_times)
+    src_times, dt, trans = _standard_ccblade_transform(rotor, sections, ops, period, num_src_times, positive_x_rotation)
 
     # This is just an array of the angular offsets of each blade. First blade is
     # aligned with the y axis, next one is offset 2*pi/B radians, etc..
@@ -384,7 +425,7 @@ function tblte_source_elements_ccblade(rotor, sections, ops, outputs, bls, perio
     src_times = reshape(src_times, :, 1, 1)  # This one isn't necessary.
 
     # Construct and transform the source elements.
-    ses = TBLTESourceElement.(Ref(rotor), sections, ops, outputs, θs, dradii, src_times, Ref(dt), bls) .|> trans
+    ses = TBLTESourceElement.(Ref(rotor), sections, ops, outputs, θs, dradii, src_times, Ref(dt), bls, positive_x_rotation) .|> trans
 
     return ses
 end
