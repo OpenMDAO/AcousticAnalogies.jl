@@ -54,9 +54,9 @@ where `y0dot` is the position of the source element.
 - `Δr`: length of the element.
 - `area_per_chord2`: cross-sectional area divided by the chord squared of the element.
 - `τ`: source time of the element.
-- `positive_x_rotation=true`: rotate blade around the positive-x axis if `true`, negative-x axis otherwise.
+- `positive_x_rotation`: rotate blade around the positive-x axis if `true`, negative-x axis otherwise.
 """
-function CompactSourceElement(rotor::CCBlade.Rotor, section::CCBlade.Section, op::CCBlade.OperatingPoint, out::CCBlade.Outputs, θ, Δr, area_per_chord2, τ, positive_x_rotation=true)
+function CompactSourceElement(rotor::CCBlade.Rotor, section::CCBlade.Section, op::CCBlade.OperatingPoint, out::CCBlade.Outputs, θ, Δr, area_per_chord2, τ, positive_x_rotation)
     ρ0 = op.rho
     c0 = op.asound
     r = section.r
@@ -142,9 +142,9 @@ Construct and return an array of CompactSourceElement objects from CCBlade struc
 - `area_per_chord2`: cross-sectional area divided by the chord squared of the element at each CCBlade.section. Should be a Vector{AbstractFloat}, same length as `sections`, `ops`, `outputs`.
 - `period`: length of the source time over which the returned source elements will evaluated.
 - `num_src_times`: number of source times.
-- `positive_x_rotation=true`: rotate blade around the positive-x axis if `true`, negative-x axis otherwise.
+- `positive_x_rotation`: rotate blade around the positive-x axis if `true`, negative-x axis otherwise.
 """
-function source_elements_ccblade(rotor, sections, ops, outputs, area_per_chord2, period, num_src_times, positive_x_rotation=true)
+function source_elements_ccblade(rotor, sections, ops, outputs, area_per_chord2, period, num_src_times, positive_x_rotation)
     # Need to know the radial spacing. (CCBlade doesn't use this—when
     # integrating stuff [loading to get torque and thrust] it uses the
     # trapezoidal rule and passes in the radial locations, and assumes that
@@ -180,7 +180,7 @@ end
 
 
 """
-    TBLTESourceElement(rotor::CCBlade.Rotor, section::CCBlade.Section, op::CCBlade.OperatingPoint, out::CCBlade.Outputs, θ, Δr, τ, Δτ, bl::AbstractBoundaryLayer, positive_x_rotation=true)
+    TBLTESourceElement(rotor::CCBlade.Rotor, section::CCBlade.Section, op::CCBlade.OperatingPoint, out::CCBlade.Outputs, θ, Δr, τ, Δτ, bl::AbstractBoundaryLayer, positive_x_rotation)
 
 Construct a source element to be used with the compact form of Farassat's formulation 1A from CCBlade objects.
 
@@ -202,9 +202,9 @@ where `y0dot` is the position of the source element.
 - `τ`: source time of the element, in seconds.
 - `Δτ`: source time duration, in seconds.
 - `bl`: `AcousticAnalogies.AbstractBoundaryLayer`, needed for boundary layer properties.
-- `positive_x_rotation=true`: rotate blade around the positive-x axis if `true`, negative-x axis otherwise.
+- `positive_x_rotation`: rotate blade around the positive-x axis if `true`, negative-x axis otherwise.
 """
-function TBLTESourceElement(rotor::CCBlade.Rotor, section::CCBlade.Section, op::CCBlade.OperatingPoint, out::CCBlade.Outputs, θ, Δr, τ, Δτ, bl::AbstractBoundaryLayer, positive_x_rotation=true)
+function TBLTESourceElement(rotor::CCBlade.Rotor, section::CCBlade.Section, op::CCBlade.OperatingPoint, out::CCBlade.Outputs, θ, Δr, τ, Δτ, bl::AbstractBoundaryLayer, positive_x_rotation)
     ρ0 = op.rho
     c0 = op.asound
     r = section.r
@@ -382,7 +382,7 @@ function TBLTESourceElement(rotor::CCBlade.Rotor, section::CCBlade.Section, op::
 end
 
 """
-    tblte_source_elements_ccblade(rotor::CCBlade.Rotor, sections::Vector{CCBlade.Section}, ops::Vector{CCBlade.OperatingPoint}, outputs::Vector{CCBlade.Outputs}, bls::Vector{AbstractBoundaryLayer}, period, num_src_times, positive_x_rotation=true)
+    tblte_source_elements_ccblade(rotor::CCBlade.Rotor, sections::Vector{CCBlade.Section}, ops::Vector{CCBlade.OperatingPoint}, outputs::Vector{CCBlade.Outputs}, bls::Vector{AbstractBoundaryLayer}, period, num_src_times, positive_x_rotation)
 
 Construct and return an array of CompactSourceElement objects from CCBlade structs.
 
@@ -394,9 +394,9 @@ Construct and return an array of CompactSourceElement objects from CCBlade struc
 - `bls`::`Vector` of boundary layer `AbstractBoundaryLayer` `structs`.
 - `period`: length of the source time over which the returned source elements will evaluated.
 - `num_src_times`: number of source times.
-- `positive_x_rotation=true`: rotate blade around the positive-x axis if `true`, negative-x axis otherwise.
+- `positive_x_rotation`: rotate blade around the positive-x axis if `true`, negative-x axis otherwise.
 """
-function tblte_source_elements_ccblade(rotor, sections, ops, outputs, bls, period, num_src_times, positive_x_rotation=true)
+function tblte_source_elements_ccblade(rotor, sections, ops, outputs, bls, period, num_src_times, positive_x_rotation)
     # Need to know the radial spacing. (CCBlade doesn't use this—when
     # integrating stuff [loading to get torque and thrust] it uses the
     # trapezoidal rule and passes in the radial locations, and assumes that

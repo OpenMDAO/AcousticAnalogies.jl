@@ -335,7 +335,7 @@ end
 orientation(se::TBLTESourceElement) = se.span_uvec
 
 """
-    TBLTESourceElement(c0, nu, r, θ, Δr, chord, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y=true)
+    TBLTESourceElement(c0, nu, r, θ, Δr, chord, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
 
 Construct a source element for predicting turbulent boundary layer-trailing edge (TBLTE) noise using the BPM/Brooks and Burley method.
 
@@ -355,7 +355,7 @@ Construct a source element for predicting turbulent boundary layer-trailing edge
 - bl: Boundary layer struct, i.e. an AbstractBoundaryLayer.
 - twist_about_positive_y: if `true`, apply twist ϕ about positive y axis, negative y axis otherwise
 """
-function TBLTESourceElement(c0, nu, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y=true)
+function TBLTESourceElement(c0, nu, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
     sθ, cθ = sincos(θ)
     sϕ, cϕ = sincos(ϕ)
     y0dot = @SVector [0, r*cθ, r*sθ]
@@ -366,7 +366,7 @@ function TBLTESourceElement(c0, nu, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ,
     if twist_about_positive_y
         chord_uvec = @SVector [-sϕ, cϕ*sθ, -cϕ*cθ]
     else
-        chord_uvec = @SVector [-sϕ, cϕ*sθ, -cϕ*cθ]
+        chord_uvec = @SVector [-sϕ, -cϕ*sθ, cϕ*cθ]
     end
 
     chord_cross_span_to_get_suction_uvec = twist_about_positive_y

@@ -20,7 +20,7 @@ include("boundary_layers.jl")
 export AbstractBoundaryLayer, TrippedN0012BoundaryLayer, UntrippedN0012BoundaryLayer
 
 include("core.jl")
-export CompactSourceElement
+export CompactSourceElement, TBLTESourceElement
 export AcousticObserver, StationaryAcousticObserver, ConstVelocityAcousticObserver
 export F1AOutput, F1APressureTimeHistory
 export adv_time
