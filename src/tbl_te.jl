@@ -386,13 +386,14 @@ function Dbar_l(se::TBLTESourceElement, obs::AcousticObserver, t_obs)
     # Unit vector normal to both the span and chord directions.
     # Does the order matter?
     # Doesn't look like it, since we're only using it to find z_er, which we square.
-    z_uvec = cross(se.chord_uvec, se.span_uvec)
+    z_uvec_tmp = cross(se.chord_uvec, se.span_uvec)
+    z_uvec = z_uvec_tmp / norm_cs_safe(z_uvec_tmp)
     
     # Component of rv along the chord line (see Figure 11 in Brooks and Burley AIAA 2001-2210).
     x_er = dot_cs_safe(rv, se.chord_uvec)
 
     # Component of rv along the span line (see Figure 11 in Brooks and Burley AIAA 2001-2210).
-    y_er = dot_cs_safe(rv, span_uvec)
+    y_er = dot_cs_safe(rv, se.span_uvec)
 
     # Component of rv in the direction normal to both span and chord (see Figure 11 in Brooks and Burley AIAA 2001-2210).
     z_er = dot_cs_safe(rv, z_uvec)
@@ -403,7 +404,7 @@ function Dbar_l(se::TBLTESourceElement, obs::AcousticObserver, t_obs)
 
     # Need to find sin(Φ_er)^2, where Φ_er = acos(y_er/sqrt(y_er^2 + z_er^2)), equation (21) from Brooks and Burley AIAA 2001-2210.
     # But sin(acos(y_er/sqrt(y_er^2 + z_er^2))) = z_er/sqrt(y_er^2 + z_er^2), and so sin(Φ_er)^2 = z_er^2/(y_er_^2 + z_er^2).
-    sin2Φer = (z_er^2)/(y_er^2 - z_er^2)
+    sin2Φer = (z_er^2)/(y_er^2 + z_er^2)
 
     # Now just need the denominator: (1 - M_tot*cos(ξR))^4.
     # M_tot is the "total" velocity from... hmm... what perspective?
@@ -422,6 +423,12 @@ function Dbar_l(se::TBLTESourceElement, obs::AcousticObserver, t_obs)
     # That's what I usually think of as the "actual" velocity, since it's what a stationary observer would observe on a calm day.
     # But when we add in the induced velocity, I think what we're finding is the velocity of the blade element relative to the nearfield velocity.
     # Cool.
+    # But does that mean I add or subtract `se.y1dot_fluid` from `se.y1dot`?
+    # Well, let's think about that.
+    # First, let's say I start with stuff in the blade-fixed frame.
+    # And let's say I'm imagining that, from the global frame, I'm assuming the
+    # blade element is moving in the positive x direction, initially aligned
+    # with the y axis
     # So I think all I need to do is just use se.y1dot_fluid + se.y1dot.
     # Now, cos(ξ_r) is defined by equation (18) in Brooks and Burley AIAA 2001-2210, which is the angle between the radiation vector (rv here) and the total velocity (se.y1dot here).
     # But I can simplify that by just finding the unit radiation vector, then dotting that with the velocity vector, and dividing by c0.
@@ -429,7 +436,7 @@ function Dbar_l(se::TBLTESourceElement, obs::AcousticObserver, t_obs)
     # Unit radiation vector.
     r_uvec = rv./r_er
     # Equation 14 from Brooks and Burley AIAA 2001-2210.
-    Vtotal = se.y1dot + se.y1dot_fluid
+    Vtotal = se.y1dot - se.y1dot_fluid
     # Mach number vectory in the direction of the radiation vector.
     Mtotcosξr = dot_cs_safe(Vtotal, r_uvec)/se.c0
 
@@ -453,13 +460,14 @@ function Dbar_h(se::TBLTESourceElement, obs::AcousticObserver, t_obs)
     # Unit vector normal to both the span and chord directions.
     # Does the order matter?
     # Doesn't look like it, since we're only using it to find z_er, which we square.
-    z_uvec = cross(se.chord_uvec, se.span_uvec)
+    z_uvec_tmp = cross(se.chord_uvec, se.span_uvec)
+    z_uvec = z_uvec_tmp / norm_cs_safe(z_uvec_tmp)
     
     # Component of rv along the chord line (see Figure 11 in Brooks and Burley AIAA 2001-2210).
     x_er = dot_cs_safe(rv, se.chord_uvec)
 
     # Component of rv along the span line (see Figure 11 in Brooks and Burley AIAA 2001-2210).
-    y_er = dot_cs_safe(rv, span_uvec)
+    y_er = dot_cs_safe(rv, se.span_uvec)
 
     # Component of rv in the direction normal to both span and chord (see Figure 11 in Brooks and Burley AIAA 2001-2210).
     z_er = dot_cs_safe(rv, z_uvec)
@@ -472,12 +480,12 @@ function Dbar_h(se::TBLTESourceElement, obs::AcousticObserver, t_obs)
 
     # Need to find sin(Φ_er)^2, where Φ_er = acos(y_er/sqrt(y_er^2 + z_er^2)), equation (21) from Brooks and Burley AIAA 2001-2210.
     # But sin(acos(y_er/sqrt(y_er^2 + z_er^2))) = z_er/sqrt(y_er^2 + z_er^2), and so sin(Φ_er)^2 = z_er^2/(y_er_^2 + z_er^2).
-    sin2Φer = (z_er^2)/(y_er^2 - z_er^2)
+    sin2Φer = (z_er^2)/(y_er^2 + z_er^2)
 
     # Unit radiation vector.
     r_uvec = rv./r_er
     # Equation 14 from Brooks and Burley AIAA 2001-2210.
-    Vtotal = se.y1dot + se.y1dot_fluid
+    Vtotal = se.y1dot - se.y1dot_fluid
     # Mach number vectory in the direction of the radiation vector.
     Mtotcosξr = dot_cs_safe(Vtotal, r_uvec)/se.c0
 
@@ -490,7 +498,8 @@ end
 
 function angle_of_attack(se::TBLTESourceElement)
     # Find the total velocity from the perspective of the blade element, which is just the total velocity of the blade element with the sign switched.
-    Vtotal = -(se.y1dot + se.y1dot_fluid)
+    # Vtotal = -(se.y1dot - se.y1dot_fluid)
+    Vtotal = se.y1dot_fluid - se.y1dot 
 
     # Remove the component of the velocity in the span direction.
     Vtotal_no_span = Vtotal - dot_cs_safe(Vtotal, se.span_uvec)*se.span_uvec

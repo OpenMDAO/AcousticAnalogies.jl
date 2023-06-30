@@ -2,6 +2,8 @@ module BoundaryLayerTests
 
 using AcousticAnalogies: AcousticAnalogies
 using AcousticMetrics: AcousticMetrics
+using KinematicCoordinateTransformations
+using StaticArrays: @SVector
 using DelimitedFiles: DelimitedFiles
 using FLOWMath: linear
 using Test
@@ -1638,6 +1640,69 @@ end
             @test err[end] < 0.225
         end
 
+    end
+
+end
+
+@testset "directivity function tests" begin
+    # None of this stuff matters for the directivity functions.
+    c0 = 2.0
+    nu = 3.0
+    dr = 0.1
+    chord = 1.1
+    τ = 0.2
+    dτ = 0.01
+    bl = AcousticAnalogies.UntrippedN0012BoundaryLayer()
+    chord_cross_span_to_get_suction_uvec = true
+
+    # This stuff actually matters.
+    # Need the fluid velocity to be zero so we can ignore the denominator.
+    y1dot = @SVector [0.0, 0.0, 0.0]
+    y1dot_fluid = @SVector [0.0, 0.0, 0.0]
+    y0dot = @SVector [0.0, 0.0, 0.0]
+    chord_uvec = [1.0, 0.0, 0.0]
+    span_uvec = [0.0, 1.0, 0.0]
+
+    # Create a source element.
+    se = AcousticAnalogies.TBLTESourceElement(c0, nu, dr, chord, y0dot, y1dot, y1dot_fluid, τ, dτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_suction_uvec)
+
+    # Now, create an observer at different places, and check that we get the correct directivity function.
+    for x_er in [-5.0, -3.0, 1.5, 4.0]
+        for y_er in [-5.0, -3.0, 1.5, 4.0]
+            for z_er in [-5.0, -3.0, 1.5, 4.0]
+                x = @SVector [x_er, y_er, z_er]
+                obs = AcousticAnalogies.StationaryAcousticObserver(x)
+                r_er = sqrt(x_er^2 + y_er^2 + z_er^2)
+                Θ_er = acos(x_er/r_er)
+                Φ_er = acos(y_er/sqrt(y_er^2 + z_er^2))
+
+                # Observer time doesn't matter since the observer is stationary.
+                t_obs = 7.0
+                Dl = (sin(Θ_er)^2) * (sin(Φ_er)^2)
+                @test AcousticAnalogies.Dbar_l(se, obs, t_obs) ≈ Dl
+                Dh = 2*(sin(0.5*Θ_er)^2) * (sin(Φ_er)^2)
+                @test AcousticAnalogies.Dbar_h(se, obs, t_obs) ≈ Dh
+
+                # Now, rotate and translate both the source and the observer.
+                # The directivity functions should be the same.
+                # Time parameter for the steady rotations doesn't matter because the rotation rate is zero.
+                trans1 = SteadyRotXTransformation(t_obs, 0.0, 3.0*pi/180)
+                trans2 = SteadyRotYTransformation(t_obs, 0.0, 4.0*pi/180)
+                trans3 = SteadyRotZTransformation(t_obs, 0.0, 5.0*pi/180)
+                # Time parameter for the constant velocity transformations doesn't matter because the velocity is zero.
+                x_trans = @SVector [2.0, 3.0, 4.0]
+                v_trans = @SVector [0.0, 0.0, 0.0]
+                trans4 = ConstantVelocityTransformation(t_obs, x_trans, v_trans)
+
+                # Transform the source and observer.
+                trans = compose(t_obs, trans4, compose(t_obs, trans3, compose(t_obs, trans2, trans1)))
+                se_trans = trans(se)
+                obs_trans = AcousticAnalogies.StationaryAcousticObserver(trans(t_obs, obs(t_obs)))
+
+                @test AcousticAnalogies.Dbar_l(se_trans, obs_trans, t_obs) ≈ Dl
+                @test AcousticAnalogies.Dbar_h(se_trans, obs_trans, t_obs) ≈ Dh
+            end
+        end
     end
 
 end
