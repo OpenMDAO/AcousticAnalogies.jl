@@ -263,11 +263,11 @@ function common_obs_time(apth, period, n, axis=1)
     return t_common
 end
 
-@concrete struct F1APressureTimeHistory{IsEven} <: AcousticMetrics.AbstractPressureTimeHistory{IsEven}
-    p_m
-    p_d
-    dt
-    t0
+struct F1APressureTimeHistory{IsEven,T_p_m,T_p_d,T_dt,T_t0} <: AcousticMetrics.AbstractPressureTimeHistory{IsEven}
+    p_m::T_p_m
+    p_d::T_p_d
+    dt::T_dt
+    t0::T_t0
     function F1APressureTimeHistory{IsEven}(p_m, p_d, dt, t0) where {IsEven}
         n_p_m = length(p_m)
         n_p_d = length(p_d)
