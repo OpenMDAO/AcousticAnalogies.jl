@@ -7,7 +7,7 @@ using FLOWMath: akima, linear, ksmax, dot_cs_safe, norm_cs_safe
 using Formatting: format
 using KinematicCoordinateTransformations
 using LinearAlgebra: cross, norm, mul!
-using SingleFieldStructArrays
+using SplitApplyCombine: mapview
 using StaticArrays
 using WriteVTK
 
