@@ -5,9 +5,10 @@ using CCBlade
 using ConcreteStructs: @concrete
 using FLOWMath: akima, linear, ksmax, dot_cs_safe, norm_cs_safe
 using Formatting: format
+using JuliennedArrays: JuliennedArrays
 using KinematicCoordinateTransformations
 using LinearAlgebra: cross, norm, mul!
-using SingleFieldStructArrays
+using FlexiMaps: mapview
 using StaticArrays
 using WriteVTK
 

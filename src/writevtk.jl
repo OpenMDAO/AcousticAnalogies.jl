@@ -55,14 +55,14 @@ function to_vtp(name, ses::AbstractArray{<:CompactSourceElement})
 
     # Now need to add the cell data. I would have expected to have to flatten
     # these arrays, but apparently that's not necessary.
-    vtkfile["Length", VTKCellData()] = SingleFieldStructArray(ses, Val{:Δr})
-    vtkfile["CSArea", VTKCellData()] = SingleFieldStructArray(ses, Val{:Λ})
-    vtkfile["Position", VTKCellData()] = hcat(SingleFieldStructArray(ses, Val{:y0dot})...)
-    vtkfile["Velocity", VTKCellData()] = hcat(SingleFieldStructArray(ses, Val{:y1dot})...)
-    vtkfile["Acceleration", VTKCellData()] = hcat(SingleFieldStructArray(ses, Val{:y2dot})...)
-    vtkfile["Jerk", VTKCellData()] = hcat(SingleFieldStructArray(ses, Val{:y3dot})...)
-    vtkfile["Loading", VTKCellData()] = hcat(SingleFieldStructArray(ses, Val{:f0dot})...)
-    vtkfile["LoadingDot", VTKCellData()] = hcat(SingleFieldStructArray(ses, Val{:f1dot})...)
+    vtkfile["Length", VTKCellData()] = mapview(:Δr, ses)
+    vtkfile["CSArea", VTKCellData()] = mapview(:Λ, ses)
+    vtkfile["Position", VTKCellData()] = hcat(mapview(:y0dot, ses)...)
+    vtkfile["Velocity", VTKCellData()] = hcat(mapview(:y1dot, ses)...)
+    vtkfile["Acceleration", VTKCellData()] = hcat(mapview(:y2dot, ses)...)
+    vtkfile["Jerk", VTKCellData()] = hcat(mapview(:y3dot, ses)...)
+    vtkfile["Loading", VTKCellData()] = hcat(mapview(:f0dot, ses)...)
+    vtkfile["LoadingDot", VTKCellData()] = hcat(mapview(:f1dot, ses)...)
 
     return vtkfile
 end
