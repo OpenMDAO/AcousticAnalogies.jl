@@ -1,7 +1,8 @@
-module WriteVTKTest
+module GenWriteVTKTestData
 
 using AcousticAnalogies
 using CCBlade
+using JLD2: JLD2
 
 """
     XROTORAirfoilConfig(A0, DCLDA, CLMAX, CLMIN, DCL_STALL, DCLDA_STALL, CDMIN, CLDMIN, DCDCL2, REREF, REXP, MCRIT)
@@ -238,7 +239,7 @@ function af_xrotor(alpha, Re, Mach, config::XROTORAirfoilConfig)
       return CLIFT, CDRAG
 end
 
-function doit(name)
+function main()
     rpm = 2200.0
     omega = rpm*(2*pi/60.0)
 
@@ -295,9 +296,13 @@ function doit(name)
     num_source_times = 64
     ses = source_elements_ccblade(rotor, sections, ops, outs, fill(cs_area_over_chord_squared, length(radii)), period, num_source_times)
 
+    name = "cf1a"
+    JLD2.jldopen("$(name).jld2", "w") do file
+        file["ses"] = ses
+    end
+
     pvd = AcousticAnalogies.to_paraview_collection(name, ses)
 
-    return pvd
 end
 
 end  # module
