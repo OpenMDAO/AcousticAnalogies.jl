@@ -60,6 +60,14 @@ using Test
         err_max = maximum(err)
         @test err_max < 0.01
 
+        # Do it with the mutating version aka combine!.
+        apth_out2 = F1APressureTimeHistory(apth, period, n_out, axis)
+        combine!(apth_out2, apth, axis; f_interp=f_interp)
+        @test all(apth_out2.p_m .≈ apth_out.p_m)
+        @test all(apth_out2.p_d .≈ apth_out.p_d)
+        @test apth_out2.dt ≈ apth_out.dt
+        @test apth_out2.t0 ≈ apth_out.t0
+
         return nothing
     end
 
@@ -81,6 +89,14 @@ using Test
         err = @. abs(apth_out.p_d - apth_test.p_d)/(p_d_max - p_d_min)
         err_max = maximum(err)
         @test err_max < 0.01
+
+        # Do it with the mutating version aka combine!.
+        apth_out2 = F1APressureTimeHistory(apth, period, n_out, axis)
+        combine!(apth_out2, apth, axis; f_interp=f_interp)
+        @test all(apth_out2.p_m .≈ apth_out.p_m)
+        @test all(apth_out2.p_d .≈ apth_out.p_d)
+        @test apth_out2.dt ≈ apth_out.dt
+        @test apth_out2.t0 ≈ apth_out.t0
 
         return nothing
     end
