@@ -1,0 +1,4 @@
+[deps]
+AcousticAnalogies = "e71b3392-1e0c-4536-b366-2bd1fce6fba0"
+CCBlade = "e1828068-15df-11e9-03e4-ef195ea46fa4"
+JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"

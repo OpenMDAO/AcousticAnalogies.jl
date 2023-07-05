@@ -6,5 +6,6 @@ include("f1a_tests.jl")
 include("ccblade_helper_tests.jl")
 include("anopp2_comparison.jl")
 include("forwarddiff_test.jl")
+include("writevtk_tests.jl")
 
 end # module
