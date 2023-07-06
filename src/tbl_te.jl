@@ -335,9 +335,25 @@ end
 orientation(se::TBLTESourceElement) = se.span_uvec
 
 """
-    TBLTESourceElement(c0, nu, r, θ, Δr, chord, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
+    TBLTESourceElement(c0, nu, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
 
-Construct a source element for predicting turbulent boundary layer-trailing edge (TBLTE) noise using the BPM/Brooks and Burley method.
+Construct a source element for predicting turbulent boundary layer-trailing edge (TBLTE) noise using the BPM/Brooks and Burley method, using position and velocity data expressed in a cylindrical coordinate system.
+
+The `r` and `θ` arguments are used to define the radial and circumferential position of the source element in a cylindrical coordinate system.
+Likewise, the `vn`, `vr`, and `vc` arguments are used to define the normal, radial, and circumferential velocity of the fluid (in a reference frame moving with the element) in the same cylindrical coordinate system.
+The cylindrical coordinate system is defined as follows:
+
+  * The normal/axial direction is in the positive x axis
+  * The circumferential/azimuth angle `θ` is defined such that `θ = 0` means the radial direction is aligned with the positive y axis, and a positive `θ` indicates a right-handed rotation around the positive x axis.
+
+The `twist_about_positive_y` is a `Bool` controling how the `ϕ` argument is handled, which in turn controls the orientation of a unit vector defining `chord_uvec` indicating the orientation of the chord line, from leading edge to trailing edge.
+If `twist_about_positive_y` is `true`, `chord_uvec` will initially be pointed in the negative-z direction, and then rotated around the positive y axis by an amount `ϕ` before being rotated by the azimuth angle `θ`.
+(This would typcially be appropriate for a source element rotating around the positive x axis.)
+If `twist_about_positive_y` is `false`, `chord_uvec` will initially be pointed in the positive-z direction, and then rotated around the negative y axis by an amount `ϕ` before being rotated by the azimuth angle `θ`.
+(This would typcially be appropriate for a source element rotating around the negative x axis.)
+
+Note that, for a proper noise prediction, the source element needs to be transformed into the "global" frame, aka, the reference frame of the fluid.
+This can be done easily with the transformations provided by the `KinematicCoordinateTransformations` package, or manually by modifying the components of the source element struct.
 
 # Arguments
 - c0: Ambient speed of sound (m/s)
@@ -497,17 +513,24 @@ function Dbar_h(se::TBLTESourceElement, obs::AcousticObserver, t_obs)
 end
 
 function angle_of_attack(se::TBLTESourceElement)
-    # Find the total velocity from the perspective of the blade element, which is just the total velocity of the blade element with the sign switched.
+    # Find the total velocity of the fluid from the perspective of the blade element, which is just the total velocity of the blade element from the perspective of the fluid with the sign switched.
     # Vtotal = -(se.y1dot - se.y1dot_fluid)
     Vtotal = se.y1dot_fluid - se.y1dot 
 
-    # Remove the component of the velocity in the span direction.
-    Vtotal_no_span = Vtotal - dot_cs_safe(Vtotal, se.span_uvec)*se.span_uvec
+    # To get the angle of attack, I need to find the components of the velocity in the chordwise direction, and the direction normal to both the chord and span.
+    # So, first need to get a vector normal to both the chord and span, pointing from pressure side to suction side.
+    normal_uvec_tmp = ifelse(se.chord_cross_span_to_get_suction_uvec,
+        cross(se.chord_uvec, se.span_uvec),
+        cross(se.span_uvec, se.chord_uvec))
+    normal_uvec = normal_uvec_tmp ./ norm_cs_safe(normal_uvec_tmp)
 
-    # Find the angle between Vtotal_no_span and the chord line.
-    # The dot product of two vectors is dot(a,b) = |a|*|b|*cos(α).
-    # So I can use the dot product to find that angle.
-    alphastar = acos(dot_cs_safe(Vtotal_no_span, se.chord_uvec)/norm(Vtotal_no_span))
+    # Now get the component of velocity in the chord_uvec and normal_uvec directions.
+    V_chordwise = dot_cs_safe(Vtotal, se.chord_uvec)
+    V_normal = dot_cs_safe(Vtotal, normal_uvec)
+
+    # Now we can find the angle of attack.
+    alphastar = atan_cs_safe(V_normal, V_chordwise)
+    # alphastar = atan(V_normal, V_chordwise)
     
     return alphastar
 end
@@ -526,10 +549,6 @@ function (trans::KinematicTransformation)(se::TBLTESourceElement)
     chord_uvec = trans(se.τ, se.chord_uvec, linear_only)
 
     return TBLTESourceElement(se.c0, se.nu, se.Δr, se.chord, y0dot, y1dot, y1dot_fluid, se.τ, se.Δτ, span_uvec, chord_uvec, se.bl, se.chord_cross_span_to_get_suction_uvec)
-end
-
-function bpm(se::TBLTESourceElement, obs::AcousticObserver, t_obs)
-
 end
 
 """

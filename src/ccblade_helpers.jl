@@ -262,40 +262,41 @@ function TBLTESourceElement(rotor::CCBlade.Rotor, section::CCBlade.Section, op::
     T = eltype(y0dot)
     y1dot = @SVector zeros(T, 3)
 
-    # Now, what is the velocity of the fluid in the blade-fixed frame?
-    # In our coordinate system, the rotor is rotating about the x axis, moving in the x axis direction.
-    # So that means it appears that the axial freestream velocity Vx is in the negative x axis direction.
-    # And the induced velocity `u` has the same sign convention as Vx.
-    # So the total axial velocity of the fluid is `(-Vx - u)`.
-    #
-    # For the tangential velocity, we're imagining the blade is initially aligned with the y axis, rotating about the positive x axis.
-    # So that means the blade is moving toward the z axis.
-    # So, from the perspective of the blade, the `Vy` velocity is in the negative z axis direction.
-    # But the sign convention for the induced tangential velocity `v` is that
-    # it's positive when it opposes `Vy`, so the  total tangential velocity of the fluid is `(-Vy + v)`.
-    #
-    # So, finally, the fluid velocity vector we need to rotate is
-    #
-    # [-Vx - u ]
-    # [    0   ]
-    # [-Vy + v ]
-    #
-    # and when I do all that I get
-    #
-    # [ (-Vx - u)*cos(precone)                          ]
-    # [ (Vx + u)*sin(precone)*cos(θ) - (-Vy + v)*sin(θ) ]
-    # [ (Vx + u)*sin(precone)*sin(θ) + (-Vy + v)*cos(θ) ]
     Vx = op.Vx
     u = out.u
     Vy = op.Vy
     v = out.v
-    y1dot_fluid = @SVector [(-Vx - u)*cpc, (Vx + u)*spc*cθ - (-Vy + v)*sθ, (Vx + u)*spc*sθ + (-Vy + v)*cθ]
 
     # The `span_uvec` is a unit vector pointing from the hub to the tip, along the blade element's radial length.
     # So that's just the same as the position vector, but without the r factor.
     span_uvec = @SVector [spc, cpc*cθ, cpc*sθ]
 
     if positive_x_rotation
+        # Now, what is the velocity of the fluid in the blade-fixed frame?
+        # In our coordinate system, the rotor is rotating about the x axis, moving in the x axis direction.
+        # So that means it appears that the axial freestream velocity Vx is in the negative x axis direction.
+        # And the induced velocity `u` has the same sign convention as Vx.
+        # So the total axial velocity of the fluid is `(-Vx - u)`.
+        #
+        # For the tangential velocity, we're imagining the blade is initially aligned with the y axis, rotating about the positive x axis.
+        # So that means the blade is moving toward the z axis.
+        # So, from the perspective of the blade, the `Vy` velocity is in the negative z axis direction.
+        # But the sign convention for the induced tangential velocity `v` is that
+        # it's positive when it opposes `Vy`, so the  total tangential velocity of the fluid is `(-Vy + v)`.
+        #
+        # So, finally, the fluid velocity vector we need to rotate is
+        #
+        # [-Vx - u ]
+        # [    0   ]
+        # [-Vy + v ]
+        #
+        # and when I do all that I get
+        #
+        # [ (-Vx - u)*cos(precone)                          ]
+        # [ (Vx + u)*sin(precone)*cos(θ) - (-Vy + v)*sin(θ) ]
+        # [ (Vx + u)*sin(precone)*sin(θ) + (-Vy + v)*cos(θ) ]
+        y1dot_fluid = @SVector [(-Vx - u)*cpc, (Vx + u)*spc*cθ - (-Vy + v)*sθ, (Vx + u)*spc*sθ + (-Vy + v)*cθ]
+
         # Finally the `chord_uvec` is a unit vector pointing from the leading edge to the trailing edge.
         # In our initial coordinate system (i.e., not accounting for the precone or
         # θ rotations) we're imagining the blade is rotating about the x axis,
@@ -339,7 +340,37 @@ function TBLTESourceElement(rotor::CCBlade.Rotor, section::CCBlade.Section, op::
     else
 
         # But, what if I want to assume that the blade is rotating in the opposite direction, i.e., about the negative x axis?
-        # Then I want to start with a unit vector pointing in the positive z axis, then do a negative-twist rotation about the positive y axis.
+        # For the velocity, the direction of the axial velocity is unchanged: we're still moving in the positive x direction, so the axial velocity from the perspective of the blade element will be in the negative x direction.
+        # So the total axial velocity of the fluid is `(-Vx - u)`.
+        #
+        # For the tangential velocity, we're rotating about the negative x axis now, so since the blade is initially aligned with the y axis, it is moving in the negative z direction.
+        # So that means the freestream tangential velocity appears to be in the opposite direction, aka the positive z direction.
+        # But the induced tangential velocity is in the opposite direction of the freestream tangential velocity, so the total velocity in the tangential direction is `(Vy - v)`.
+        # 
+        # So the fluid velocity vector we want to rotate is
+        #
+        # [-Vx - u ]
+        # [    0   ]
+        # [ Vy - v ]
+        #
+        # The theta and precone stuff doesn't change, so we'll do all the same stuff.
+        # First we do the precone:
+        #
+        # [ cos(precone), sin(precone), 0 ] [-Vx - u]   [ (-Vx - u)*cos(precone)    ]   [ (-Vx - u)*cos(precone) ]
+        # [-sin(precone), cos(precone), 0 ] [    0  ] = [ (-Vx - u)*(-sin(precone)) ] = [ ( Vx + u)*sin(precone)  ]
+        # [     0,             0,       1 ] [ Vy - v]   [      Vy - v               ]   [   Vy - v                ]
+        #
+        # then do the theta rotation.
+        #
+        # [ 1,    0  ,    0    ] [ (-Vx - u)*cos(precone) ]   [ (-Vx - u)*cos(precone)                          ]
+        # [ 0, cos(θ), -sin(θ) ] [ ( Vx + u)*sin(precone) ] = [ ( Vx + u)*sin(precone)*cos(θ) - (Vy - v)*sin(θ) ]
+        # [ 0, sin(θ),  cos(θ) ] [   Vy - v               ]   [ ( Vx + u)*sin(precone)*sin(θ) + (Vy - v)*cos(θ) ]
+        y1dot_fluid = @SVector [(-Vx - u)*cpc, (Vx + u)*spc*cθ - (Vy - v)*sθ, (Vx + u)*spc*sθ + (Vy - v)*cθ]
+        #
+        # That should be the same thing as the opposite case, but with the sign on (Vy - v) switched.
+        # Yep, good.
+        #
+        # For the chord_uvec, I want to start with a unit vector pointing in the positive z axis, then do a negative-twist rotation about the positive y axis.
         # So start with
         #
         # [ 0 ]

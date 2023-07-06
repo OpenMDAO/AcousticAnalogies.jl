@@ -6,6 +6,7 @@ include("f1a_tests.jl")
 include("ccblade_helper_tests.jl")
 include("anopp2_comparison.jl")
 include("forwarddiff_test.jl")
-include("boundary_layer_tests.jl")
+include("bpm_tests.jl")
+include("source_constructor_tests.jl")
 
 end # module

@@ -29,7 +29,17 @@ orientation(se::CompactSourceElement) = se.u
 """
     CompactSourceElement(ρ0, c0, r, θ, Δr, Λ, fn, fr, fc, τ)
 
-Construct a source element to be used with the compact form of Farassat's formulation 1A.
+Construct a source element to be used with the compact form of Farassat's formulation 1A, using position and loading data expressed in a cylindrical coordinate system.
+
+The `r` and `θ` arguments are used to define the radial and circumferential position of the source element in a cylindrical coordinate system.
+Likewise, the `fn`, `fr`, and `fc` arguments are used to define the normal, radial, and circumferential loading per unit span *on the fluid* (in a reference frame moving with the element) in the same cylindrical coordinate system.
+The cylindrical coordinate system is defined as follows:
+
+  * The normal axial direction is in the positive x axis
+  * The circumferential/azimuth angle `θ` is defined such that `θ = 0` means the radial direction is aligned with the positive y axis, and a positive `θ` indicates a right-handed rotation around the positive x axis.
+
+Note that, for a proper noise prediction, the source element needs to be transformed into the "global" frame, aka, the reference frame of the fluid.
+This can be done easily with the transformations provided by the `KinematicCoordinateTransformations` package, or manually by modifying the components of the source element struct.
 
 # Arguments
 - ρ0: Ambient air density (kg/m^3)
