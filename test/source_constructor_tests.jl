@@ -103,14 +103,15 @@ using Test
                 for ϕ in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
                     # The angle of attack depends on the twist and the fluid velocity
                     if twist_about_positive_y
-                        alpha = ϕ - atan(-vn, -vc)
+                        alpha_check = ϕ - atan(-vn, -vc)
                     else
-                        alpha = ϕ - atan(-vn, vc)
+                        alpha_check = ϕ - atan(-vn, vc)
                     end
-                    alpha = alpha - div(alpha+pi, 2*pi)*2*pi
                     se = TBLTESourceElement(c0, nu, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y) |> trans_theta
-                    # @show AcousticAnalogies.angle_of_attack(se) - alpha
-                    @test AcousticAnalogies.angle_of_attack(se) ≈ alpha
+                    # Adjust the angles of attack to always be between -pi and pi.
+                    alpha_check = rem2pi(alpha_check+pi, RoundNearest) - pi
+                    alpha = rem2pi(AcousticAnalogies.angle_of_attack(se)+pi, RoundNearest) - pi
+                    @test alpha ≈ alpha_check
 
                     for field in fieldnames(TBLTESourceElement)
                         # The twist changes the unit vector in the chord direction, but nothing else, so ignore that for now.
