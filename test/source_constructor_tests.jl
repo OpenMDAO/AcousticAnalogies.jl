@@ -5,6 +5,7 @@ using CCBlade
 using DelimitedFiles
 using KinematicCoordinateTransformations
 using StaticArrays
+using JLD2
 using Test
 
 @testset "Constructor rotation tests" begin
@@ -34,30 +35,26 @@ using Test
     @testset "CompactSourceElement, CCBlade" begin
 
         # Create the CCBlade objects.
-        Rhub = 0.2
-        Rtip = 1.1
-        num_blades = 3
-        r = 2.0
-        Δr = 0.1
-        chord = 0.15
-        twist = 15*pi/180
-        af = nothing
-        Vx = 35.0
-        Vy = 100.0
-        rho = 1.25
-        Np = 2.0
-        Tp = 3.0
-        dummies = fill(0.0, 13)
-        out = CCBlade.Outputs(Np, Tp, dummies...)
-        section = CCBlade.Section(r, chord, twist, af)
-        op = CCBlade.OperatingPoint(Vx, Vy, rho)
         area_per_chord2 = 0.1
         τ = 0.1
-        rotor0precone = CCBlade.Rotor(Rhub, Rtip, num_blades; turbine=false, precone=0.0)
+        ccblade_fname = joinpath(@__DIR__, "gen_test_data", "gen_ccblade_data", "ccblade_omega11.jld2")
+        out, section, Δr, op, rotor0precone = nothing, nothing, nothing, nothing, nothing
+        jldopen(ccblade_fname, "r") do f
+            out = f["outs"][1]
+            section = f["sections"][1]
+            Δr = f["sections"][2].r - f["sections"][1].r
+            op = f["ops"][1]
+            rotor0precone = f["rotor"]
+        end
+        @test rotor0precone.precone ≈ 0.0
+        Rhub = rotor0precone.Rhub
+        Rtip = rotor0precone.Rtip
+        num_blades = rotor0precone.B
+        turbine = rotor0precone.turbine
         for positive_x_rotation in [true, false]
             se_0theta0precone = CompactSourceElement(rotor0precone, section, op, out, 0.0, Δr, area_per_chord2, τ, positive_x_rotation)
             for precone in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
-                rotor = CCBlade.Rotor(Rhub, Rtip, num_blades; turbine=false, precone=precone)
+                rotor = CCBlade.Rotor(Rhub, Rtip, num_blades; turbine=turbine, precone=precone)
                 # This is tricky: in my "normal" coordinate system, the blade is rotating around the x axis, moving axially in the positive x direction, and is initially aligned with the y axis.
                 # That means that the precone should be a rotation around the negative z axis.
                 # And so to undo it, we want a positive rotation around the positive z axis.
@@ -138,32 +135,25 @@ using Test
 
     @testset "TBLTESourceElement, CCBlade" begin
         # Create the CCBlade objects.
-        Rhub = 0.2
-        Rtip = 1.1
-        num_blades = 3
-        r = 2.0
-        Δr = 0.1
-        chord = 0.15
-        twist = 15*pi/180
-        af = nothing
-        Vx = 35.0
-        Vy = 100.0
-        rho = 1.25
-        Np = 2.0
-        Tp = 3.0
-        dummies = fill(0.0, 13)
-        out = CCBlade.Outputs(Np, Tp, dummies...)
-        op = CCBlade.OperatingPoint(Vx, Vy, rho)
         τ = 0.1
         Δτ = 0.02
         bl = AcousticAnalogies.UntrippedN0012BoundaryLayer()
-        rotor0precone = CCBlade.Rotor(Rhub, Rtip, num_blades; turbine=false, precone=0.0)
+        ccblade_fname = joinpath(@__DIR__, "gen_test_data", "gen_ccblade_data", "ccblade_omega11.jld2")
+        out, section_loaded, Δr, op, rotor0precone = nothing, nothing, nothing, nothing, nothing
+        jldopen(ccblade_fname, "r") do f
+            out = f["outs"][1]
+            section_loaded = f["sections"][1]
+            Δr = f["sections"][2].r - f["sections"][1].r
+            op = f["ops"][1]
+            rotor0precone = f["rotor"]
+            @test rotor0precone.precone ≈ 0.0
+        end
         for positive_x_rotation in [true, false]
             for twist in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
-                section = CCBlade.Section(r, chord, twist, af)
+                section = CCBlade.Section(section_loaded.r, section_loaded.chord, twist, section_loaded.af)
                 se_0theta0precone = TBLTESourceElement(rotor0precone, section, op, out, 0.0, Δr, τ, Δτ, bl, positive_x_rotation)
                 for precone in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
-                    rotor = CCBlade.Rotor(Rhub, Rtip, num_blades; turbine=false, precone=precone)
+                    rotor = CCBlade.Rotor(rotor0precone.Rhub, rotor0precone.Rtip, rotor0precone.B; turbine=rotor0precone.turbine, precone=precone)
                     # This is tricky: in my "normal" coordinate system, the blade is rotating around the x axis, moving axially in the positive x direction, and is initially aligned with the y axis.
                     # That means that the precone should be a rotation around the negative z axis.
                     # And so to undo it, we want a positive rotation around the positive z axis.
@@ -201,7 +191,6 @@ using Test
                 end
             end
         end
-
     end
 
 end

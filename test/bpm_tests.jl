@@ -1707,4 +1707,75 @@ end
 
 end
 
+@testset "angle of attack test" begin
+    for twist_about_positive_y in [true, false]
+        # None of this stuff matters for the angle of attack.
+        c0 = 2.0
+        nu = 3.0
+        dr = 0.1
+        chord = 1.1
+        dτ = 0.01
+        r = 0.5
+        omega = 101.0
+        bl = AcousticAnalogies.UntrippedN0012BoundaryLayer()
+
+        # We'll create a random transformation to check that rotating and displacing the source doesn't change the angle of attack.
+        # Time parameter for the steady rotations doesn't matter because the rotation rate is zero.
+        τ = 0.2
+        trans1 = SteadyRotXTransformation(τ, 0.0, 3.0*pi/180)
+        trans2 = SteadyRotYTransformation(τ, 0.0, 4.0*pi/180)
+        trans3 = SteadyRotZTransformation(τ, 0.0, 5.0*pi/180)
+        # Time parameter for the constant velocity transformations doesn't matter because the velocity is zero.
+        x_trans = @SVector [2.0, 3.0, 4.0]
+        v_trans = @SVector [0.0, 0.0, 0.0]
+        trans4 = ConstantVelocityTransformation(τ, x_trans, v_trans)
+        # Combine all the transformations into one.
+        trans = compose(τ, trans4, compose(τ, trans3, compose(τ, trans2, trans1)))
+
+        # This stuff does matter for angle of attack.
+        Vx = 5.5
+        u = 0.1*Vx
+        Vy = omega*r
+        v = 0.05*Vy
+        # So, let's say I'm in the usual frame of reference: moving axially in the positive x direction, rotating about the positive x axis if `twist_about_positive_y` is `true`, negative x axis if `twist_about_positive_y` is `false`, initially aligned with the y axis.
+        # Then, from the perspective of the blade element, the fluid velocity in the axial direction (`x`) is `-(Vx + u)`, and the velocity in the tangential direction is `(-Vy + v)`.
+        # vr shouldn't matter at all, so check that.
+        for vr in [0.0, 2.1, -2.1]
+            for θ in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
+                for twist in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
+                    for vn_sign in [1, -1]
+                        for vc_sign in [1, -1]
+                            vn = -(Vx + u)*vn_sign
+                            vc = (-Vy + v)*vc_sign
+                            se = AcousticAnalogies.TBLTESourceElement(c0, nu, r, θ, dr, chord, twist, vn, vr, vc, τ, dτ, bl, twist_about_positive_y)
+                            # And then the angle of attack will be `twist - atan(-vn, -vc)`, where `twist` is the twist of the blade, `vn` is the velocity in the axial direction, and `vc` is the velocity in the circumferential/tangential direction.
+                            # But we need to switch the direction of the velocity vector, since I'm thinking of them in opposite directions (eg the angle of attack is zero when the velocity and chordwise vector from trailing edge to leading edge are exactly opposite).
+                            # The rem2pi will give us back an equivalent angle in the interval [-π, π].
+                            if twist_about_positive_y
+                                # If the twist is about the positive y axis, then the assumption is that the twist and velocity angles are zero when they are aligned with positive z axis.
+                                # In the "usual" operation, the axial component of the blade-fixed frame velocity will be in the negative x direction, and the circumferential component of the blade-fixed frame velocity will be in the negative z direction.
+                                # So we need to switch both of those signs to get the correct angle.
+                                angle_of_attack_check = rem2pi(twist - atan(-vn, -vc), RoundNearest)
+                            else
+                                # If the twist is about the negative y axis, then the assumption is the twist and velocity angles are zero when they are aligned with the negative z axis.
+                                # In then "usual" operation, the axial component of the blade-fixed frame velocity will be in the negative x direction, and the circumferential component of the blade fixed frame velocity will be in the positive z direction.
+                                # So we need to switch the sign of the axial component, but not the circumferential.
+                                angle_of_attack_check = rem2pi(twist - atan(-vn, vc), RoundNearest)
+                            end
+
+                            @test AcousticAnalogies.angle_of_attack(se) ≈ angle_of_attack_check
+
+                            # Apply the random transformation we created.
+                            se_trans = trans(se)
+
+                            # Make sure we get the same angle of attack as before.
+                            @test AcousticAnalogies.angle_of_attack(se_trans) ≈ angle_of_attack_check
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
 end # module
