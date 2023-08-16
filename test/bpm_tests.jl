@@ -1739,6 +1739,7 @@ end
         v = 0.05*Vy
         # So, let's say I'm in the usual frame of reference: moving axially in the positive x direction, rotating about the positive x axis if `twist_about_positive_y` is `true`, negative x axis if `twist_about_positive_y` is `false`, initially aligned with the y axis.
         # Then, from the perspective of the blade element, the fluid velocity in the axial direction (`x`) is `-(Vx + u)`, and the velocity in the tangential direction is `(-Vy + v)`.
+        #
         # vr shouldn't matter at all, so check that.
         for vr in [0.0, 2.1, -2.1]
             for θ in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
@@ -1770,6 +1771,41 @@ end
 
                             # Make sure we get the same angle of attack as before.
                             @test AcousticAnalogies.angle_of_attack(se_trans) ≈ angle_of_attack_check
+
+                            # Now, instead of doing a transformation that just displaces the source element, let's do one that changes the velocity.
+                            # So, how are we going to transform the source element into the fluid frame?
+                            # Well, first we say we're rotating around the x axix at a rate ω or -ω, depending on the value of `twist_about_positive_y`
+                            # Oh, but wait.
+                            # We're switching the sign.
+                            # Hmm... what to do about that?
+                            # Well, the definition of the fluid frame is one that has the "freestream velocity" as zero.
+                            # So that, I think, means we need to remove the axial and circumferential (rotational) velocity.
+                            # So remove Vx and Vy.
+                            # I should be able to do that.
+                            # So, first, let's think about getting rid of Vy.
+                            # If we rotate about the positive x axis, then that will increase the velocity in the z direction (since the blade is initially aligned with the y axis).
+                            # If we rotate about the negative x axis, then that will decrease the velocity in the z direction (again, since the blade is initially aligned with the y axis).
+                            # OK, then.
+                            trans_rot = KinematicCoordinateTransformations.SteadyRotXTransformation(τ, omega*vc_sign, 0.0)
+
+                            # Now, for the x velocity, we just want to remove the Vx.
+                            x0 = @SVector [0.0, 0.0, 0.0]
+                            v0 = @SVector [Vx*vn_sign, 0.0, 0.0]
+                            trans_freestream = KinematicCoordinateTransformations.ConstantVelocityTransformation(τ, x0, v0)
+
+                            # Now compose the two transformations, and apply them to the source element.
+                            trans_global = compose(τ, trans_freestream, trans_rot)
+                            se_global = trans_global(se)
+
+                            # The angle of attack should be the same.
+                            @test AcousticAnalogies.angle_of_attack(se_global) ≈ angle_of_attack_check
+
+                            # Also, we should know what the source element and fluid velocities are, right?
+                            y1dot_check = @SVector [Vx*vn_sign, Vy*vc_sign*(-sin(θ)), Vy*vc_sign*(cos(θ))]
+                            y1dot_fluid_check = @SVector [-u*vn_sign, vr*cos(θ) + v*vc_sign*(-sin(θ)), vr*sin(θ) + v*vc_sign*(cos(θ))]
+
+                            @test se_global.y1dot ≈ y1dot_check
+                            @test se_global.y1dot_fluid ≈ y1dot_fluid_check
                         end
                     end
                 end
