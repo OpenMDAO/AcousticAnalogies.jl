@@ -9,6 +9,7 @@ using StaticArrays: @SVector
 using DelimitedFiles: DelimitedFiles
 using FLOWMath: linear
 using Test
+using LinearAlgebra: norm, dot, cross
 
 @testset "boundary layer thickness" begin
     @testset "zero angle of attack" begin
@@ -1835,24 +1836,47 @@ end
             @test op.pitch ≈ 0.0
         end
         for positive_x_rotation in [true, false]
-            # for θ in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
-            for θ in [0].*(pi/180)
-                # @show atan(op.Vx + out.u, op.Vy - out.v) out.phi
-                # @show section.theta - out.phi
-                # @show out.alpha
+            for θ in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
                 se = AcousticAnalogies.TBLTESourceElement(rotor, section, op, out, θ, Δr, τ, Δτ, bl, positive_x_rotation)
-                # @show AcousticAnalogies.angle_of_attack(se) out.alpha
+                # The `chord_uvec` vector points from leading edge to trailing edge.
+                # So we should be able to use that to figure out the angle it makes with the tangential/rotation direction.
+                # The tangential/rotation direction can be found by crossing the the rotation axis with the position vector.
+                # Then I can dot the chord with that direction, and the forward velocity axis, then use the arctan function to get the angle.
                 if positive_x_rotation
-                    # chord_uvec points from leading edge to trailing edge, so starts out  as [0, 0, -1] then rotates about the positive y axis.
-                    @show -(op.Vx + out.u) se.y1dot_fluid[1]
-                    @show -(op.Vy - out.v) se.y1dot_fluid[3]
-                    @show se.y1dot_fluid[2] se.y1dot
-                    @show atan((op.Vx + out.u), (op.Vy - out.v)) out.phi
-                    @show atan(-se.y1dot_fluid[1], -se.y1dot_fluid[3])
-                    @show atan(-se.chord_uvec[1], -se.chord_uvec[3])
-                    @show section.theta + op.pitch
-                    @show AcousticAnalogies.angle_of_attack(se) out.alpha
+                    rot_axis = @SVector [1, 0, 0]
+                else
+                    rot_axis = @SVector [-1, 0, 0]
                 end
+                tan_axis_tmp = cross(rot_axis, se.y0dot)
+                tan_axis = tan_axis_tmp / norm(tan_axis_tmp)
+                forward_axis = @SVector [1, 0, 0]
+                # I'm visualizing the chord vector as going from trailing edge to leading edge, but it's leading edge to trailing edge in the TBLTESourceElement struct, so switch that.
+                te_to_le = -se.chord_uvec
+                twist_check = atan(dot(te_to_le, forward_axis), dot(te_to_le, tan_axis))
+                @test twist_check ≈ section.theta
+
+                # The angle of attack that AcousticAnalogies.jl calculates should match what CCBlade.jl has.
+                @test AcousticAnalogies.angle_of_attack(se) ≈ out.alpha
+
+                # Now, rotate and translate the source, which shouldn't change the twist or angle of attack, as long as we don't do anything that would change the velocity.
+                # Time parameter for the steady rotations doesn't matter because the rotation rate is zero.
+                trans1 = SteadyRotXTransformation(τ, 0.0, 3.0*pi/180)
+                trans2 = SteadyRotYTransformation(τ, 0.0, 4.0*pi/180)
+                trans3 = SteadyRotZTransformation(τ, 0.0, 5.0*pi/180)
+                # Time parameter for the constant velocity transformations doesn't matter because the velocity is zero.
+                x_trans = @SVector [2.0, 3.0, 4.0]
+                v_trans = @SVector [0.0, 0.0, 0.0]
+                trans4 = ConstantVelocityTransformation(τ, x_trans, v_trans)
+
+                # Transform the source.
+                trans = compose(τ, trans4, compose(τ, trans3, compose(τ, trans2, trans1)))
+                se_trans = trans(se)
+
+                # Angle of attack should still be the same.
+                @test AcousticAnalogies.angle_of_attack(se_trans) ≈ out.alpha
+
+                # It'd be nice to check the twist too, but if that was wrong, the angle of attack would be wrong too.
+                # And there are other tests already for `chord_uvec`.
             end
         end
     end
