@@ -212,7 +212,7 @@ function TBLTESourceElement(rotor::CCBlade.Rotor, section::CCBlade.Section, op::
 
     sθ, cθ = sincos(θ)
     spc, cpc = sincos(precone)
-    stwist, ctwist = sincos(section.theta)
+    stwist, ctwist = sincos(section.theta + op.pitch)
 
     # The way this will work:
     #
@@ -262,10 +262,13 @@ function TBLTESourceElement(rotor::CCBlade.Rotor, section::CCBlade.Section, op::
     T = eltype(y0dot)
     y1dot = @SVector zeros(T, 3)
 
-    Vx = op.Vx
-    u = out.u
-    Vy = op.Vy
-    v = out.v
+    # Vx = op.Vx
+    # u = out.u
+    # Vy = op.Vy
+    # v = out.v
+    sphi, cphi = sincos(out.phi)
+    Vx_plus_u = out.W*sphi
+    Vy_minus_v = out.W*cphi
 
     # The `span_uvec` is a unit vector pointing from the hub to the tip, along the blade element's radial length.
     # So that's just the same as the position vector, but without the r factor.
@@ -295,7 +298,8 @@ function TBLTESourceElement(rotor::CCBlade.Rotor, section::CCBlade.Section, op::
         # [ (-Vx - u)*cos(precone)                          ]
         # [ (Vx + u)*sin(precone)*cos(θ) - (-Vy + v)*sin(θ) ]
         # [ (Vx + u)*sin(precone)*sin(θ) + (-Vy + v)*cos(θ) ]
-        y1dot_fluid = @SVector [(-Vx - u)*cpc, (Vx + u)*spc*cθ - (-Vy + v)*sθ, (Vx + u)*spc*sθ + (-Vy + v)*cθ]
+        # y1dot_fluid = @SVector [(-Vx - u)*cpc, (Vx + u)*spc*cθ - (-Vy + v)*sθ, (Vx + u)*spc*sθ + (-Vy + v)*cθ]
+        y1dot_fluid = @SVector [-Vx_plus_u*cpc, Vx_plus_u*spc*cθ - (-Vy_minus_v)*sθ, Vx_plus_u*spc*sθ + (-Vy_minus_v)*cθ]
 
         # Finally the `chord_uvec` is a unit vector pointing from the leading edge to the trailing edge.
         # In our initial coordinate system (i.e., not accounting for the precone or
@@ -365,7 +369,8 @@ function TBLTESourceElement(rotor::CCBlade.Rotor, section::CCBlade.Section, op::
         # [ 1,    0  ,    0    ] [ (-Vx - u)*cos(precone) ]   [ (-Vx - u)*cos(precone)                          ]
         # [ 0, cos(θ), -sin(θ) ] [ ( Vx + u)*sin(precone) ] = [ ( Vx + u)*sin(precone)*cos(θ) - (Vy - v)*sin(θ) ]
         # [ 0, sin(θ),  cos(θ) ] [   Vy - v               ]   [ ( Vx + u)*sin(precone)*sin(θ) + (Vy - v)*cos(θ) ]
-        y1dot_fluid = @SVector [(-Vx - u)*cpc, (Vx + u)*spc*cθ - (Vy - v)*sθ, (Vx + u)*spc*sθ + (Vy - v)*cθ]
+        # y1dot_fluid = @SVector [(-Vx - u)*cpc, (Vx + u)*spc*cθ - (Vy - v)*sθ, (Vx + u)*spc*sθ + (Vy - v)*cθ]
+        y1dot_fluid = @SVector [-Vx_plus_u*cpc, Vx_plus_u*spc*cθ - Vy_minus_v*sθ, Vx_plus_u*spc*sθ + Vy_minus_v*cθ]
         #
         # That should be the same thing as the opposite case, but with the sign on (Vy - v) switched.
         # Yep, good.

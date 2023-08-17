@@ -176,7 +176,7 @@ using Test
 
                         if positive_x_rotation
                             # If we're doing a positive-x rotation, we're applying the twist about the positive y axis.
-                            # If we're, applying the twist about the positive y axis, then we need to do a negative rotation about the y axis to undo it.
+                            # If we're applying the twist about the positive y axis, then we need to do a negative rotation about the y axis to undo it.
                             trans_phi = SteadyRotYTransformation(τ, 0.0, -twist)
                             chord_uvec_check = @SVector [0.0, 0.0, -1.0]
                         else
