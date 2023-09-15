@@ -1,10 +1,11 @@
-module CCBladeHelperTests
+module CompactF1AConstructorTests
 
 using AcousticAnalogies
 using CCBlade
 using DelimitedFiles
 using KinematicCoordinateTransformations
 using StaticArrays
+using JLD2
 using Test
 
 include("gen_test_data/gen_ccblade_data/constants.jl")
@@ -24,7 +25,77 @@ ccbc = CCBladeTestCaseConstants
     @test all(AcousticAnalogies.get_ccblade_dradii(rotor, sections) .≈ Δr)
 end
 
-@testset "CCBlade CompactSourceElement test" begin
+@testset "Constructor rotation tests" begin
+    @testset "CompactSourceElement" begin
+        ρ0 = 1.1
+        c0 = 1.2
+        r = 2.0
+        Δr = 0.1
+        Λ = 0.2
+        fn = 2.0
+        fr = 3.0
+        fc = 4.0
+        τ = 0.1
+        se_0theta = CompactSourceElement(ρ0, c0, r, 0.0, Δr, Λ, fn, fr, fc, τ)
+        for θ in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
+            # Create a transformation that will undo the θ rotation.
+            trans = KinematicCoordinateTransformations.SteadyRotXTransformation(τ, 0.0, -θ)
+            # Create a source element with the theta rotation, then undo it.
+            se = CompactSourceElement(ρ0, c0, r, θ, Δr, Λ, fn, fr, fc, τ) |> trans
+            # Check that we got the same thing:
+            for field in fieldnames(CompactSourceElement)
+                @test getproperty(se, field) ≈ getproperty(se_0theta, field)
+            end
+        end
+    end
+
+    @testset "CompactSourceElement, CCBlade" begin
+
+        # Create the CCBlade objects.
+        area_per_chord2 = 0.1
+        τ = 0.1
+        ccblade_fname = joinpath(@__DIR__, "gen_test_data", "gen_ccblade_data", "ccblade_omega11.jld2")
+        out, section, Δr, op, rotor0precone = nothing, nothing, nothing, nothing, nothing
+        jldopen(ccblade_fname, "r") do f
+            out = f["outs"][1]
+            section = f["sections"][1]
+            Δr = f["sections"][2].r - f["sections"][1].r
+            op = f["ops"][1]
+            rotor0precone = f["rotor"]
+        end
+        @test rotor0precone.precone ≈ 0.0
+        Rhub = rotor0precone.Rhub
+        Rtip = rotor0precone.Rtip
+        num_blades = rotor0precone.B
+        turbine = rotor0precone.turbine
+        for positive_x_rotation in [true, false]
+            se_0theta0precone = CompactSourceElement(rotor0precone, section, op, out, 0.0, Δr, area_per_chord2, τ, positive_x_rotation)
+            for precone in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
+                rotor = CCBlade.Rotor(Rhub, Rtip, num_blades; turbine=turbine, precone=precone)
+                # This is tricky: in my "normal" coordinate system, the blade is rotating around the x axis, moving axially in the positive x direction, and is initially aligned with the y axis.
+                # That means that the precone should be a rotation around the negative z axis.
+                # And so to undo it, we want a positive rotation around the positive z axis.
+                trans_precone = SteadyRotZTransformation(τ, 0.0, precone)
+                for θ in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
+                    trans_theta = SteadyRotXTransformation(τ, 0.0, -θ)
+                    # Create a transformation that reverses the theta and precone rotations.
+                    # The precone happens first, then theta.
+                    # So to reverse it we need to do theta, then precone.
+                    trans = KinematicCoordinateTransformations.compose(τ, trans_precone, trans_theta)
+                    # Create a source element with the theta and precone rotations, then undo it.
+                    se = CompactSourceElement(rotor, section, op, out, θ, Δr, area_per_chord2, τ, positive_x_rotation) |> trans
+                    # Check that we got the same thing:
+                    for field in fieldnames(CompactSourceElement)
+                        @test getproperty(se, field) ≈ getproperty(se_0theta0precone, field)
+                    end
+                end
+            end
+        end
+
+    end
+end
+
+@testset "CCBlade CompactSourceElement complete test" begin
 
     for positive_x_rotation in [true, false]
         omega = 2200*(2*pi/60)
@@ -99,9 +170,6 @@ end
             @test all(getproperty.(ses_helper, field) .≈ getproperty.(ses, field))
         end
     end
-end
-
-@testset "CCBlade TBLTESourceElement test" begin
 end
 
 end
