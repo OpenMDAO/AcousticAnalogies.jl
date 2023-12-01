@@ -12,7 +12,9 @@ end
 
 UntrippedN0012BoundaryLayer() = UntrippedN0012BoundaryLayer(12.5*pi/180)
 
-stall_alpha(bl::Union{TrippedN0012BoundaryLayer,UntrippedN0012BoundaryLayer}, Re_c) = bl.alphastar0
+alpha_stall(bl::Union{TrippedN0012BoundaryLayer,UntrippedN0012BoundaryLayer}, Re_c) = bl.alphastar0
+
+alpha_zerolift(bl::Union{TrippedN0012BoundaryLayer,UntrippedN0012BoundaryLayer}) = zero(bl.alphastar0)
 
 function bl_thickness_0(::TrippedN0012BoundaryLayer, Re_c)
     # Equation 2 from the BPM report.
@@ -77,11 +79,12 @@ end
 # end
 
 function disp_thickness_s(::TrippedN0012BoundaryLayer, alphastar)
-    # Equation 12 from the BPM report.
     T = typeof(alphastar)
+    # Equation 12 from the BPM report.
     alphastar_deg = alphastar*180/pi
     if alphastar_deg < 0
-        throw(DomainError(alphastar, "negative alphastar argument invalid"))
+        # throw(DomainError(alphastar, "negative alphastar argument invalid"))
+        return T(NaN)
     elseif alphastar_deg ≤ 5
         return 10^(0.0679*alphastar_deg)
     elseif alphastar_deg ≤ 12.5
@@ -114,10 +117,12 @@ end
 # end
 
 function disp_thickness_s(::UntrippedN0012BoundaryLayer, alphastar)
+    T = typeof(alphastar)
     # Equation 15 from the BPM report.
     alphastar_deg = alphastar*180/pi
     if alphastar_deg < 0
-        throw(DomainError(alphastar, "negative alphastar argument invalid"))
+        # throw(DomainError(alphastar, "negative alphastar argument invalid"))
+        return T(NaN)
     elseif alphastar_deg ≤ 7.5
         return 10^(0.0679*alphastar_deg)
     elseif alphastar_deg ≤ 12.5
@@ -127,8 +132,16 @@ function disp_thickness_s(::UntrippedN0012BoundaryLayer, alphastar)
     else
         # What should I do for angles of attack greater than 25°?
         # Maybe just keep the same thickness?
-        return 52.42*10^(0.0258*25)
+        return 52.42*10^(0.0258*25)*one(T)
     end
+end
+
+function disp_thickness_top(bl::Union{TrippedN0012BoundaryLayer,UntrippedN0012BoundaryLayer}, alphastar)
+    return ifelse(alphastar > alpha_zerolift(bl), disp_thickness_s(bl, alphastar), disp_thickness_p(bl, -alphastar))
+end
+
+function disp_thickness_bot(bl::Union{TrippedN0012BoundaryLayer,UntrippedN0012BoundaryLayer}, alphastar)
+    return ifelse(alphastar > alpha_zerolift(bl), disp_thickness_p(bl, alphastar), disp_thickness_s(bl, -alphastar))
 end
 
 function bl_thickness_p(bl::AbstractBoundaryLayer, Re_c, alphastar)
@@ -139,11 +152,11 @@ end
 #     return bl_thickness_s(bl, alphastar)*bl_thickness_0(bl, Re_c)
 # end
 
-function disp_thickness_p(bl::AbstractBoundaryLayer, Re_c, alphastar)
+function disp_thickness_bot(bl::AbstractBoundaryLayer, Re_c, alphastar)
     # (δ^*_p/δ^*_0)*(δ^*_0/c)
-    return disp_thickness_p(bl, alphastar)*disp_thickness_0(bl, Re_c)
+    return disp_thickness_bot(bl, alphastar)*disp_thickness_0(bl, Re_c)
 end
 
-function disp_thickness_s(bl::AbstractBoundaryLayer, Re_c, alphastar)
-    return disp_thickness_s(bl, alphastar)*disp_thickness_0(bl, Re_c)
+function disp_thickness_top(bl::AbstractBoundaryLayer, Re_c, alphastar)
+    return disp_thickness_top(bl, alphastar)*disp_thickness_0(bl, Re_c)
 end

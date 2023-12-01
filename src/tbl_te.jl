@@ -203,7 +203,7 @@ function TBL_TE_s(freq, nu, L, chord, U, M, M_c, r_e, theta_e, phi_e, alphastar,
     T = promote_type(typeof(freq), typeof(nu), typeof(L), typeof(chord), typeof(U), typeof(M), typeof(M_c), typeof(r_e), typeof(theta_e), typeof(phi_e), typeof(alphastar))
 
     Re_c = U*chord/nu
-    alphastar0 = stall_alpha(bl, Re_c)
+    alphastar0 = alpha_stall(bl, Re_c)
 
     gamma0_deg = gamma0(M)
     if alphastar*180/pi > min(gamma0_deg, alphastar0*180/pi)
@@ -211,7 +211,7 @@ function TBL_TE_s(freq, nu, L, chord, U, M, M_c, r_e, theta_e, phi_e, alphastar,
         G_s = 10^(0.1*(-100))*one(T)
     else
         D = Dbar_h(theta_e, phi_e, M, M_c)
-        deltastar_s = disp_thickness_s(bl, Re_c, alphastar)*chord
+        deltastar_s = disp_thickness_top(bl, Re_c, alphastar)*chord
         St_s = freq*deltastar_s/U
 
         St_peak_p = St_1(M)
@@ -236,7 +236,7 @@ function TBL_TE_p(freq, nu, L, chord, U, M, M_c, r_e, theta_e, phi_e, alphastar,
     T = promote_type(typeof(freq), typeof(nu), typeof(L), typeof(chord), typeof(U), typeof(M), typeof(M_c), typeof(r_e), typeof(theta_e), typeof(phi_e), typeof(alphastar))
 
     Re_c = U*chord/nu
-    alphastar0 = stall_alpha(bl, Re_c)
+    alphastar0 = alpha_stall(bl, Re_c)
 
     gamma0_deg = gamma0(M)
 
@@ -245,7 +245,7 @@ function TBL_TE_p(freq, nu, L, chord, U, M, M_c, r_e, theta_e, phi_e, alphastar,
         G_p = 10^(0.1*(-100))*one(T)
     else
         D = Dbar_h(theta_e, phi_e, M, M_c)
-        deltastar_p = disp_thickness_p(bl, Re_c, alphastar)*chord
+        deltastar_p = disp_thickness_bot(bl, Re_c, alphastar)*chord
 
         k_1 = K_1(Re_c)
         St_p = freq*deltastar_p/U
@@ -268,9 +268,9 @@ end
 
 function TBL_TE_alpha(freq, nu, L, chord, U, M, M_c, r_e, theta_e, phi_e, alphastar, bl)
     Re_c = U*chord/nu
-    alphastar0 = stall_alpha(bl, Re_c)
+    alphastar0 = alpha_stall(bl, Re_c)
     gamma0_deg = gamma0(M)
-    deltastar_s = disp_thickness_s(bl, Re_c, alphastar)*chord
+    deltastar_s = disp_thickness_top(bl, Re_c, alphastar)*chord
     St_s = freq*deltastar_s/U
     St_peak_p = St_1(M)
     St_peak_alpha = St_2(St_peak_p, alphastar)
@@ -303,7 +303,11 @@ function TBL_TE(freq, nu, L, chord, U, M, M_c, r_e, theta_e, phi_e, alphastar, b
     return SPL_s, SPL_p, SPL_alpha
 end
 
-@concrete struct TBLTESourceElement <: AbstractCompactSourceElement
+abstract type AbstractDirectivity end
+struct BPMDirectivity <: AbstractDirectivity end
+struct BrooksBurleyDirectivity <: AbstractDirectivity end
+
+@concrete struct TBLTESourceElement{TDirect<:AbstractDirectivity,TUInduction} <: AbstractCompactSourceElement
     # Speed of sound, m/s.
     c0
     # Kinematic viscosity, m^2/s
@@ -328,8 +332,13 @@ end
     chord_uvec
     # Boundary layer struct, i.e. an AbstractBoundaryLayer.
     bl
-    # `Bool` indicating chord_uvec×span_uvec will give a vector pointing from pressure side to suction side if `true`, or the opposite if `false`.
-    chord_cross_span_to_get_suction_uvec
+    # `Bool` indicating chord_uvec×span_uvec will give a vector pointing from bottom side (usually pressure side) to top side (usually suction side) if `true`, or the opposite if `false`.
+    chord_cross_span_to_get_top_uvec
+end
+
+# Default to using the `BrooksBurleyDirectivity` directivity function, and include induction in the flow speed normal to span (TUInduction == true).
+function TBLTESourceElement(c0, nu, Δr, chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
+    return TBLTESourceElement{BrooksBurleyDirectivity,true}(c0, nu, Δr, chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
 end
 
 orientation(se::TBLTESourceElement) = se.span_uvec
@@ -371,7 +380,7 @@ This can be done easily with the transformations provided by the `KinematicCoord
 - bl: Boundary layer struct, i.e. an AbstractBoundaryLayer.
 - twist_about_positive_y: if `true`, apply twist ϕ about positive y axis, negative y axis otherwise
 """
-function TBLTESourceElement(c0, nu, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
+function TBLTESourceElement{TDirect,TUInduction}(c0, nu, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y) where {TDirect,TUInduction}
     sθ, cθ = sincos(θ)
     sϕ, cϕ = sincos(ϕ)
     y0dot = @SVector [0, r*cθ, r*sθ]
@@ -385,14 +394,16 @@ function TBLTESourceElement(c0, nu, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ,
         chord_uvec = @SVector [-sϕ, -cϕ*sθ, cϕ*cθ]
     end
 
-    chord_cross_span_to_get_suction_uvec = twist_about_positive_y
-    return TBLTESourceElement(c0, nu, Δr, chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_suction_uvec)
+    chord_cross_span_to_get_top_uvec = twist_about_positive_y
+    return TBLTESourceElement{TDirect,TUInduction}(c0, nu, Δr, chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
 end
 
-function Dbar_l(se::TBLTESourceElement, obs::AcousticObserver, t_obs)
-    # Position of the observer.
-    x_obs = obs(t_obs)
+# Default to using the `BrooksBurleyDirectivity` directivity function, and include induction in the flow speed normal to span (TUInduction == true).
+function TBLTESourceElement(c0, nu, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
+    return TBLTESourceElement{BrooksBurleyDirectivity,true}(c0, nu, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
+end
 
+function directivity(se::TBLTESourceElement{BrooksBurleyDirectivity}, x_obs, top_is_suction)
     # Position vector from source to observer.
     rv = x_obs .- se.y0dot
 
@@ -402,7 +413,22 @@ function Dbar_l(se::TBLTESourceElement, obs::AcousticObserver, t_obs)
     # Unit vector normal to both the span and chord directions.
     # Does the order matter?
     # Doesn't look like it, since we're only using it to find z_er, which we square.
-    z_uvec_tmp = cross(se.chord_uvec, se.span_uvec)
+    # But let's do it right, anyway!
+    # if se.chord_cross_span_to_get_top_uvec
+    #     # But, if the angle of attack is negative, then the "top" of the airfoil (which is normally the suction side) is actually the suction side.
+    #     if top_is_suction
+    #         z_uvec_tmp = cross(se.chord_uvec, se.span_uvec)
+    #     else
+    #         z_uvec_tmp = cross(se.span_uvec, se.chord_uvec)
+    #     end
+    # else
+    #     if top_is_suction
+    #         z_uvec_tmp = cross(se.span_uvec, se.chord_uvec)
+    #     else
+    #         z_uvec_tmp = cross(se.chord_uvec, se.span_uvec)
+    #     end
+    # end
+    z_uvec_tmp = cross(se.chord_uvec, se.span_uvec)*ifelse(se.chord_cross_span_to_get_top_uvec, 1, -1)*ifelse(top_is_suction, 1, -1)
     z_uvec = z_uvec_tmp / norm_cs_safe(z_uvec_tmp)
     
     # Component of rv along the chord line (see Figure 11 in Brooks and Burley AIAA 2001-2210).
@@ -421,6 +447,12 @@ function Dbar_l(se::TBLTESourceElement, obs::AcousticObserver, t_obs)
     # Need to find sin(Φ_er)^2, where Φ_er = acos(y_er/sqrt(y_er^2 + z_er^2)), equation (21) from Brooks and Burley AIAA 2001-2210.
     # But sin(acos(y_er/sqrt(y_er^2 + z_er^2))) = z_er/sqrt(y_er^2 + z_er^2), and so sin(Φ_er)^2 = z_er^2/(y_er_^2 + z_er^2).
     sin2Φer = (z_er^2)/(y_er^2 + z_er^2)
+
+    # Need to find 2*sin(0.5*Θ_er)^2, where Θ_er = acos(x_er/r_er), equation (21) from Brooks and Burley AIAA 2001-2210.
+    # But there is a half-angle identity that says sin(θ/2)^2 = 0.5*(1 - cos(θ)).
+    # So I actually want 2*sin(0.5*Θ_er)^2 = 2*0.5*(1 - cos(Θ_er)) = (1 - cos(Θ_er)).
+    # But I can substitute in Θ_er = acos(x_er/r_er) and get 2*sin(0.5*Θ_er)^2 = 1 - x_er/r_er.
+    twosin2halfΘer = 1 - x_er/r_er
 
     # Now just need the denominator: (1 - M_tot*cos(ξR))^4.
     # M_tot is the "total" velocity from... hmm... what perspective?
@@ -456,37 +488,78 @@ function Dbar_l(se::TBLTESourceElement, obs::AcousticObserver, t_obs)
     # Mach number vectory in the direction of the radiation vector.
     Mtotcosξr = dot_cs_safe(Vtotal, r_uvec)/se.c0
 
+    # Convective amplification factor for the two directivity functions.
+    conv_amp = 1/(1 - Mtotcosξr)^4
+
     # Now I can finally find the directivity function!
     # Equation (19) from Brooks and Burley AIAA 2001-2210.
-    D = (sin2Θer*sin2Φer)/(1 - Mtotcosξr)^4
+    # Dl = (sin2Θer*sin2Φer)/(1 - Mtotcosξr)^4
+    Dl = (sin2Θer*sin2Φer)*conv_amp
 
-    return D
+    # Now I can finally find the directivity function!
+    # Equation (20) from Brooks and Burley AIAA 2001-2210.
+    # Dh = (twosin2halfΘer*sin2Φer)/(1 - Mtotcosξr)^4
+    Dh = (twosin2halfΘer*sin2Φer)*conv_amp
+
+    return r_er, Dl, Dh
 end
 
-function Dbar_h(se::TBLTESourceElement, obs::AcousticObserver, t_obs)
-    # Position of the observer.
-    x_obs = obs(t_obs)
-
+function directivity(se::TBLTESourceElement{BPMDirectivity}, x_obs, top_is_suction)
     # Position vector from source to observer.
     rv = x_obs .- se.y0dot
 
     # Distance from source to observer.
     r_er = norm_cs_safe(rv)
 
+    # So, the BPM report uses the local flow velocity, not the chord line, to define the x direction.
+    # So, I want to get a unit vector in that direction.
+    # Should it include induction?
+    # It won't matter for comparing to the data in the BPM report, since the flow including and excluding induction would be in the same direction.
+    # In the BPM report Appendix B, the x direction is defined as the opposite of the motion of the source element/flat plate, so I guess I won't use induction.
+    # But I want the velocity to be normal to the span direction, so let's remove_that.
+    # So, want the x direction to be opposite the velocity of the source element.
+    x_vec_tmp1 = -se.y1dot
+    # Then we want to remove any part of the velocity in the direction of the span.
+    x_vec_tmp2 = x_vec_tmp1 - dot_cs_safe(x_vec_tmp1, se.span_uvec)*x_vec_tmp1
+    # Now make it a unit vector:
+    x_uvec = x_vec_tmp2 / norm_cs_safe(x_vec_tmp2)
+
     # Unit vector normal to both the span and chord directions.
     # Does the order matter?
     # Doesn't look like it, since we're only using it to find z_er, which we square.
-    z_uvec_tmp = cross(se.chord_uvec, se.span_uvec)
+    # But it's supposed to be pointing from the pressure to the suction side, which we can figure out, so let's do it the right way.
+    # if se.chord_cross_span_to_get_top_uvec
+    #     if top_is_suction
+    #         z_uvec_tmp = cross(x_uvec, se.span_uvec)
+    #     else
+    #         z_uvec_tmp = cross(se.span_uvec, x_uvec)
+    #     end
+    # else
+    #     if top_is_suction
+    #         z_uvec_tmp = cross(se.span_uvec, x_uvec)
+    #     else
+    #         z_uvec_tmp = cross(x_uvec, se.span_uvec)
+    #     end
+    # end
+    z_uvec_tmp = cross(x_uvec, se.span_uvec)*ifelse(se.chord_cross_span_to_get_top_uvec, 1, -1)*ifelse(top_is_suction, 1, -1)
     z_uvec = z_uvec_tmp / norm_cs_safe(z_uvec_tmp)
     
-    # Component of rv along the chord line (see Figure 11 in Brooks and Burley AIAA 2001-2210).
-    x_er = dot_cs_safe(rv, se.chord_uvec)
+    # Component of rv along the chord line (see Figure B3 in the BPM report).
+    x_er = dot_cs_safe(rv, x_uvec)
 
-    # Component of rv along the span line (see Figure 11 in Brooks and Burley AIAA 2001-2210).
+    # Component of rv along the span line (see Figure B3 the BPM report).
     y_er = dot_cs_safe(rv, se.span_uvec)
 
     # Component of rv in the direction normal to both span and chord (see Figure 11 in Brooks and Burley AIAA 2001-2210).
     z_er = dot_cs_safe(rv, z_uvec)
+
+    # Need to find sin(Θ_er)^2, where Θ_er = acos(x_er/r_er), equation (21) from Brooks and Burley AIAA 2001-2210.
+    # But sin(acos(x_er/r_er)) = sqrt(r_er^2 - x_er^2)/r_er, and so sin(Θ_er)^2 = (r_er^2 - x_er^2)/r_er^2
+    sin2Θer = (r_er^2 - x_er^2)/r_er^2
+
+    # Need to find sin(Φ_er)^2, where Φ_er = acos(y_er/sqrt(y_er^2 + z_er^2)), equation (21) from Brooks and Burley AIAA 2001-2210.
+    # But sin(acos(y_er/sqrt(y_er^2 + z_er^2))) = z_er/sqrt(y_er^2 + z_er^2), and so sin(Φ_er)^2 = z_er^2/(y_er_^2 + z_er^2).
+    sin2Φer = (z_er^2)/(y_er^2 + z_er^2)
 
     # Need to find 2*sin(0.5*Θ_er)^2, where Θ_er = acos(x_er/r_er), equation (21) from Brooks and Burley AIAA 2001-2210.
     # But there is a half-angle identity that says sin(θ/2)^2 = 0.5*(1 - cos(θ)).
@@ -494,23 +567,184 @@ function Dbar_h(se::TBLTESourceElement, obs::AcousticObserver, t_obs)
     # But I can substitute in Θ_er = acos(x_er/r_er) and get 2*sin(0.5*Θ_er)^2 = 1 - x_er/r_er.
     twosin2halfΘer = 1 - x_er/r_er
 
-    # Need to find sin(Φ_er)^2, where Φ_er = acos(y_er/sqrt(y_er^2 + z_er^2)), equation (21) from Brooks and Burley AIAA 2001-2210.
-    # But sin(acos(y_er/sqrt(y_er^2 + z_er^2))) = z_er/sqrt(y_er^2 + z_er^2), and so sin(Φ_er)^2 = z_er^2/(y_er_^2 + z_er^2).
-    sin2Φer = (z_er^2)/(y_er^2 + z_er^2)
+    # Now just need the denominator: (1 - M_tot*cos(ξR))^4.
+    # M_tot is the "total" velocity from... hmm... what perspective?
+    # Let's see... it looks like it's suppose to be from the fluid, aka the global frame.
+    # The definition is Brooks and Burley AIAA 2001-2210, equation (14):
+    #
+    #   V_tot = V - V_wt - V_ind
+    #
+    # where 
+    #
+    #   * V is the velocity due to the rotation of the blade element
+    #   * V_wt is the wind tunnel velocity, which is positive when it goes against the motion of the blade element.
+    #   * V_ind is "the induced velocity due to the near and far wake of the rotor," and appears to be positive in roughly the thrust direction.
+    #
+    # So if I calculate V - V_wt, that's the "actual" velocity of the blade element, i.e., the velocity of the blade element relative to the fluid far away from the blade element, since it doesn't include the induced velocity.
+    # That's what I usually think of as the "actual" velocity, since it's what a stationary observer would observe on a calm day.
+    # But when we add in the induced velocity, I think what we're finding is the velocity of the blade element relative to the nearfield velocity.
+    # Cool.
+    # But does that mean I add or subtract `se.y1dot_fluid` from `se.y1dot`?
+    # Well, let's think about that.
+    # First, let's say I start with stuff in the blade-fixed frame.
+    # And let's say I'm imagining that, from the global frame, I'm assuming the
+    # blade element is moving in the positive x direction, initially aligned
+    # with the y axis
+    # So I think all I need to do is just use se.y1dot_fluid + se.y1dot.
+    # Now, cos(ξ_r) is defined by equation (18) in Brooks and Burley AIAA 2001-2210, which is the angle between the radiation vector (rv here) and the total velocity (se.y1dot here).
+    # But I can simplify that by just finding the unit radiation vector, then dotting that with the velocity vector, and dividing by c0.
 
     # Unit radiation vector.
     r_uvec = rv./r_er
-    # Equation 14 from Brooks and Burley AIAA 2001-2210.
-    Vtotal = se.y1dot - se.y1dot_fluid
+    # For the BPM directivity function, the velocity/Mach number doesn't include induction.
+    Vtotal = se.y1dot
     # Mach number vectory in the direction of the radiation vector.
     Mtotcosξr = dot_cs_safe(Vtotal, r_uvec)/se.c0
 
-    # Now I can finally find the directivity function!
-    # Equation (20) from Brooks and Burley AIAA 2001-2210.
-    D = (twosin2halfΘer*sin2Φer)/(1 - Mtotcosξr)^4
+    # Convective amplification factor for the low-freqency directivity function.
+    conv_amp_l = 1/(1 - Mtotcosξr)^4
 
-    return D
+    # The BPM high-frequency convective amplification factor is a bit different.
+    # It has a factor (M - M_c)*cos(Θ_er), which, in the more general coordinate system of Brooks & Burley would be -(M - M_c)*cos(ξ_r).
+    # So, the `M` is the speed of the blade element without induction, and `M_c` is the velocity of the blade element including induction.
+    # So `M_c = se.y1dot - se.y1dot_fluid` and then `M - M_c = se.y1dot - (se.y1dot - se.y1dot_fluid) = se.y1dot_fluid.
+    # And so what we'd want to do is this:
+    M_minus_M_ccosξr = dot_cs_safe(se.y1dot_fluid, r_uvec)/se.c0
+    conv_amp_h = 1/((1 - Mtotcosξr)*(1 - M_minus_M_ccosξr)^2)
+
+    # Now I can finally find the directivity function!
+    # Equation (B2) from the BPM report.
+    Dl = (sin2Θer*sin2Φer)*conv_amp_l
+
+    # Now I can finally find the directivity function!
+    # Equation (B1) from the BPM report.
+    Dh = (twosin2halfΘer*sin2Φer)*conv_amp_h
+
+    return r_er, Dl, Dh
 end
+
+#function Dbar_l(se::TBLTESourceElement, obs::AcousticObserver, t_obs)
+#    # Position of the observer.
+#    x_obs = obs(t_obs)
+
+#    # Position vector from source to observer.
+#    rv = x_obs .- se.y0dot
+
+#    # Distance from source to observer.
+#    r_er = norm_cs_safe(rv)
+
+#    # Unit vector normal to both the span and chord directions.
+#    # Does the order matter?
+#    # Doesn't look like it, since we're only using it to find z_er, which we square.
+#    z_uvec_tmp = cross(se.chord_uvec, se.span_uvec)
+#    z_uvec = z_uvec_tmp / norm_cs_safe(z_uvec_tmp)
+    
+#    # Component of rv along the chord line (see Figure 11 in Brooks and Burley AIAA 2001-2210).
+#    x_er = dot_cs_safe(rv, se.chord_uvec)
+
+#    # Component of rv along the span line (see Figure 11 in Brooks and Burley AIAA 2001-2210).
+#    y_er = dot_cs_safe(rv, se.span_uvec)
+
+#    # Component of rv in the direction normal to both span and chord (see Figure 11 in Brooks and Burley AIAA 2001-2210).
+#    z_er = dot_cs_safe(rv, z_uvec)
+
+#    # Need to find sin(Θ_er)^2, where Θ_er = acos(x_er/r_er), equation (21) from Brooks and Burley AIAA 2001-2210.
+#    # But sin(acos(x_er/r_er)) = sqrt(r_er^2 - x_er^2)/r_er, and so sin(Θ_er)^2 = (r_er^2 - x_er^2)/r_er^2
+#    sin2Θer = (r_er^2 - x_er^2)/r_er^2
+
+#    # Need to find sin(Φ_er)^2, where Φ_er = acos(y_er/sqrt(y_er^2 + z_er^2)), equation (21) from Brooks and Burley AIAA 2001-2210.
+#    # But sin(acos(y_er/sqrt(y_er^2 + z_er^2))) = z_er/sqrt(y_er^2 + z_er^2), and so sin(Φ_er)^2 = z_er^2/(y_er_^2 + z_er^2).
+#    sin2Φer = (z_er^2)/(y_er^2 + z_er^2)
+
+#    # Now just need the denominator: (1 - M_tot*cos(ξR))^4.
+#    # M_tot is the "total" velocity from... hmm... what perspective?
+#    # Let's see... it looks like it's suppose to be from the fluid, aka the global frame.
+#    # The definition is Brooks and Burley AIAA 2001-2210, equation (14):
+#    #
+#    #   V_tot = V - V_wt - V_ind
+#    #
+#    # where 
+#    #
+#    #   * V is the velocity due to the rotation of the blade element
+#    #   * V_wt is the wind tunnel velocity, which is positive when it goes against the motion of the blade element.
+#    #   * V_ind is "the induced velocity due to the near and far wake of the rotor," and appears to be positive in roughly the thrust direction.
+#    #
+#    # So if I calculate V - V_wt, that's the "actual" velocity of the blade element, i.e., the velocity of the blade element relative to the fluid far away from the blade element, since it doesn't include the induced velocity.
+#    # That's what I usually think of as the "actual" velocity, since it's what a stationary observer would observe on a calm day.
+#    # But when we add in the induced velocity, I think what we're finding is the velocity of the blade element relative to the nearfield velocity.
+#    # Cool.
+#    # But does that mean I add or subtract `se.y1dot_fluid` from `se.y1dot`?
+#    # Well, let's think about that.
+#    # First, let's say I start with stuff in the blade-fixed frame.
+#    # And let's say I'm imagining that, from the global frame, I'm assuming the
+#    # blade element is moving in the positive x direction, initially aligned
+#    # with the y axis
+#    # So I think all I need to do is just use se.y1dot_fluid + se.y1dot.
+#    # Now, cos(ξ_r) is defined by equation (18) in Brooks and Burley AIAA 2001-2210, which is the angle between the radiation vector (rv here) and the total velocity (se.y1dot here).
+#    # But I can simplify that by just finding the unit radiation vector, then dotting that with the velocity vector, and dividing by c0.
+
+#    # Unit radiation vector.
+#    r_uvec = rv./r_er
+#    # Equation 14 from Brooks and Burley AIAA 2001-2210.
+#    Vtotal = se.y1dot - se.y1dot_fluid
+#    # Mach number vectory in the direction of the radiation vector.
+#    Mtotcosξr = dot_cs_safe(Vtotal, r_uvec)/se.c0
+
+#    # Now I can finally find the directivity function!
+#    # Equation (19) from Brooks and Burley AIAA 2001-2210.
+#    D = (sin2Θer*sin2Φer)/(1 - Mtotcosξr)^4
+
+#    return D
+#end
+
+#function Dbar_h(se::TBLTESourceElement, obs::AcousticObserver, t_obs)
+#    # Position of the observer.
+#    x_obs = obs(t_obs)
+
+#    # Position vector from source to observer.
+#    rv = x_obs .- se.y0dot
+
+#    # Distance from source to observer.
+#    r_er = norm_cs_safe(rv)
+
+#    # Unit vector normal to both the span and chord directions.
+#    # Does the order matter?
+#    # Doesn't look like it, since we're only using it to find z_er, which we square.
+#    z_uvec_tmp = cross(se.chord_uvec, se.span_uvec)
+#    z_uvec = z_uvec_tmp / norm_cs_safe(z_uvec_tmp)
+    
+#    # Component of rv along the chord line (see Figure 11 in Brooks and Burley AIAA 2001-2210).
+#    x_er = dot_cs_safe(rv, se.chord_uvec)
+
+#    # Component of rv along the span line (see Figure 11 in Brooks and Burley AIAA 2001-2210).
+#    y_er = dot_cs_safe(rv, se.span_uvec)
+
+#    # Component of rv in the direction normal to both span and chord (see Figure 11 in Brooks and Burley AIAA 2001-2210).
+#    z_er = dot_cs_safe(rv, z_uvec)
+
+#    # Need to find 2*sin(0.5*Θ_er)^2, where Θ_er = acos(x_er/r_er), equation (21) from Brooks and Burley AIAA 2001-2210.
+#    # But there is a half-angle identity that says sin(θ/2)^2 = 0.5*(1 - cos(θ)).
+#    # So I actually want 2*sin(0.5*Θ_er)^2 = 2*0.5*(1 - cos(Θ_er)) = (1 - cos(Θ_er)).
+#    # But I can substitute in Θ_er = acos(x_er/r_er) and get 2*sin(0.5*Θ_er)^2 = 1 - x_er/r_er.
+#    twosin2halfΘer = 1 - x_er/r_er
+
+#    # Need to find sin(Φ_er)^2, where Φ_er = acos(y_er/sqrt(y_er^2 + z_er^2)), equation (21) from Brooks and Burley AIAA 2001-2210.
+#    # But sin(acos(y_er/sqrt(y_er^2 + z_er^2))) = z_er/sqrt(y_er^2 + z_er^2), and so sin(Φ_er)^2 = z_er^2/(y_er_^2 + z_er^2).
+#    sin2Φer = (z_er^2)/(y_er^2 + z_er^2)
+
+#    # Unit radiation vector.
+#    r_uvec = rv./r_er
+#    # Equation 14 from Brooks and Burley AIAA 2001-2210.
+#    Vtotal = se.y1dot - se.y1dot_fluid
+#    # Mach number vectory in the direction of the radiation vector.
+#    Mtotcosξr = dot_cs_safe(Vtotal, r_uvec)/se.c0
+
+#    # Now I can finally find the directivity function!
+#    # Equation (20) from Brooks and Burley AIAA 2001-2210.
+#    D = (twosin2halfΘer*sin2Φer)/(1 - Mtotcosξr)^4
+
+#    return D
+#end
 
 function angle_of_attack(se::TBLTESourceElement)
     # Find the total velocity of the fluid from the perspective of the blade element, which is just the total velocity of the blade element from the perspective of the fluid with the sign switched.
@@ -519,7 +753,7 @@ function angle_of_attack(se::TBLTESourceElement)
 
     # To get the angle of attack, I need to find the components of the velocity in the chordwise direction, and the direction normal to both the chord and span.
     # So, first need to get a vector normal to both the chord and span, pointing from pressure side to suction side.
-    normal_uvec_tmp = ifelse(se.chord_cross_span_to_get_suction_uvec,
+    normal_uvec_tmp = ifelse(se.chord_cross_span_to_get_top_uvec,
         cross(se.chord_uvec, se.span_uvec),
         cross(se.span_uvec, se.chord_uvec))
     normal_uvec = normal_uvec_tmp ./ norm_cs_safe(normal_uvec_tmp)
@@ -535,12 +769,30 @@ function angle_of_attack(se::TBLTESourceElement)
     return alphastar
 end
 
+function speed_normal_to_span(se::TBLTESourceElement{TDirect,true}) where {TDirect}
+    # Find the total velocity of the fluid including induction, from the perspective of the blade element, which is just the total velocity of the blade element from the perspective of the fluid with the sign switched.
+    Vtotal = se.y1dot_fluid - se.y1dot
+    # Find the component of the velocity in the direction of the span.
+    Vspan = dot_cs_safe(Vtotal, se.span_uvec)*se.span_uvec
+    # Subtract that from the total velocity to get the velocity normal to the span, then get the norm for the speed normal to span.
+    return norm_cs_safe(Vtotal - Vspan)
+end
+
+function speed_normal_to_span(se::TBLTESourceElement{TDirect,false}) where {TDirect}
+    # Find the total velocity of the fluid, not including induction, from the perspective of the blade element, which is just the total velocity of the blade element from the perspective of the fluid with the sign switched.
+    Vtotal = -se.y1dot
+    # Find the component of the velocity in the direction of the span.
+    Vspan = dot_cs_safe(Vtotal, se.span_uvec)*se.span_uvec
+    # Subtract that from the total velocity to get the velocity normal to the span, then get the norm for the speed normal to span.
+    return norm_cs_safe(Vtotal - Vspan)
+end
+
 """
     (trans::KinematicTransformation)(se::TBLTESourceElement)
 
 Transform the position and orientation of a source element according to the coordinate system transformation `trans`.
 """
-function (trans::KinematicTransformation)(se::TBLTESourceElement)
+function (trans::KinematicTransformation)(se::TBLTESourceElement{TDirect,TUInduction}) where {TDirect,TUInduction}
     linear_only = false
     y0dot, y1dot = trans(se.τ, se.y0dot, se.y1dot, linear_only)
     y0dot, y1dot_fluid = trans(se.τ, se.y0dot, se.y1dot_fluid, linear_only)
@@ -548,7 +800,7 @@ function (trans::KinematicTransformation)(se::TBLTESourceElement)
     span_uvec = trans(se.τ, se.span_uvec, linear_only)
     chord_uvec = trans(se.τ, se.chord_uvec, linear_only)
 
-    return TBLTESourceElement(se.c0, se.nu, se.Δr, se.chord, y0dot, y1dot, y1dot_fluid, se.τ, se.Δτ, span_uvec, chord_uvec, se.bl, se.chord_cross_span_to_get_suction_uvec)
+    return TBLTESourceElement{TDirect,TUInduction}(se.c0, se.nu, se.Δr, se.chord, y0dot, y1dot, y1dot_fluid, se.τ, se.Δτ, span_uvec, chord_uvec, se.bl, se.chord_cross_span_to_get_top_uvec)
 end
 
 """
@@ -563,3 +815,121 @@ Output of the turbulent boundary layer-trailing edge (TBL-TE) calculation: the a
     G_alpha
 end
 
+function noise(se::TBLTESourceElement, obs::AcousticObserver, t_obs, freq)
+    # Position of the observer:
+    x_obs = obs(t_obs)
+
+    # Need the angle of attack.
+    alphastar = angle_of_attack(se)
+
+    # Need the directivity functions.
+    top_is_suction = alphastar > alpha_zerolift(se.bl)
+    r_er, Dl, Dh = directivity(se, x_obs, top_is_suction)
+
+    # Need the fluid velocity normal to the span.
+    # Brooks and Burley 2001 are a bit ambiguous on whether it should include induction, or just the freestream and rotation.
+    #
+    #   * In the nomenclature section: `U` is "flow speed normal to span (`U_mn` with `mn` suppressed).
+    #     So that's one point for "no induction."
+    #   * In some discussion after equation (8), "The Mach number, `M = U/c0`, represents that component of velocity `U` normal to the span...".
+    #     Hard to say one way or the other.
+    #   * In equation (12), `U_mn` is the velocity without induction.
+    #     So that's another point for "no induction."
+    #   * Equation (14) defines `V_tot` as the velocity including the freestream, rotation, and induction.
+    #     And then it defines `U` as the part of `V_tot` normal to the span.
+    #     So that's a point for "yes induction."
+    #   * In the directivity function definitions in equations (19) and (20), `M_tot` is used in the denominator, which seems to make it clear *that* velocity should include induction, since `V_tot` always includes induction.
+    #
+    # So, at the moment, the TBLTESourceElement type has a parameter TUInduction which, when true, will include induction in the flow speed normal to the span, and not otherwise.
+    U = speed_normal_to_span(se)
+
+    # Reynolds number based on chord and the flow speed normal to span.
+    Re_c = U*se.chord/se.nu
+
+    # Also need the displacement thicknesses on the top and and bottom.
+    # deltastar_s = disp_thickness_s(se.bl, Re_c, alphastar)*se.chord
+    # deltastar_p = disp_thickness_p(se.bl, Re_c, alphastar)*se.chord
+    deltastar_top = disp_thickness_top(se.bl, Re_c, alphastar)*se.chord
+    deltastar_bot = disp_thickness_bot(se.bl, Re_c, alphastar)*se.chord
+    deltastar_s, deltastar_p = ifelse(top_is_suction,
+        (deltastar_top, deltastar_bot),
+        (deltastar_bot, deltastar_top))
+
+    # Mach number of the flow speed normal to span.
+    M = U/se.c0
+
+    alphastar0 = alpha_stall(se.bl, Re_c)
+    gamma0_deg = gamma0(M)
+
+    St_s = freq*deltastar_s/U
+    St_peak_p = St_1(M)
+    St_peak_alpha = St_2(St_peak_p, alphastar)
+    k2 = K_2(Re_c, M, alphastar)
+
+    if alphastar*180/pi > min(gamma0_deg, alphastar0*180/pi)
+        # D = Dbar_l(theta_e, phi_e, M)
+        A_prime = A(St_s/St_peak_alpha, 3*Re_c)
+        # SPL_alpha = 10*log10((deltastar_s*M^5*L*D)/(r_er^2)) + A_prime + k2
+        # Brooks and Burley AIAA 2001-2210 style.
+        H_alpha = 10^(0.1*(A_prime + k2))
+        G_alpha = (deltastar_s*M^5*se.Δr*Dl)/(r_er^2)*H_alpha
+
+        G_s = 10^(0.1*(-100))*one(typeof(G_alpha))
+        G_p = 10^(0.1*(-100))*one(typeof(G_alpha))
+    else
+        # D = Dbar_h(theta_e, phi_e, M, M_c)
+        # deltastar_s = disp_thickness_s(bl, Re_c, alphastar)*chord
+        # St_s = freq*deltastar_s/U
+
+        # St_peak_p = St_1(M)
+        # St_peak_alpha = St_2(St_peak_p, alphastar)
+        St_peak_s = 0.5*(St_peak_p + St_peak_alpha)
+
+        A_s = A(St_s/St_peak_s, Re_c)
+
+        k_1 = K_1(Re_c)
+
+        # SPL_s = 10*log10((deltastar_s*M^5*L*Dh)/(r_er^2)) + A_s + k_1 - 3
+        # Brooks and Burley AIAA 2001-2210 style.
+        H_s = 10^(0.1*(A_s + k_1 - 3))
+        G_s = (deltastar_s*M^5*se.Δr*Dh)/(r_er^2)*H_s
+
+        # D = Dbar_h(theta_e, phi_e, M, M_c)
+        # deltastar_p = disp_thickness_p(se.bl, Re_c, alphastar)*chord
+
+        # k_1 = K_1(Re_c)
+        St_p = freq*deltastar_p/U
+        # St_peak_p = St_1(M)
+
+        A_p = A(St_p/St_peak_p, Re_c)
+
+        Re_deltastar_p = U*deltastar_p/se.nu
+        ΔK_1 = DeltaK_1(alphastar, Re_deltastar_p)
+
+        # SPL_p = 10*log10((deltastar_p*M^5*L*Dh)/(r_er^2)) + A_p + k_1 - 3 + ΔK_1
+        # Brooks and Burley AIAA 2001-2210 style.
+        H_p = 10^(0.1*(A_p + k_1 - 3 + ΔK_1))
+        G_p = (deltastar_p*M^5*se.Δr*Dh)/(r_er^2)*H_p
+
+        # D = Dbar_h(theta_e, phi_e, M, M_c)
+        B_alpha = B(St_s/St_peak_alpha, Re_c)
+        # SPL_alpha = 10*log10((deltastar_s*M^5*L*Dh)/(r_er^2)) + B_alpha + k2
+        # Brooks and Burley AIAA 2001-2210 style.
+        H_alpha = 10^(0.1*(B_alpha + k2))
+        G_alpha = (deltastar_s*M^5*se.Δr*Dh)/(r_er^2)*H_alpha
+    end
+
+    # OK, cool.
+    # Now, how do I adjust for the relative motion of everything?
+    # I've figured that out before.
+    # I think what I need to do is to adjust the time, frequency, and time step according to the Doppler shift.
+    t = t_obs
+    dt = se.Δτ
+    freq_out = freq
+    return TBLTEOutput(t, dt, freq_out, G_s, G_p, G_alpha)
+end
+
+function noise(se::TBLTESourceElement, obs::AcousticObserver, freq)
+    t_obs = adv_time(se, obs)
+    return noise(se, obs, t_obs, freq)
+end

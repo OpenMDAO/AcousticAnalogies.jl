@@ -92,8 +92,14 @@ end
 
 function BLUNT(freq, nu, L, chord, h, Psi, U, M, M_c, r_e, theta_e, phi_e, alphastar, bl)
     Re_c = U*chord/nu
-    deltastar_s = disp_thickness_s(bl, Re_c, alphastar)*chord
-    deltastar_p = disp_thickness_p(bl, Re_c, alphastar)*chord
+    # deltastar_s = disp_thickness_s(bl, Re_c, alphastar)*chord
+    # deltastar_p = disp_thickness_p(bl, Re_c, alphastar)*chord
+    deltastar_top = disp_thickness_top(bl, Re_c, alphastar)*chord
+    deltastar_bot = disp_thickness_bot(bl, Re_c, alphastar)*chord
+    top_is_suction = alphastar > alpha_zerolift(bl)
+    deltastar_s, deltastar_p = ifelse(top_is_suction,
+        (deltastar_top, deltastar_bot),
+        (deltastar_bot, deltastar_top))
 
     # Equation 73 from the BPM report.
     deltastar_avg = 0.5*(deltastar_p + deltastar_s)

@@ -413,8 +413,8 @@ function TBLTESourceElement(rotor::CCBlade.Rotor, section::CCBlade.Section, op::
     nu = op.mu/op.rho
     chord = section.chord
 
-    chord_cross_span_to_get_suction_uvec = positive_x_rotation
-    return TBLTESourceElement(c0, nu, Δr, chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_suction_uvec)
+    chord_cross_span_to_get_top_uvec = positive_x_rotation
+    return TBLTESourceElement(c0, nu, Δr, chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
 end
 
 """
