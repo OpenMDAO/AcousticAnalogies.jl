@@ -1,7 +1,7 @@
 name = "AcousticAnalogies"
 uuid = "e71b3392-1e0c-4536-b366-2bd1fce6fba0"
 authors = ["Ingraham, Daniel James (GRC-LTV0) <daniel.j.ingraham@nasa.gov>"]
-version = "0.7.1"
+version = "0.7.2"
 
 [deps]
 AcousticMetrics = "046f749b-9c1e-43ca-86bc-6902340f753e"
