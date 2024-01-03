@@ -42,7 +42,7 @@ CurrentModule = AADocs
   * Thoroughly tested: unit tests for everything, and multiple comparisons of the entire
     calculation to equivalent methods in NASA's ANOPP2 code.
   * Convenient, fast coordinate system transformations through
-    [KinematicCoordinateTransformations.jl](https://github.com/dingraha/KinematicCoordinateTransformations.jl).
+    [KinematicCoordinateTransformations.jl](https://github.com/OpenMDAO/KinematicCoordinateTransformations.jl).
   * Written in pure Julia, and compatible with automatic differentiation (AD)
     tools like [ForwardDiff.jl](https://github.com/JuliaDiff/ForwardDiff.jl).
   * Comprehensive docs (TODO).
