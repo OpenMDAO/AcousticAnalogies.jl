@@ -28,12 +28,11 @@ jobs:
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
-      - name: Add General and DanielIngrahamRegistry
+      - name: Add General
         shell: julia --color=yes {0}
         run: |
           using Pkg
           Pkg.Registry.add(RegistrySpec(url="https://github.com/JuliaRegistries/General"))
-          # Pkg.Registry.add(RegistrySpec(url="https://github.com/dingraha/DanielIngrahamRegistry"))
         env:
               JULIA_PKG_USE_CLI_GIT: 'true'
       - uses: julia-actions/julia-runtest@v1
