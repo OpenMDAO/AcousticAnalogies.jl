@@ -20,12 +20,11 @@ jobs:
       - uses: julia-actions/setup-julia@v1
         with:
           version: '1'
-      - name: Add General and DanielIngrahamRegistry
+      - name: Add General
         shell: julia --color=yes {0}
         run: |
           using Pkg
           Pkg.Registry.add(RegistrySpec(url="https://github.com/JuliaRegistries/General"))
-          Pkg.Registry.add(RegistrySpec(url="https://github.com/dingraha/DanielIngrahamRegistry"))
         env:
               JULIA_PKG_USE_CLI_GIT: 'true'
       - name: Install dependencies

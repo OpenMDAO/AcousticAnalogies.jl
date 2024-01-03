@@ -222,7 +222,7 @@ one for which the fluid medium (air) appears to be stationary. This involves
 just setting the position and loading components of each `CompactSourceElement`
 to the correct values (`y0dot` through `y3dot` and `f0dot` and `f1dot`). This
 could be done manually, but it's easier to use the
-[KinematicCoordinateTransformations.jl](https://github.com/dingraha/KinematicCoordinateTransformations.jl)
+[KinematicCoordinateTransformations.jl](https://github.com/OpenMDAO/KinematicCoordinateTransformations.jl)
 package.
 
 The first transformation we need to perform is a steady rotation around the x
