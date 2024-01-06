@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>WriteVTK.jl Support · AcousticAnalogies.jl</title><meta name="title" content="WriteVTK.jl Support · AcousticAnalogies.jl"/><meta property="og:title" content="WriteVTK.jl Support · AcousticAnalogies.jl"/><meta property="twitter:title" content="WriteVTK.jl Support · AcousticAnalogies.jl"/><meta name="description" content="Documentation for AcousticAnalogies.jl."/><meta property="og:description" content="Documentation for AcousticAnalogies.jl."/><meta property="twitter:description" content="Documentation for AcousticAnalogies.jl."/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">AcousticAnalogies.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Introduction</a></li><li><a class="tocitem" href="../guided_example/">Guided Example</a></li><li><a class="tocitem" href="../ccblade_example/">CCBlade.jl Example</a></li><li class="is-active"><a class="tocitem" href>WriteVTK.jl Support</a></li><li><a class="tocitem" href="../api/">API Reference</a></li><li><a class="tocitem" href="../sqa/">Software Quality Assurance</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>WriteVTK.jl Support</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>WriteVTK.jl Support</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/OpenMDAO/AcousticAnalogies.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/OpenMDAO/AcousticAnalogies.jl/blob/main/docs/src/writevtk_support.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="WriteVTK.jl-Support"><a class="docs-heading-anchor" href="#WriteVTK.jl-Support">WriteVTK.jl Support</a><a id="WriteVTK.jl-Support-1"></a><a class="docs-heading-anchor-permalink" href="#WriteVTK.jl-Support" title="Permalink"></a></h1><p>AcousticAnalogies.jl can write out <a href="../api/#AcousticAnalogies.CompactSourceElement-NTuple{10, Any}"><code>CompactSourceElement</code></a> <code>structs</code> to VTK files, allowing us to easily visualize the state and motion of the acoustic sources in popular visualization tools (e.g. <a href="https://www.paraview.org/">ParaView</a>). This is very useful for checking that the motion, loading, coordinate system, etc. is what we expect.</p><p>To write out VTK files, we just need to pass an array of source elements to the <a href="../api/#AcousticAnalogies.to_paraview_collection"><code>AcousticAnalogies.to_paraview_collection</code></a> function. We&#39;ll use <a href="https://github.com/byuflowlab/CCBlade.jl"><code>CCBlade.jl</code></a> to calculate the aerodynamic loads, and the CCBlade.jl helper routines that AcousticAnalogies.jl provides to create the source elements from the CCBlade.jl data.</p><pre><code class="language-julia hljs">using AcousticAnalogies
+using CCBlade
+
+# Define the blade geometry.
+B = 2
+Rhub = 0.10
+Rtip = 1.1684  # meters
+radii = Rhub .+ range(0.0, 1.0, length=31).*(Rtip - Rhub)
+radii = 0.5.*(radii[2:end] .+ radii[1:end-1])
+
+cs_area_over_chord_squared = 0.064
+chord = [
+    0.35044     , 0.28260     , 0.22105     , 0.17787     , 0.14760,
+    0.12567     , 0.10927     , 0.96661E-01 , 0.86742E-01 ,
+    0.78783E-01 , 0.72287E-01 , 0.66906E-01 , 0.62387E-01 ,
+    0.58541E-01 , 0.55217E-01 , 0.52290E-01 , 0.49645E-01 ,
+    0.47176E-01 , 0.44772E-01 , 0.42326E-01 , 0.39732E-01 ,
+    0.36898E-01 , 0.33752E-01 , 0.30255E-01 , 0.26401E-01 ,
+    0.22217E-01 , 0.17765E-01 , 0.13147E-01 , 0.85683E-02 ,
+    0.47397E-02].*Rtip
+
+theta = [
+    40.005, 34.201, 28.149, 23.753, 20.699, 18.516, 16.890, 15.633,
+    14.625, 13.795, 13.094, 12.488, 11.956, 11.481, 11.053, 10.662,
+    10.303, 9.9726, 9.6674, 9.3858, 9.1268, 8.8903, 8.6764, 8.4858,
+    8.3193, 8.1783, 8.0638, 7.9769, 7.9183, 7.8889].*(pi/180)
+
+# Define the operating point.
+rpm = 2200.0
+omega = rpm*(2*pi/60.0)
+rho = 1.226  # kg/m^3
+c0 = 340.0  # m/s
+mu = 0.1780e-4  # kg/(m*s)
+pitch = 0.0  # rad
+Vinf = 5.0  # m/s
+
+# Create an airfoil interpolation object.
+xrotor_config = XROTORAirfoilConfig(
+    A0=0.0, DCLDA=6.2800, CLMAX=1.5, CLMIN=-0.5, DCLDA_STALL=0.1,
+    DCL_STALL=0.1, MCRIT=0.8, CDMIN=0.13e-1, CLDMIN=0.5, DCDCL2=0.4e-2, REREF=0.2e6, REXP=-0.4)
+airfoil_interp(a, r, m) = af_xrotor(a, r, m, xrotor_config)
+
+# Create the CCBlade.jl structs.
+rotor = Rotor(Rhub, Rtip, B)
+sections = Section.(radii, chord, theta, Ref(airfoil_interp))
+ops = OperatingPoint.(Vinf, omega.*radii, rho, pitch, mu, c0)
+outs = solve.(Ref(rotor), sections, ops)
+
+# Create the AcousticAnalogies.jl source elements.
+bpp = 60/(rpm*B)
+period = 2*bpp
+num_source_times = 64
+ses = source_elements_ccblade(rotor, sections, ops, outs, fill(cs_area_over_chord_squared, length(radii)), period, num_source_times)
+@show size(ses)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(64, 30, 2)</code></pre><p><code>ses</code> is an array of source elements of shape <code>(num_source_times, num_radial, B)</code>, where <code>num_source_times</code> is the number of time steps over which the source elements are defined, <code>num_radial</code> is the number of radial elements each blade is subdivided into, and <code>B</code> is the number of blades.</p><p>Now that we have an array of source elements, we can write them out to VTK files.</p><pre><code class="language-julia hljs">name = &quot;two_blade_example&quot;
+outfiles = AcousticAnalogies.to_paraview_collection(name, ses)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">65-element Vector{String}:
+ &quot;two_blade_example.pvd&quot;
+ &quot;two_blade_example00000001.vtp&quot;
+ &quot;two_blade_example00000002.vtp&quot;
+ &quot;two_blade_example00000003.vtp&quot;
+ &quot;two_blade_example00000004.vtp&quot;
+ &quot;two_blade_example00000005.vtp&quot;
+ &quot;two_blade_example00000006.vtp&quot;
+ &quot;two_blade_example00000007.vtp&quot;
+ &quot;two_blade_example00000008.vtp&quot;
+ &quot;two_blade_example00000009.vtp&quot;
+ ⋮
+ &quot;two_blade_example00000056.vtp&quot;
+ &quot;two_blade_example00000057.vtp&quot;
+ &quot;two_blade_example00000058.vtp&quot;
+ &quot;two_blade_example00000059.vtp&quot;
+ &quot;two_blade_example00000060.vtp&quot;
+ &quot;two_blade_example00000061.vtp&quot;
+ &quot;two_blade_example00000062.vtp&quot;
+ &quot;two_blade_example00000063.vtp&quot;
+ &quot;two_blade_example00000064.vtp&quot;</code></pre><p>This will write out one polygonal VTK (<code>.vtp</code>) file per time step, along with a ParaView collection (<code>.pvd</code>) file that allows us to open all of the <code>.vtp</code> files at once.</p><p>Here&#39;s an example visualization of the above example, showing an animation of the loading in the <code>y</code> direction, which is normal to the rotation axis of the rotor. <img src="../assets/two_blade_example-y_loading.gif" alt="Loading Animation"/></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../ccblade_example/">« CCBlade.jl Example</a><a class="docs-footer-nextpage" href="../api/">API Reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="auto">Automatic (OS)</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.2.1 on <span class="colophon-date" title="Saturday 6 January 2024 20:07">Saturday 6 January 2024</span>. Using Julia version 1.10.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
