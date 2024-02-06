@@ -462,6 +462,7 @@ end
         @test se.span_uvec ≈ [0.0, 1.0, 0.0]
         @test se.chord_uvec ≈ [cos(alphastar), 0.0, -sin(alphastar)]
         # @test se.chord_uvec ≈ [1.0, 0.0, 0.0]
+        @test isapprox(AcousticAnalogies.angle_of_attack(se), alphastar; atol=1e-12)
 
         # Now we want to transform the source element into the global frame, which just means we make it move with speed `U` in the negative x direction.
         trans = KinematicCoordinateTransformations.ConstantVelocityTransformation(τ, [0.0, 0.0, 0.0], [-U, 0.0, 0.0])
@@ -481,6 +482,12 @@ end
         @test se_global.span_uvec ≈ [0.0, 1.0, 0.0]
         @test se_global.chord_uvec ≈ [cos(alphastar), 0.0, -sin(alphastar)]
         # @test se_global.chord_uvec ≈ [1.0, 0.0, 0.0]
+        @test isapprox(AcousticAnalogies.angle_of_attack(se_global), alphastar; atol=1e-12)
+
+        # If the angle of attack is negative, then the pressure and suction sides of the airfoil section switch, and so the coordinate system does too.
+        if (alphastar - AcousticAnalogies.alpha_zerolift(bl)) < 0
+            Φ_e *= -1
+        end
 
         # What about the observer?
         # That's the tricky part.
@@ -525,8 +532,6 @@ end
         alphastar = 0.0
         bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
 
-        freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl)
-
         # Now, need to get the data from the BPM report.
         fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure11-a-TBL-TE-suction.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
@@ -537,18 +542,195 @@ end
         f_p = f_s
         SPL_p = SPL_s
 
-        # Now compare...
-        SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
-        vmin, vmax = extrema(SPL_s)
-        err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
-        @test maximum(err) < 0.029
+        for angle_of_attack_sign in [1, -1]
+            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl)
 
-        SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
-        vmin, vmax = extrema(SPL_p)
-        err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
-        @test maximum(err) < 0.029
+            # Now compare...
+            SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
+            vmin, vmax = extrema(SPL_s)
+            err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
+            @test maximum(err) < 0.029
 
-        @show SPL_alpha_jl
+            SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
+            vmin, vmax = extrema(SPL_p)
+            err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
+            @test maximum(err) < 0.029
+
+            # These should all be very negative, since alphastar is zero:
+            @test all(SPL_alpha_jl .< -100)
+        end
+    end
+
+    @testset "BPM Figure 11d" begin
+        nu = 1.4529e-5  # kinematic viscosity, m^2/s
+        L = 45.72e-2  # span in meters
+        chord = 30.48e-2  # chord in meters
+        U = 31.7  # freestream velocity in m/s
+        M = 0.093  # Mach number, corresponds to U = 31.7 m/s in BPM report
+        r_e = 1.22 # radiation distance in meters
+        θ_e = 90*pi/180 
+        Φ_e = 90*pi/180
+        alphastar = 0.0
+        bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
+
+        # Now, need to get the data from the BPM report.
+        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure11-d-TBL-TE-suction.csv")
+        bpm = DelimitedFiles.readdlm(fname, ',')
+        f_s = bpm[:, 1] # This is in kHz.
+        SPL_s = bpm[:, 2]
+
+        # At zero angle of attack the pressure and suction side predictions are the same.
+        f_p = f_s
+        SPL_p = SPL_s
+
+        for angle_of_attack_sign in [1, -1]
+            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl)
+
+            # Now compare...
+            SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
+            vmin, vmax = extrema(SPL_s)
+            err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
+            @test maximum(err) < 0.015
+
+            SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
+            vmin, vmax = extrema(SPL_p)
+            err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
+            @test maximum(err) < 0.015
+
+            # These should all be very negative, since alphastar is zero:
+            @test all(SPL_alpha_jl .< -100)
+        end
+    end
+
+    @testset "BPM Figure 12a" begin
+        nu = 1.4529e-5  # kinematic viscosity, m^2/s
+        L = 45.72e-2  # span in meters
+        chord = 30.48e-2  # chord in meters
+        U = 71.3  # freestream velocity in m/s
+        M = 0.209  # Mach number, corresponds to U = 71.3 m/s in BPM report
+        r_e = 1.22 # radiation distance in meters
+        θ_e = 90*pi/180 
+        Φ_e = 90*pi/180
+        alphastar = 1.5*pi/180
+        bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
+
+        # Now, need to get the data from the BPM report.
+        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure12-U71.3-TBL-TE-suction.csv")
+        bpm = DelimitedFiles.readdlm(fname, ',')
+        f_s = bpm[:, 1]
+        SPL_s = bpm[:, 2]
+
+        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure12-U71.3-TBL-TE-pressure.csv")
+        bpm = DelimitedFiles.readdlm(fname, ',')
+        f_p = bpm[:, 1]
+        SPL_p = bpm[:, 2]
+
+        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure12-U71.3-separation.csv")
+        bpm = DelimitedFiles.readdlm(fname, ',')
+        f_alpha = bpm[:, 1]
+        SPL_alpha = bpm[:, 2]
+
+        for angle_of_attack_sign in [1, -1]
+            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl)
+
+            # Now compare...
+            SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
+            vmin, vmax = extrema(SPL_s)
+            err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
+            @test maximum(err) < 0.022
+
+            SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
+            vmin, vmax = extrema(SPL_p)
+            err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
+            @test maximum(err) < 0.017
+
+            SPL_alpha_jl_interp = linear(freqs, SPL_alpha_jl, f_alpha.*1e3)
+            vmin, vmax = extrema(SPL_alpha)
+            err = abs.(SPL_alpha_jl_interp .- SPL_alpha)./(vmax - vmin)
+            @test maximum(err) < 0.037
+        end
+    end
+
+    @testset "BPM Figure 26a" begin
+        nu = 1.4529e-5  # kinematic viscosity, m^2/s
+        L = 45.72e-2  # span in meters
+        chord = 10.16e-2  # chord in meters
+        U = 71.3  # freestream velocity in m/s
+        M = 0.209  # Mach number, corresponds to U = 71.3 m/s in BPM report
+        r_e = 1.22 # radiation distance in meters
+        θ_e = 90*pi/180 
+        Φ_e = 90*pi/180
+        alphastar = 0.0
+        bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
+
+        # Now, need to get the data from the BPM report.
+        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure26-a-TBL-TE-suction.csv")
+        bpm = DelimitedFiles.readdlm(fname, ',')
+        f_s = bpm[:, 1]
+        SPL_s = bpm[:, 2]
+
+        # At zero angle of attack the pressure and suction side predictions are the same.
+        f_p = f_s
+        SPL_p = SPL_s
+
+        for angle_of_attack_sign in [1, -1]
+            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl)
+
+            # Now compare...
+            SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
+            vmin, vmax = extrema(SPL_s)
+            err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
+            @test maximum(err) < 0.015
+
+            SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
+            vmin, vmax = extrema(SPL_p)
+            err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
+            @test maximum(err) < 0.015
+
+            # These should all be very negative, since alphastar is zero:
+            @test all(SPL_alpha_jl .< -100)
+        end
+    end
+
+    @testset "BPM Figure 26d" begin
+        nu = 1.4529e-5  # kinematic viscosity, m^2/s
+        L = 45.72e-2  # span in meters
+        chord = 10.16e-2  # chord in meters
+        U = 31.7  # freestream velocity in m/s
+        M = 0.093  # Mach number, corresponds to U = 31.7 m/s in BPM report
+        r_e = 1.22 # radiation distance in meters
+        θ_e = 90*pi/180 
+        Φ_e = 90*pi/180
+        alphastar = 0.0
+        bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
+
+        # Now, need to get the data from the BPM report.
+        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure26-d-TBL-TE-suction.csv")
+        bpm = DelimitedFiles.readdlm(fname, ',')
+        f_s = bpm[:, 1]
+        SPL_s = bpm[:, 2]
+
+        # At zero angle of attack the pressure and suction side predictions are the same.
+        f_p = f_s
+        SPL_p = SPL_s
+
+        for angle_of_attack_sign in [1, -1]
+            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl)
+
+            # Now compare...
+            SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
+            vmin, vmax = extrema(SPL_s)
+            err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
+            @test maximum(err) < 0.032
+
+            SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
+            vmin, vmax = extrema(SPL_p)
+            err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
+            @test maximum(err) < 0.032
+
+            # These should all be very negative, since alphastar is zero:
+            @test all(SPL_alpha_jl .< -100)
+        end
     end
 
     @testset "BPM Figure 28a" begin
@@ -563,8 +745,6 @@ end
         alphastar = 6.7*pi/180
         # Using the tripped boundary layer in this case.
         bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
-
-        freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl)
 
         # Now, need to get the data from the BPM report.
         fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure28-a-TBL-TE-suction.csv")
@@ -582,21 +762,200 @@ end
         f_alpha = bpm[:, 1]
         SPL_alpha = bpm[:, 2]
 
-        # Now compare...
-        SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
-        vmin, vmax = extrema(SPL_s)
-        err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
-        @test maximum(err) < 0.036
+        for angle_of_attack_sign in [1, -1]
+            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl)
 
-        SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
-        vmin, vmax = extrema(SPL_p)
-        err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
-        @test maximum(err) < 0.075
+            # Now compare...
+            SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
+            vmin, vmax = extrema(SPL_s)
+            err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
+            @test maximum(err) < 0.036
 
-        SPL_alpha_jl_interp = linear(freqs, SPL_alpha_jl, f_alpha.*1e3)
-        vmin, vmax = extrema(SPL_alpha)
-        err = abs.(SPL_alpha_jl_interp .- SPL_alpha)./(vmax - vmin)
-        @test maximum(err) < 0.039
+            SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
+            vmin, vmax = extrema(SPL_p)
+            err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
+            @test maximum(err) < 0.075
+
+            SPL_alpha_jl_interp = linear(freqs, SPL_alpha_jl, f_alpha.*1e3)
+            vmin, vmax = extrema(SPL_alpha)
+            err = abs.(SPL_alpha_jl_interp .- SPL_alpha)./(vmax - vmin)
+            @test maximum(err) < 0.039
+        end
+    end
+
+    @testset "BPM Figure 28d" begin
+        nu = 1.4529e-5  # kinematic viscosity, m^2/s
+        L = 45.72e-2  # span in meters
+        chord = 10.16e-2  # chord in meters
+        U = 31.7  # freestream velocity in m/s
+        M = 0.093  # mach number, corresponds to u = 31.7 m/s in bpm report
+        r_e = 1.22 # radiation distance in meters
+        θ_e = 90*pi/180 
+        Φ_e = 90*pi/180
+        alphastar = 6.7*pi/180
+        # Using the tripped boundary layer in this case.
+        bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
+
+        # Now, need to get the data from the BPM report.
+        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure28-d-TBL-TE-suction.csv")
+        bpm = DelimitedFiles.readdlm(fname, ',')
+        f_s = bpm[:, 1]
+        SPL_s = bpm[:, 2]
+
+        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure28-d-TBL-TE-pressure.csv")
+        bpm = DelimitedFiles.readdlm(fname, ',')
+        f_p = bpm[:, 1]
+        SPL_p = bpm[:, 2]
+
+        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure28-d-separation.csv")
+        bpm = DelimitedFiles.readdlm(fname, ',')
+        f_alpha = bpm[:, 1]
+        SPL_alpha = bpm[:, 2]
+
+        for angle_of_attack_sign in [1, -1]
+            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl)
+
+            # Now compare...
+            SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
+            vmin, vmax = extrema(SPL_s)
+            err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
+            @test maximum(err) < 0.021
+
+            SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
+            vmin, vmax = extrema(SPL_p)
+            err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
+            @test maximum(err) < 0.042
+
+            SPL_alpha_jl_interp = linear(freqs, SPL_alpha_jl, f_alpha.*1e3)
+            vmin, vmax = extrema(SPL_alpha)
+            err = abs.(SPL_alpha_jl_interp .- SPL_alpha)./(vmax - vmin)
+            @test maximum(err) < 0.040
+        end
+    end
+
+    @testset "BPM Figure 38d" begin
+        nu = 1.4529e-5  # kinematic viscosity, m^2/s
+        L = 45.72e-2  # span in meters
+        chord = 2.54e-2  # chord in meters
+        U = 31.7  # freestream velocity in m/s
+        M = 0.093  # mach number, corresponds to u = 31.7 m/s in bpm report
+        r_e = 1.22 # radiation distance in meters
+        θ_e = 90*pi/180 
+        Φ_e = 90*pi/180
+        alphastar = 0.0*pi/180
+        # Using the tripped boundary layer in this case.
+        bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
+
+        # Now, need to get the data from the BPM report.
+        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure38-d-TBL-TE-suction.csv")
+        bpm = DelimitedFiles.readdlm(fname, ',')
+        f_s = bpm[:, 1]
+        SPL_s = bpm[:, 2]
+
+        # At zero angle of attack the pressure and suction side predictions are the same.
+        f_p = f_s
+        SPL_p = SPL_s
+
+        for angle_of_attack_sign in [1, -1]
+            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl)
+
+            # Now compare...
+            SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
+            vmin, vmax = extrema(SPL_s)
+            err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
+            @test maximum(err) < 0.026
+
+            SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
+            vmin, vmax = extrema(SPL_p)
+            err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
+            @test maximum(err) < 0.026
+
+            # These should all be very negative, since alphastar is zero:
+            @test all(SPL_alpha_jl .< -100)
+        end
+    end
+
+
+    @testset "BPM Figure 39d" begin
+        nu = 1.4529e-5  # kinematic viscosity, m^2/s
+        L = 45.72e-2  # span in meters
+        chord = 2.54e-2  # chord in meters
+        U = 31.7  # freestream velocity in m/s
+        M = 0.093  # mach number, corresponds to u = 31.7 m/s in bpm report
+        r_e = 1.22 # radiation distance in meters
+        θ_e = 90*pi/180 
+        Φ_e = 90*pi/180
+        alphastar = 4.8*pi/180
+        # Using the tripped boundary layer in this case.
+        bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
+
+        # Now, need to get the data from the BPM report.
+        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure39-d-TBL-TE-suction.csv")
+        bpm = DelimitedFiles.readdlm(fname, ',')
+        f_s = bpm[:, 1]
+        SPL_s = bpm[:, 2]
+
+        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure39-d-TBL-TE-pressure.csv")
+        bpm = DelimitedFiles.readdlm(fname, ',')
+        f_p = bpm[:, 1]
+        SPL_p = bpm[:, 2]
+
+        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure39-d-separation.csv")
+        bpm = DelimitedFiles.readdlm(fname, ',')
+        f_alpha = bpm[:, 1]
+        SPL_alpha = bpm[:, 2]
+
+        for angle_of_attack_sign in [1, -1]
+            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl)
+
+            # Now compare...
+            SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
+            vmin, vmax = extrema(SPL_s)
+            err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
+            @test maximum(err) < 0.036
+
+            SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
+            vmin, vmax = extrema(SPL_p)
+            err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
+            @test maximum(err) < 0.043
+
+            SPL_alpha_jl_interp = linear(freqs, SPL_alpha_jl, f_alpha.*1e3)
+            vmin, vmax = extrema(SPL_alpha)
+            err = abs.(SPL_alpha_jl_interp .- SPL_alpha)./(vmax - vmin)
+            @test maximum(err) < 0.039
+        end
+    end
+
+    @testset "BPM Figure 69a" begin
+        nu = 1.4529e-5  # kinematic viscosity, m^2/s
+        L = 45.72e-2  # span in meters
+        chord = 5.08e-2  # chord in meters
+        U = 71.3  # freestream velocity in m/s
+        M = 0.209  # Mach number, corresponds to U = 71.3 m/s in BPM report
+        r_e = 1.22 # radiation distance in meters
+        θ_e = 90*pi/180 
+        Φ_e = 90*pi/180
+        alphastar = 15.4*pi/180
+        bl = AcousticAnalogies.UntrippedN0012BoundaryLayer()
+
+        # Now, need to get the data from the BPM report.
+        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure69-a-separation.csv")
+        bpm = DelimitedFiles.readdlm(fname, ',')
+        f_alpha = bpm[:, 1]
+        SPL_alpha = bpm[:, 2]
+
+        for angle_of_attack_sign in [1, -1]
+            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl)
+
+            # Now compare...
+            @test all(SPL_s_jl .≈ -100)
+            @test all(SPL_p_jl .≈ -100)
+
+            SPL_alpha_jl_interp = linear(freqs, SPL_alpha_jl, f_alpha.*1e3)
+            vmin, vmax = extrema(SPL_alpha)
+            err = abs.(SPL_alpha_jl_interp .- SPL_alpha)./(vmax - vmin)
+            @test maximum(err) < 0.033
+        end
     end
 
 end

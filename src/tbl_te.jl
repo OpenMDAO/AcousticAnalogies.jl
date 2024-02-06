@@ -823,7 +823,7 @@ function noise(se::TBLTESourceElement, obs::AcousticObserver, t_obs, freq)
     alphastar = angle_of_attack(se)
 
     # Need the directivity functions.
-    top_is_suction = alphastar > alpha_zerolift(se.bl)
+    top_is_suction = is_top_suction(se.bl, alphastar)
     r_er, Dl, Dh = directivity(se, x_obs, top_is_suction)
 
     # Need the fluid velocity normal to the span.
@@ -846,14 +846,17 @@ function noise(se::TBLTESourceElement, obs::AcousticObserver, t_obs, freq)
     # Reynolds number based on chord and the flow speed normal to span.
     Re_c = U*se.chord/se.nu
 
-    # Also need the displacement thicknesses on the top and and bottom.
-    # deltastar_s = disp_thickness_s(se.bl, Re_c, alphastar)*se.chord
-    # deltastar_p = disp_thickness_p(se.bl, Re_c, alphastar)*se.chord
-    deltastar_top = disp_thickness_top(se.bl, Re_c, alphastar)*se.chord
-    deltastar_bot = disp_thickness_bot(se.bl, Re_c, alphastar)*se.chord
-    deltastar_s, deltastar_p = ifelse(top_is_suction,
-        (deltastar_top, deltastar_bot),
-        (deltastar_bot, deltastar_top))
+    # Also need the displacement thicknesses for the pressure and suction sides.
+    # deltastar_top = disp_thickness_top(se.bl, Re_c, alphastar)*se.chord
+    # deltastar_bot = disp_thickness_bot(se.bl, Re_c, alphastar)*se.chord
+    # deltastar_s, deltastar_p = ifelse(top_is_suction,
+    #     (deltastar_top, deltastar_bot),
+    #     (deltastar_bot, deltastar_top))
+    deltastar_s = disp_thickness_s(se.bl, Re_c, alphastar)*se.chord
+    deltastar_p = disp_thickness_p(se.bl, Re_c, alphastar)*se.chord
+
+    # Now that we've decided on the directivity functions and the displacement thickness, and we know the correct value of `top_is_suction` we should be able to switch the sign on `alphastar` if it's negative, and reference it to the zero-lift value, as the BPM report does.
+    alphastar_positive = abs_cs_safe(alphastar - alpha_zerolift(se.bl))
 
     # Mach number of the flow speed normal to span.
     M = U/se.c0
@@ -863,10 +866,10 @@ function noise(se::TBLTESourceElement, obs::AcousticObserver, t_obs, freq)
 
     St_s = freq*deltastar_s/U
     St_peak_p = St_1(M)
-    St_peak_alpha = St_2(St_peak_p, alphastar)
-    k2 = K_2(Re_c, M, alphastar)
+    St_peak_alpha = St_2(St_peak_p, alphastar_positive)
+    k2 = K_2(Re_c, M, alphastar_positive)
 
-    if alphastar*180/pi > min(gamma0_deg, alphastar0*180/pi)
+    if alphastar_positive*180/pi > min(gamma0_deg, alphastar0*180/pi)
         # D = Dbar_l(theta_e, phi_e, M)
         A_prime = A(St_s/St_peak_alpha, 3*Re_c)
         # SPL_alpha = 10*log10((deltastar_s*M^5*L*D)/(r_er^2)) + A_prime + k2
@@ -878,11 +881,11 @@ function noise(se::TBLTESourceElement, obs::AcousticObserver, t_obs, freq)
         G_p = 10^(0.1*(-100))*one(typeof(G_alpha))
     else
         # D = Dbar_h(theta_e, phi_e, M, M_c)
-        # deltastar_s = disp_thickness_s(bl, Re_c, alphastar)*chord
+        # deltastar_s = disp_thickness_s(bl, Re_c, alphastar_positive)*chord
         # St_s = freq*deltastar_s/U
 
         # St_peak_p = St_1(M)
-        # St_peak_alpha = St_2(St_peak_p, alphastar)
+        # St_peak_alpha = St_2(St_peak_p, alphastar_positive)
         St_peak_s = 0.5*(St_peak_p + St_peak_alpha)
 
         A_s = A(St_s/St_peak_s, Re_c)
@@ -895,7 +898,7 @@ function noise(se::TBLTESourceElement, obs::AcousticObserver, t_obs, freq)
         G_s = (deltastar_s*M^5*se.Δr*Dh)/(r_er^2)*H_s
 
         # D = Dbar_h(theta_e, phi_e, M, M_c)
-        # deltastar_p = disp_thickness_p(se.bl, Re_c, alphastar)*chord
+        # deltastar_p = disp_thickness_p(se.bl, Re_c, alphastar_positive)*chord
 
         # k_1 = K_1(Re_c)
         St_p = freq*deltastar_p/U
@@ -904,7 +907,7 @@ function noise(se::TBLTESourceElement, obs::AcousticObserver, t_obs, freq)
         A_p = A(St_p/St_peak_p, Re_c)
 
         Re_deltastar_p = U*deltastar_p/se.nu
-        ΔK_1 = DeltaK_1(alphastar, Re_deltastar_p)
+        ΔK_1 = DeltaK_1(alphastar_positive, Re_deltastar_p)
 
         # SPL_p = 10*log10((deltastar_p*M^5*L*Dh)/(r_er^2)) + A_p + k_1 - 3 + ΔK_1
         # Brooks and Burley AIAA 2001-2210 style.

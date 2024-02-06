@@ -86,7 +86,7 @@ end
 
             # Get the AcousticAnalogies.jl implementation.
             alpha_deg_jl = range(minimum(alpha_deg), maximum(alpha_deg); length=50)
-            deltastar_jl = AcousticAnalogies.disp_thickness_p.(Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()), alpha_deg_jl.*pi/180)
+            deltastar_jl = AcousticAnalogies._disp_thickness_p.(Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()), alpha_deg_jl.*pi/180)
 
             # Interpolate the BPM report data onto the uniform alpha spacing.
             deltastar_bpm_interp = linear(alpha_deg, deltastar_bpm, alpha_deg_jl)
@@ -106,7 +106,7 @@ end
 
             # Get the AcousticAnalogies.jl implementation.
             alpha_deg_jl = range(minimum(alpha_deg), maximum(alpha_deg); length=50)
-            deltastar_jl = AcousticAnalogies.disp_thickness_s.(Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()), alpha_deg_jl.*pi/180)
+            deltastar_jl = AcousticAnalogies._disp_thickness_s.(Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()), alpha_deg_jl.*pi/180)
 
             # Interpolate the BPM report data onto the uniform alpha spacing.
             deltastar_bpm_interp = linear(alpha_deg, deltastar_bpm, alpha_deg_jl)
@@ -147,7 +147,7 @@ end
 
             # Get the AcousticAnalogies.jl implementation.
             alpha_deg_jl = range(minimum(alpha_deg), maximum(alpha_deg); length=50)
-            deltastar_jl = AcousticAnalogies.disp_thickness_p.(Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()), alpha_deg_jl.*pi/180)
+            deltastar_jl = AcousticAnalogies._disp_thickness_p.(Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()), alpha_deg_jl.*pi/180)
 
             # Interpolate the BPM report onto the uniform alpha spacing.
             deltastar_bpm_interp = linear(alpha_deg, deltastar_bpm, alpha_deg_jl)
@@ -166,7 +166,7 @@ end
             deltastar_bpm = bpm_suction_side[:, 2]
 
             alpha_deg_jl = range(minimum(alpha_deg), maximum(alpha_deg); length=50)
-            deltastar_jl = AcousticAnalogies.disp_thickness_s.(Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()), alpha_deg_jl.*pi/180)
+            deltastar_jl = AcousticAnalogies._disp_thickness_s.(Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()), alpha_deg_jl.*pi/180)
 
             deltastar_bpm_interp = linear(alpha_deg, deltastar_bpm, alpha_deg_jl)
 

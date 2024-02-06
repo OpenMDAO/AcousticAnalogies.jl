@@ -16,6 +16,8 @@ alpha_stall(bl::Union{TrippedN0012BoundaryLayer,UntrippedN0012BoundaryLayer}, Re
 
 alpha_zerolift(bl::Union{TrippedN0012BoundaryLayer,UntrippedN0012BoundaryLayer}) = zero(bl.alphastar0)
 
+is_top_suction(bl::AbstractBoundaryLayer, alphastar) = alphastar >= alpha_zerolift(bl)
+
 function bl_thickness_0(::TrippedN0012BoundaryLayer, Re_c)
     # Equation 2 from the BPM report.
     logRe_c = log10(Re_c)
@@ -50,7 +52,7 @@ function bl_thickness_p(::Union{TrippedN0012BoundaryLayer,UntrippedN0012Boundary
     return 10^(-0.04175*alphastar_deg + 0.00106*alphastar_deg^2)
 end
 
-function disp_thickness_p(::Union{TrippedN0012BoundaryLayer,UntrippedN0012BoundaryLayer}, alphastar)
+function _disp_thickness_p(::Union{TrippedN0012BoundaryLayer,UntrippedN0012BoundaryLayer}, alphastar)
     # Equation 9 from the BPM report.
     alphastar_deg = alphastar*180/pi
     return 10^(-0.0432*alphastar_deg + 0.00113*alphastar_deg^2)
@@ -78,7 +80,7 @@ end
 #     end
 # end
 
-function disp_thickness_s(::TrippedN0012BoundaryLayer, alphastar)
+function _disp_thickness_s(::TrippedN0012BoundaryLayer, alphastar)
     T = typeof(alphastar)
     # Equation 12 from the BPM report.
     alphastar_deg = alphastar*180/pi
@@ -116,7 +118,7 @@ end
 #     end
 # end
 
-function disp_thickness_s(::UntrippedN0012BoundaryLayer, alphastar)
+function _disp_thickness_s(::UntrippedN0012BoundaryLayer, alphastar)
     T = typeof(alphastar)
     # Equation 15 from the BPM report.
     alphastar_deg = alphastar*180/pi
@@ -136,12 +138,13 @@ function disp_thickness_s(::UntrippedN0012BoundaryLayer, alphastar)
     end
 end
 
-function disp_thickness_top(bl::Union{TrippedN0012BoundaryLayer,UntrippedN0012BoundaryLayer}, alphastar)
-    return ifelse(alphastar > alpha_zerolift(bl), disp_thickness_s(bl, alphastar), disp_thickness_p(bl, -alphastar))
+function _disp_thickness_top(bl::Union{TrippedN0012BoundaryLayer,UntrippedN0012BoundaryLayer}, alphastar)
+    # Switch sign on alphastar and call the "opposite" `disp_thickness_*` routine if the top surface isn't the suction surface.
+    return ifelse(is_top_suction(bl, alphastar), _disp_thickness_s(bl, alphastar), _disp_thickness_p(bl, -alphastar))
 end
 
-function disp_thickness_bot(bl::Union{TrippedN0012BoundaryLayer,UntrippedN0012BoundaryLayer}, alphastar)
-    return ifelse(alphastar > alpha_zerolift(bl), disp_thickness_p(bl, alphastar), disp_thickness_s(bl, -alphastar))
+function _disp_thickness_bot(bl::Union{TrippedN0012BoundaryLayer,UntrippedN0012BoundaryLayer}, alphastar)
+    return ifelse(is_top_suction(bl, alphastar), _disp_thickness_p(bl, alphastar), _disp_thickness_s(bl, -alphastar))
 end
 
 function bl_thickness_p(bl::AbstractBoundaryLayer, Re_c, alphastar)
@@ -154,9 +157,18 @@ end
 
 function disp_thickness_bot(bl::AbstractBoundaryLayer, Re_c, alphastar)
     # (δ^*_p/δ^*_0)*(δ^*_0/c)
-    return disp_thickness_bot(bl, alphastar)*disp_thickness_0(bl, Re_c)
+    return _disp_thickness_bot(bl, alphastar)*disp_thickness_0(bl, Re_c)
 end
 
 function disp_thickness_top(bl::AbstractBoundaryLayer, Re_c, alphastar)
-    return disp_thickness_top(bl, alphastar)*disp_thickness_0(bl, Re_c)
+    return _disp_thickness_top(bl, alphastar)*disp_thickness_0(bl, Re_c)
 end
+
+function disp_thickness_s(bl::AbstractBoundaryLayer, Re_c, alphastar)
+    return ifelse(is_top_suction(bl, alphastar), disp_thickness_top(bl, Re_c, alphastar), disp_thickness_bot(bl, Re_c, alphastar))
+end
+
+function disp_thickness_p(bl::AbstractBoundaryLayer, Re_c, alphastar)
+    return ifelse(is_top_suction(bl, alphastar), disp_thickness_bot(bl, Re_c, alphastar), disp_thickness_top(bl, Re_c, alphastar))
+end
+
