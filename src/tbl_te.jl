@@ -307,6 +307,51 @@ abstract type AbstractDirectivity end
 struct BPMDirectivity <: AbstractDirectivity end
 struct BrooksBurleyDirectivity <: AbstractDirectivity end
 
+"""
+    doppler_factor(se::CompactSourceElement, obs::AbstractAcousticObserver, t_obs)
+
+Calculate the Doppler shift factor for noise emitted by source element `se` and recieved by observer `obs` at time `t_obs`, i.e. the ratio between an observer frequency `f` and emitted frequency `f_0`.
+
+The correct value for `t_obs` can be found using [`adv_time`](@ref).
+"""
+function doppler_factor(se::AbstractCompactSourceElement, obs::AbstractAcousticObserver, t_obs)
+    # Location of the observer at the observer time.
+    x_obs = obs(t_obs)
+
+    # Also need the speed of sound.
+    c = se.c0
+
+    # Get a unit vector pointing from the source position at the source time to the observer position at the observer time.
+    rv = x_obs .- se.y0dot
+    r = norm_cs_safe(rv)
+    rhat = rv/r
+
+    # So, now, if I dot the source velocity with `rhat`, that would give me the component of velocity of the source in the direction of the observer, positive if moving toward it, negative if moving away.
+    v_src = dot_cs_safe(velocity(se), rhat)
+
+    # And, if I dot the observer velocity `rhat`, that will give me the component of velocity of the observer in the direction of the source, positive if moving *away* from it, negative if moving toward.
+    v_obs = dot_cs_safe(velocity(obs, t_obs), rhat)
+
+    # Now we can get the factor.
+    factor = (1 - v_obs/c) / (1 - v_src/c)
+
+    return factor
+end
+
+"""
+    doppler_factor(se::CompactSourceElement, obs::AbstractAcousticObserver)
+
+Calculate the Doppler shift factor for noise emitted by source element `se` and recieved by observer `obs`, i.e. the ratio between an observer frequency `f` and emitted frequency `f_0`.
+
+The correct value for `t_obs` will be found using [`adv_time`](@ref) internally.
+"""
+function doppler_factor(se::AbstractCompactSourceElement, obs::AbstractAcousticObserver)
+    # Do the advanced time calculation.
+    t_obs = adv_time(se, obs)
+
+    return doppler_factor(se, obs, t_obs)
+end
+
 @concrete struct TBLTESourceElement{TDirect<:AbstractDirectivity,TUInduction} <: AbstractCompactSourceElement
     # Speed of sound, m/s.
     c0
@@ -623,7 +668,7 @@ function directivity(se::TBLTESourceElement{BPMDirectivity}, x_obs, top_is_sucti
     return r_er, Dl, Dh
 end
 
-#function Dbar_l(se::TBLTESourceElement, obs::AcousticObserver, t_obs)
+#function Dbar_l(se::TBLTESourceElement, obs::AbstractAcousticObserver, t_obs)
 #    # Position of the observer.
 #    x_obs = obs(t_obs)
 
@@ -697,7 +742,7 @@ end
 #    return D
 #end
 
-#function Dbar_h(se::TBLTESourceElement, obs::AcousticObserver, t_obs)
+#function Dbar_h(se::TBLTESourceElement, obs::AbstractAcousticObserver, t_obs)
 #    # Position of the observer.
 #    x_obs = obs(t_obs)
 
@@ -815,7 +860,7 @@ Output of the turbulent boundary layer-trailing edge (TBL-TE) calculation: the a
     G_alpha
 end
 
-function noise(se::TBLTESourceElement, obs::AcousticObserver, t_obs, freq)
+function noise(se::TBLTESourceElement, obs::AbstractAcousticObserver, t_obs, freq)
     # Position of the observer:
     x_obs = obs(t_obs)
 
@@ -932,7 +977,7 @@ function noise(se::TBLTESourceElement, obs::AcousticObserver, t_obs, freq)
     return TBLTEOutput(t, dt, freq_out, G_s, G_p, G_alpha)
 end
 
-function noise(se::TBLTESourceElement, obs::AcousticObserver, freq)
+function noise(se::TBLTESourceElement, obs::AbstractAcousticObserver, freq)
     t_obs = adv_time(se, obs)
     return noise(se, obs, t_obs, freq)
 end

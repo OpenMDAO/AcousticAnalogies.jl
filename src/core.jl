@@ -87,20 +87,22 @@ end
 Supertype for an object that recieves a noise prediction when combined with an
 acoustic analogy source; computational equivalent of a microphone.
 
-    (obs::AcousticObserver)(t)
+    (obs::AbstractAcousticObserver)(t)
 
 Calculate the position of the acoustic observer at time `t`.
 """
-abstract type AcousticObserver end
+abstract type AbstractAcousticObserver end
 
 """
     StationaryAcousticObserver(x)
 
 Construct an acoustic observer that does not move with position `x` (m).
 """
-@concrete struct StationaryAcousticObserver <: AcousticObserver
+@concrete struct StationaryAcousticObserver <: AbstractAcousticObserver
     x
 end
+
+@inline velocity(obs::StationaryAcousticObserver, t_obs) = zero(obs.x)
 
 """
     ConstVelocityAcousticObserver(t0, x0, v)
@@ -108,7 +110,7 @@ end
 Construct an acoustic observer moving with a constant velocity `v`, located at
 `x0` at time `t0`.
 """
-@concrete struct ConstVelocityAcousticObserver <: AcousticObserver
+@concrete struct ConstVelocityAcousticObserver <: AbstractAcousticObserver
     t0 
     x0
     v
@@ -122,13 +124,15 @@ function (obs::ConstVelocityAcousticObserver)(t)
     return obs.x0 .+ (t - obs.t0).*obs.v
 end
 
+@inline velocity(obs::ConstVelocityAcousticObserver, t_obs) = obs.v
+
 """
-    adv_time(se::AbstractCompactSourceElement, obs::AcousticObserver)
+    adv_time(se::AbstractCompactSourceElement, obs::AbstractAcousticObserver)
 
 Calculate the time an acoustic wave emmited by source `se` at time `se.τ` is
 recieved by observer `obs`.
 """
-adv_time(se::AbstractCompactSourceElement, obs::AcousticObserver)
+adv_time(se::AbstractCompactSourceElement, obs::AbstractAcousticObserver)
 
 function adv_time(se::AbstractCompactSourceElement, obs::StationaryAcousticObserver)
     rv = obs(se.τ) .- se.y0dot
@@ -174,14 +178,14 @@ end
 
 
 """
-    f1a(se::CompactSourceElement, obs::AcousticObserver, t_obs)
+    f1a(se::CompactSourceElement, obs::AbstractAcousticObserver, t_obs)
 
 Calculate the acoustic pressure emitted by source element `se` and recieved by
 observer `obs` at time `t_obs`, returning an [`F1AOutput`](@ref) object.
 
 The correct value for `t_obs` can be found using [`adv_time`](@ref).
 """
-function f1a(se::CompactSourceElement, obs::AcousticObserver, t_obs)
+function f1a(se::CompactSourceElement, obs::AbstractAcousticObserver, t_obs)
     x_obs = obs(t_obs)
 
     rv = x_obs .- se.y0dot
@@ -236,12 +240,12 @@ function f1a(se::CompactSourceElement, obs::AcousticObserver, t_obs)
 end
 
 """
-    f1a(se::CompactSourceElement, obs::AcousticObserver)
+    f1a(se::CompactSourceElement, obs::AbstractAcousticObserver)
 
 Calculate the acoustic pressure emitted by source element `se` and recieved by
 observer `obs`, returning an [`F1AOutput`](@ref) object.
 """
-function f1a(se::CompactSourceElement, obs::AcousticObserver)
+function f1a(se::CompactSourceElement, obs::AbstractAcousticObserver)
     t_obs = adv_time(se, obs)
     return f1a(se, obs, t_obs)
 end

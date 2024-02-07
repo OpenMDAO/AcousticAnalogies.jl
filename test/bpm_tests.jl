@@ -487,7 +487,6 @@ end
             alphastar = 1.5*pi/180
 
             f_jl = AcousticMetrics.ExactThirdOctaveCenterBands(0.2e3, 20e3)
-            println("BPM Figure 12a alphastar = $(alphastar) rad, $(alphastar*pi/180) deg")
             SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
             SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
             SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
