@@ -102,7 +102,12 @@ Construct an acoustic observer that does not move with position `x` (m).
     x
 end
 
-@inline velocity(obs::StationaryAcousticObserver, t_obs) = zero(obs.x)
+"""
+    velocity(t_obs, obs::StationaryAcousticObserver)
+
+Return the velocity of `obs` at time `t_obs` (hint—will always be zero ☺)
+"""
+@inline velocity(t_obs, obs::StationaryAcousticObserver) = zero(obs.x)
 
 """
     ConstVelocityAcousticObserver(t0, x0, v)
@@ -124,7 +129,12 @@ function (obs::ConstVelocityAcousticObserver)(t)
     return obs.x0 .+ (t - obs.t0).*obs.v
 end
 
-@inline velocity(obs::ConstVelocityAcousticObserver, t_obs) = obs.v
+"""
+    velocity(t_obs, obs::ConstVelocityAcousticObserver)
+
+Return the velocity of `obs` at time `t_obs` (hint—will always be the same)
+"""
+@inline velocity(t_obs, obs::ConstVelocityAcousticObserver) = obs.v
 
 """
     adv_time(se::AbstractCompactSourceElement, obs::AbstractAcousticObserver)

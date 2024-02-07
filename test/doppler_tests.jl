@@ -114,7 +114,7 @@ end
                 # Transform the source and observer.
                 trans = compose(t_obs, trans4, compose(t_obs, trans3, compose(t_obs, trans2, trans1)))
                 se_trans = trans(se)
-                obs_trans = AcousticAnalogies.ConstVelocityAcousticObserver(t_obs, trans(t_obs, obs(t_obs), AcousticAnalogies.velocity(obs, t_obs))...)
+                obs_trans = AcousticAnalogies.ConstVelocityAcousticObserver(t_obs, trans(t_obs, obs(t_obs), AcousticAnalogies.velocity(t_obs, obs))...)
 
                 # Now we should still get the same Doppler factor.
                 @test AcousticAnalogies.doppler_factor(se_trans, obs_trans) ≈ doppler_factor_expected
@@ -154,7 +154,7 @@ end
                     # Transform the source and observer.
                     trans = compose(t_obs, trans4, compose(t_obs, trans3, compose(t_obs, trans2, trans1)))
                     se_trans = trans(se)
-                    obs_trans = AcousticAnalogies.ConstVelocityAcousticObserver(t_obs, trans(t_obs, obs(t_obs), AcousticAnalogies.velocity(obs, t_obs))...)
+                    obs_trans = AcousticAnalogies.ConstVelocityAcousticObserver(t_obs, trans(t_obs, obs(t_obs), AcousticAnalogies.velocity(t_obs, obs))...)
 
                     # Now we should still get the same Doppler factor.
                     @test AcousticAnalogies.doppler_factor(se_trans, obs_trans) ≈ doppler_factor_expected

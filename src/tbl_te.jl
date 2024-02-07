@@ -330,7 +330,7 @@ function doppler_factor(se::AbstractCompactSourceElement, obs::AbstractAcousticO
     v_src = dot_cs_safe(velocity(se), rhat)
 
     # And, if I dot the observer velocity `rhat`, that will give me the component of velocity of the observer in the direction of the source, positive if moving *away* from it, negative if moving toward.
-    v_obs = dot_cs_safe(velocity(obs, t_obs), rhat)
+    v_obs = dot_cs_safe(velocity(t_obs, obs), rhat)
 
     # Now we can get the factor.
     factor = (1 - v_obs/c) / (1 - v_src/c)
