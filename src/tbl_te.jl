@@ -254,11 +254,11 @@ function TBL_TE_p(freq, nu, L, chord, U, M, M_c, r_e, theta_e, phi_e, alphastar,
         A_p = A(St_p/St_peak_p, Re_c)
 
         Re_deltastar_p = U*deltastar_p/nu
-        ΔK_1 = DeltaK_1(alphastar, Re_deltastar_p)
+        Δk_1 = DeltaK_1(alphastar, Re_deltastar_p)
 
-        # SPL_p = 10*log10((deltastar_p*M^5*L*D)/(r_e^2)) + A_p + k_1 - 3 + ΔK_1
+        # SPL_p = 10*log10((deltastar_p*M^5*L*D)/(r_e^2)) + A_p + k_1 - 3 + Δk_1
         # Brooks and Burley AIAA 2001-2210 style.
-        H_p = 10^(0.1*(A_p + k_1 - 3 + ΔK_1))
+        H_p = 10^(0.1*(A_p + k_1 - 3 + Δk_1))
         G_p = (deltastar_p*M^5*L*D)/(r_e^2)*H_p
     end
 
@@ -849,18 +849,66 @@ function (trans::KinematicTransformation)(se::TBLTESourceElement{TDirect,TUInduc
 end
 
 """
-Output of the turbulent boundary layer-trailing edge (TBL-TE) calculation: the acoustic pressure autospectrum centered at time `t` over duration `dt` at frequency `freq` for the suction side `G_s`, pressure side `G_p`, and the separation `G_alpha`.
+Output of the turbulent boundary layer-trailing edge (TBL-TE) calculation: the acoustic pressure autospectrum centered at time `t` over source duration `dτ` and source frequencies `freqs_src` for the suction side `G_s`, pressure side `G_p`, and the separation `G_alpha`.
+`doppler` is the appropriate Doppler shift factor for the `se`-`obs` combination, i.e., the observer frequencies can be calculated via `freqs_obs = doppler.*freqs_src` and the observer time step can be calculated via `dt = dτ/doppler`.
 """
 @concrete struct TBLTEOutput
     t
-    dt
-    freq
+    dτ
+    freqs_src
+    doppler
     G_s
     G_p
     G_alpha
 end
 
-function noise(se::TBLTESourceElement, obs::AbstractAcousticObserver, t_obs, freq)
+function _tble_te_s(freq, U, M, Re_c, Dh, r_er, Δr, deltastar_s, St_peak_s, St_peak_p, St_peak_alpha, k_1, deep_stall)
+    St_s = freq*deltastar_s/U
+    St_peak_s = 0.5*(St_peak_p + St_peak_alpha)
+
+    A_s = A(St_s/St_peak_s, Re_c)
+
+    # SPL_s = 10*log10((deltastar_s*M^5*L*Dh)/(r_er^2)) + A_s + k_1 - 3
+    # Brooks and Burley AIAA 2001-2210 style.
+    H_s = 10^(0.1*(A_s + k_1 - 3))
+    G_s = (deltastar_s*M^5*Δr*Dh)/(r_er^2)*H_s
+
+    return ifelse(deep_stall, 10^(0.1*(-100))*one(typeof(G_s)), G_s)
+end
+
+function _tble_te_p(freq, U, M, Re_c, Dh, r_er, Δr, deltastar_p, St_peak_p, k_1, Δk_1, deep_stall)
+
+    St_p = freq*deltastar_p/U
+
+    A_p = A(St_p/St_peak_p, Re_c)
+
+    # SPL_p = 10*log10((deltastar_p*M^5*L*Dh)/(r_er^2)) + A_p + k_1 - 3 + Δk_1
+    # Brooks and Burley AIAA 2001-2210 style.
+    H_p = 10^(0.1*(A_p + k_1 - 3 + Δk_1))
+    G_p = (deltastar_p*M^5*Δr*Dh)/(r_er^2)*H_p
+
+    return ifelse(deep_stall, 10^(0.1*(-100))*one(typeof(G_p)), G_p)
+end
+
+function _tble_te_alpha(freq, U, M, Re_c, Dl, Dh, r_er, Δr, deltastar_s, St_peak_alpha, k_2, deep_stall)
+    St_s = freq*deltastar_s/U
+
+    A_prime_stall = A(St_s/St_peak_alpha, 3*Re_c)
+    # SPL_alpha = 10*log10((deltastar_s*M^5*L*D)/(r_er^2)) + A_prime + k_2
+    # Brooks and Burley AIAA 2001-2210 style.
+    H_alpha_stall = 10^(0.1*(A_prime_stall + k_2))
+    G_alpha_stall = (deltastar_s*M^5*Δr*Dl)/(r_er^2)*H_alpha_stall
+
+    B_alpha = B(St_s/St_peak_alpha, Re_c)
+    # SPL_alpha = 10*log10((deltastar_s*M^5*L*Dh)/(r_er^2)) + B_alpha + k_2
+    # Brooks and Burley AIAA 2001-2210 style.
+    H_alpha = 10^(0.1*(B_alpha + k_2))
+    G_alpha = (deltastar_s*M^5*Δr*Dh)/(r_er^2)*H_alpha
+
+    return ifelse(deep_stall, G_alpha_stall, G_alpha)
+end
+
+function noise(se::TBLTESourceElement, obs::AbstractAcousticObserver, t_obs, freqs)
     # Position of the observer:
     x_obs = obs(t_obs)
 
@@ -892,11 +940,6 @@ function noise(se::TBLTESourceElement, obs::AbstractAcousticObserver, t_obs, fre
     Re_c = U*se.chord/se.nu
 
     # Also need the displacement thicknesses for the pressure and suction sides.
-    # deltastar_top = disp_thickness_top(se.bl, Re_c, alphastar)*se.chord
-    # deltastar_bot = disp_thickness_bot(se.bl, Re_c, alphastar)*se.chord
-    # deltastar_s, deltastar_p = ifelse(top_is_suction,
-    #     (deltastar_top, deltastar_bot),
-    #     (deltastar_bot, deltastar_top))
     deltastar_s = disp_thickness_s(se.bl, Re_c, alphastar)*se.chord
     deltastar_p = disp_thickness_p(se.bl, Re_c, alphastar)*se.chord
 
@@ -906,78 +949,31 @@ function noise(se::TBLTESourceElement, obs::AbstractAcousticObserver, t_obs, fre
     # Mach number of the flow speed normal to span.
     M = U/se.c0
 
+    # This stuff is used to decide if the blade element is stalled or not.
     alphastar0 = alpha_stall(se.bl, Re_c)
     gamma0_deg = gamma0(M)
+    deep_stall = (alphastar_positive*180/pi) > min(gamma0_deg, alphastar0*180/pi)
 
-    St_s = freq*deltastar_s/U
     St_peak_p = St_1(M)
     St_peak_alpha = St_2(St_peak_p, alphastar_positive)
-    k2 = K_2(Re_c, M, alphastar_positive)
+    St_peak_s = 0.5*(St_peak_p + St_peak_alpha)
 
-    if alphastar_positive*180/pi > min(gamma0_deg, alphastar0*180/pi)
-        # D = Dbar_l(theta_e, phi_e, M)
-        A_prime = A(St_s/St_peak_alpha, 3*Re_c)
-        # SPL_alpha = 10*log10((deltastar_s*M^5*L*D)/(r_er^2)) + A_prime + k2
-        # Brooks and Burley AIAA 2001-2210 style.
-        H_alpha = 10^(0.1*(A_prime + k2))
-        G_alpha = (deltastar_s*M^5*se.Δr*Dl)/(r_er^2)*H_alpha
+    Re_deltastar_p = U*deltastar_p/se.nu
+    k_1 = K_1(Re_c)
+    k_2 = K_2(Re_c, M, alphastar_positive)
+    Δk_1 = DeltaK_1(alphastar_positive, Re_deltastar_p)
 
-        G_s = 10^(0.1*(-100))*one(typeof(G_alpha))
-        G_p = 10^(0.1*(-100))*one(typeof(G_alpha))
-    else
-        # D = Dbar_h(theta_e, phi_e, M, M_c)
-        # deltastar_s = disp_thickness_s(bl, Re_c, alphastar_positive)*chord
-        # St_s = freq*deltastar_s/U
+    G_s = _tble_te_s.(freqs, U, M, Re_c, Dh, r_er, se.Δr, deltastar_s, St_peak_s, St_peak_p, St_peak_alpha, k_1, deep_stall)
+    G_p = _tble_te_p.(freqs, U, M, Re_c, Dh, r_er, se.Δr, deltastar_p, St_peak_p, k_1, Δk_1, deep_stall)
+    G_alpha = _tble_te_alpha.(freqs, U, M, Re_c, Dl, Dh, r_er, se.Δr, deltastar_s, St_peak_alpha, k_2, deep_stall)
 
-        # St_peak_p = St_1(M)
-        # St_peak_alpha = St_2(St_peak_p, alphastar_positive)
-        St_peak_s = 0.5*(St_peak_p + St_peak_alpha)
+    # Also need the Doppler shift for this source-observer combination.
+    doppler = doppler_factor(se, obs, t_obs)
 
-        A_s = A(St_s/St_peak_s, Re_c)
-
-        k_1 = K_1(Re_c)
-
-        # SPL_s = 10*log10((deltastar_s*M^5*L*Dh)/(r_er^2)) + A_s + k_1 - 3
-        # Brooks and Burley AIAA 2001-2210 style.
-        H_s = 10^(0.1*(A_s + k_1 - 3))
-        G_s = (deltastar_s*M^5*se.Δr*Dh)/(r_er^2)*H_s
-
-        # D = Dbar_h(theta_e, phi_e, M, M_c)
-        # deltastar_p = disp_thickness_p(se.bl, Re_c, alphastar_positive)*chord
-
-        # k_1 = K_1(Re_c)
-        St_p = freq*deltastar_p/U
-        # St_peak_p = St_1(M)
-
-        A_p = A(St_p/St_peak_p, Re_c)
-
-        Re_deltastar_p = U*deltastar_p/se.nu
-        ΔK_1 = DeltaK_1(alphastar_positive, Re_deltastar_p)
-
-        # SPL_p = 10*log10((deltastar_p*M^5*L*Dh)/(r_er^2)) + A_p + k_1 - 3 + ΔK_1
-        # Brooks and Burley AIAA 2001-2210 style.
-        H_p = 10^(0.1*(A_p + k_1 - 3 + ΔK_1))
-        G_p = (deltastar_p*M^5*se.Δr*Dh)/(r_er^2)*H_p
-
-        # D = Dbar_h(theta_e, phi_e, M, M_c)
-        B_alpha = B(St_s/St_peak_alpha, Re_c)
-        # SPL_alpha = 10*log10((deltastar_s*M^5*L*Dh)/(r_er^2)) + B_alpha + k2
-        # Brooks and Burley AIAA 2001-2210 style.
-        H_alpha = 10^(0.1*(B_alpha + k2))
-        G_alpha = (deltastar_s*M^5*se.Δr*Dh)/(r_er^2)*H_alpha
-    end
-
-    # OK, cool.
-    # Now, how do I adjust for the relative motion of everything?
-    # I've figured that out before.
-    # I think what I need to do is to adjust the time, frequency, and time step according to the Doppler shift.
-    t = t_obs
-    dt = se.Δτ
-    freq_out = freq
-    return TBLTEOutput(t, dt, freq_out, G_s, G_p, G_alpha)
+    return TBLTEOutput(t_obs, se.Δτ, freqs, doppler, G_s, G_p, G_alpha)
 end
 
-function noise(se::TBLTESourceElement, obs::AbstractAcousticObserver, freq)
+function noise(se::TBLTESourceElement, obs::AbstractAcousticObserver, freqs)
     t_obs = adv_time(se, obs)
-    return noise(se, obs, t_obs, freq)
+    return noise(se, obs, t_obs, freqs)
 end
