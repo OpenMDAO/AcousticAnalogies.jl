@@ -107,7 +107,7 @@ function guided_example(x)
     apth_total = combine(apth, obs_time_range, num_obs_times, 1)
 
     oaspl_from_apth = AcousticMetrics.OASPL(apth_total)
-    nbs = AcousticMetrics.NarrowbandSpectrum(apth_total)
+    nbs = AcousticMetrics.MSPSpectrumAmplitude(apth_total)
     oaspl_from_nbs = AcousticMetrics.OASPL(nbs)
 
     return vcat(oaspl_from_apth, oaspl_from_nbs)

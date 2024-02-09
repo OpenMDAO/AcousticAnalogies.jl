@@ -2,7 +2,7 @@ module CombineTests
 
 using AcousticAnalogies
 using FLOWMath: akima, linear
-using Random
+# using Random
 using Test
 
 @testset "Combine F1AOutput tests" begin
@@ -18,11 +18,19 @@ using Test
     # Add a bit of random noise to the time grid. Make sure that the amount of
     # randomness isn't large enough to make the time values non-monotonically
     # increasing (i.e., they don't overlap).
-    t1 .+= 0.49.*dt.*(1 .- 2 .* rand(size(t1)...))
+    # t1 .+= 0.49.*dt.*(1 .- 2 .* rand(size(t1)...))
+    # Annoyed by the randomness.
+    # Let's make sure we have the same amount of "noise" for each test.
+    wiggle1 = 0.49.*dt.*(cos.(2.0*pi.*t1))
+    t1 .+= wiggle1
 
     t2 = collect(range(0.1, 1.1, length=n))
     dt = t2[2] - t2[1]
-    t2 .+= 0.49.*dt.*(1 .- 2 .* rand(size(t2)...))
+    # t2 .+= 0.49.*dt.*(1 .- 2 .* rand(size(t2)...))
+    # Annoyed by the randomness.
+    # Let's make sure we have the same amount of "noise" for each test.
+    wiggle2 = 0.45.*dt.*(cos.(4.0*pi.*t2))
+    t2 .+= wiggle2
 
     # Now I need a bunch of acoustic pressures.
     apth1 = @. F1AOutput(t1, fa(t1), 2*fa(t1))
