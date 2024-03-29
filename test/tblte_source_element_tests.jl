@@ -512,11 +512,12 @@ end
         # So now I should be able to do a noise prediction.
         freqs = AcousticMetrics.ExactThirdOctaveCenterBands(0.2, 20e3)
         tblte_out = AcousticAnalogies.noise(se_global, obs, freqs)
-        SPL_s_jl = 10.0 .* log10.(tblte_out.G_s)
-        SPL_p_jl = 10.0 .* log10.(tblte_out.G_p)
-        SPL_alpha_jl = 10.0 .* log10.(tblte_out.G_alpha)
+        SPL_s_jl = 10.0 .* log10.(tblte_out.G_s./((20e-6)^2))
+        SPL_p_jl = 10.0 .* log10.(tblte_out.G_p./((20e-6)^2))
+        SPL_alpha_jl = 10.0 .* log10.(tblte_out.G_alpha./((20e-6)^2))
 
-        @test tblte_out.doppler ≈ 1
+        # @test tblte_out.doppler ≈ 1
+        @test AcousticAnalogies.doppler(tblte_out) ≈ 1
 
         return freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl
     end

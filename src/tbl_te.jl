@@ -849,18 +849,28 @@ function (trans::KinematicTransformation)(se::TBLTESourceElement{TDirect,TUInduc
 end
 
 """
-Output of the turbulent boundary layer-trailing edge (TBL-TE) calculation: the acoustic pressure autospectrum centered at time `t` over source duration `dτ` and source frequencies `freqs_src` for the suction side `G_s`, pressure side `G_p`, and the separation `G_alpha`.
+Output of the turbulent boundary layer-trailing edge (TBL-TE) calculation: the acoustic pressure autospectrum centered at time `t` over observer duration `dt` and observer frequencies `cbands` for the suction side `G_s`, pressure side `G_p`, and the separation `G_alpha`.
 `doppler` is the appropriate Doppler shift factor for the `se`-`obs` combination, i.e., the observer frequencies can be calculated via `freqs_obs = doppler.*freqs_src` and the observer time step can be calculated via `dt = dτ/doppler`.
 """
-@concrete struct TBLTEOutput
-    t
-    dτ
-    freqs_src
-    doppler
-    G_s
-    G_p
-    G_alpha
+struct TBLTEOutput{NO,TF,TFreqs<:AcousticMetrics.AbstractProportionalBands{NO,:center,TF},TG<:AbstractVector{TF}} <: AcousticMetrics.AbstractProportionalBandSpectrum{NO,TF}
+    t::TF
+    dt::TF
+    cbands::TFreqs
+    G_s::TG
+    G_p::TG
+    G_alpha::TG
 end
+@inline AcousticMetrics.lower_bands(pbs::TBLTEOutput) = AcousticMetrics.lower_bands(AcousticMetrics.center_bands(pbs))
+@inline AcousticMetrics.upper_bands(pbs::TBLTEOutput) = AcousticMetrics.upper_bands(AcousticMetrics.center_bands(pbs))
+@inline AcousticMetrics.freq_scaler(pbs::TBLTEOutput) = AcousticMetrics.freq_scaler(center_bands(pbs))
+@inline AcousticMetrics.has_observer_time(pbs::TBLTEOutput) = true
+@inline AcousticMetrics.observer_time(pbs::TBLTEOutput) = pbs.t
+@inline function Base.getindex(pbs::TBLTEOutput, i::Int)
+    @boundscheck checkbounds(pbs, i)
+    return pbs.G_s[i] + pbs.G_p[i] + pbs.G_alpha[i]
+end
+
+doppler(pbs::TBLTEOutput) = AcousticMetrics.freq_scaler(pbs.cbands)
 
 function _tble_te_s(freq, U, M, Re_c, Dh, r_er, Δr, deltastar_s, St_peak_s, St_peak_p, St_peak_alpha, k_1, deep_stall)
     St_s = freq*deltastar_s/U
@@ -963,14 +973,21 @@ function noise(se::TBLTESourceElement, obs::AbstractAcousticObserver, t_obs, fre
     k_2 = K_2(Re_c, M, alphastar_positive)
     Δk_1 = DeltaK_1(alphastar_positive, Re_deltastar_p)
 
-    G_s = _tble_te_s.(freqs, U, M, Re_c, Dh, r_er, se.Δr, deltastar_s, St_peak_s, St_peak_p, St_peak_alpha, k_1, deep_stall)
-    G_p = _tble_te_p.(freqs, U, M, Re_c, Dh, r_er, se.Δr, deltastar_p, St_peak_p, k_1, Δk_1, deep_stall)
-    G_alpha = _tble_te_alpha.(freqs, U, M, Re_c, Dl, Dh, r_er, se.Δr, deltastar_s, St_peak_alpha, k_2, deep_stall)
+    # The Brooks and Burley autospectrums appear to be scaled by the usual squared reference pressure (20 μPa)^2, but I'd like things in dimensional units, so multiply through by that.
+    pref2 = 4e-10
+    G_s = _tble_te_s.(freqs, U, M, Re_c, Dh, r_er, se.Δr, deltastar_s, St_peak_s, St_peak_p, St_peak_alpha, k_1, deep_stall).*pref2
+    G_p = _tble_te_p.(freqs, U, M, Re_c, Dh, r_er, se.Δr, deltastar_p, St_peak_p, k_1, Δk_1, deep_stall).*pref2
+    G_alpha = _tble_te_alpha.(freqs, U, M, Re_c, Dl, Dh, r_er, se.Δr, deltastar_s, St_peak_alpha, k_2, deep_stall).*pref2
 
     # Also need the Doppler shift for this source-observer combination.
     doppler = doppler_factor(se, obs, t_obs)
 
-    return TBLTEOutput(t_obs, se.Δτ, freqs, doppler, G_s, G_p, G_alpha)
+    # Get the doppler-shifted time step and proportional bands.
+    dt = se.Δt/doppler
+    freqs_obs = AcousticMetrics.center_bands(freqs, doppler)
+
+    # All done.
+    return TBLTEOutput(t_obs, dt, freqs_obs, G_s, G_p, G_alpha)
 end
 
 function noise(se::TBLTESourceElement, obs::AbstractAcousticObserver, freqs)
