@@ -852,19 +852,26 @@ end
 Output of the turbulent boundary layer-trailing edge (TBL-TE) calculation: the acoustic pressure autospectrum centered at time `t` over observer duration `dt` and observer frequencies `cbands` for the suction side `G_s`, pressure side `G_p`, and the separation `G_alpha`.
 `doppler` is the appropriate Doppler shift factor for the `se`-`obs` combination, i.e., the observer frequencies can be calculated via `freqs_obs = doppler.*freqs_src` and the observer time step can be calculated via `dt = dτ/doppler`.
 """
-struct TBLTEOutput{NO,TF,TFreqs<:AcousticMetrics.AbstractProportionalBands{NO,:center,TF},TG<:AbstractVector{TF}} <: AcousticMetrics.AbstractProportionalBandSpectrum{NO,TF}
-    t::TF
-    dt::TF
+struct TBLTEOutput{NO,TF,TFreqs<:AcousticMetrics.AbstractProportionalBands{NO,:center},TG<:AbstractVector{TF},TTime,TDTime} <: AcousticMetrics.AbstractProportionalBandSpectrum{NO,TF}
+    t::TTime
+    dt::TDTime
     cbands::TFreqs
     G_s::TG
     G_p::TG
     G_alpha::TG
+
+    function TBLTEOutput(t, dt, cbands::AcousticMetrics.AbstractProportionalBands{NO,:center}, G_s::TG, G_p::TG, G_alpha::TG) where {NO,TG}
+        ncbands = length(cbands)
+        length(G_s) == ncbands || throw(ArgumentError("length(G_s) must match length(cbands)"))
+        length(G_p) == ncbands || throw(ArgumentError("length(G_p) must match length(cbands)"))
+        length(G_alpha) == ncbands || throw(ArgumentError("length(G_alpha) must match length(cbands)"))
+        dt > zero(dt) || throw(ArgumentError("dt must be positive"))
+        return new{NO,eltype(TG),typeof(cbands),TG,typeof(t),typeof(dt)}(t, dt, cbands, G_s, G_p, G_alpha)
+    end
 end
-@inline AcousticMetrics.lower_bands(pbs::TBLTEOutput) = AcousticMetrics.lower_bands(AcousticMetrics.center_bands(pbs))
-@inline AcousticMetrics.upper_bands(pbs::TBLTEOutput) = AcousticMetrics.upper_bands(AcousticMetrics.center_bands(pbs))
-@inline AcousticMetrics.freq_scaler(pbs::TBLTEOutput) = AcousticMetrics.freq_scaler(center_bands(pbs))
 @inline AcousticMetrics.has_observer_time(pbs::TBLTEOutput) = true
 @inline AcousticMetrics.observer_time(pbs::TBLTEOutput) = pbs.t
+@inline AcousticMetrics.time_scaler(pbs::TBLTEOutput, period) = pbs.dt/period
 @inline function Base.getindex(pbs::TBLTEOutput, i::Int)
     @boundscheck checkbounds(pbs, i)
     return pbs.G_s[i] + pbs.G_p[i] + pbs.G_alpha[i]
@@ -983,7 +990,7 @@ function noise(se::TBLTESourceElement, obs::AbstractAcousticObserver, t_obs, fre
     doppler = doppler_factor(se, obs, t_obs)
 
     # Get the doppler-shifted time step and proportional bands.
-    dt = se.Δt/doppler
+    dt = se.Δτ/doppler
     freqs_obs = AcousticMetrics.center_bands(freqs, doppler)
 
     # All done.
