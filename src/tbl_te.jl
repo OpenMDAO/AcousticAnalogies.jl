@@ -871,13 +871,34 @@ struct TBLTEOutput{NO,TF,TFreqs<:AcousticMetrics.AbstractProportionalBands{NO,:c
 end
 @inline AcousticMetrics.has_observer_time(pbs::TBLTEOutput) = true
 @inline AcousticMetrics.observer_time(pbs::TBLTEOutput) = pbs.t
-@inline AcousticMetrics.time_scaler(pbs::TBLTEOutput, period) = pbs.dt/period
+@inline AcousticMetrics.time_scaler(pbs::TBLTEOutput, period) = AcousticMetrics.timestep(pbs)/period
 @inline function Base.getindex(pbs::TBLTEOutput, i::Int)
     @boundscheck checkbounds(pbs, i)
     return pbs.G_s[i] + pbs.G_p[i] + pbs.G_alpha[i]
 end
 
 doppler(pbs::TBLTEOutput) = AcousticMetrics.freq_scaler(pbs.cbands)
+
+function pbs_suction(pbs::TBLTEOutput)
+    t = AcousticMetrics.observer_time(pbs)
+    dt = AcousticMetrics.timestep(pbs)
+    cbands = AcousticMetrics.center_bands(pbs)
+    return AcousticMetrics.ProportionalBandSpectrumWithTime(t, dt, cbands, pbs.G_s)
+end
+
+function pbs_pressure(pbs::TBLTEOutput)
+    t = AcousticMetrics.observer_time(pbs)
+    dt = AcousticMetrics.timestep(pbs)
+    cbands = AcousticMetrics.center_bands(pbs)
+    return AcousticMetrics.ProportionalBandSpectrumWithTime(t, dt, cbands, pbs.G_p)
+end
+
+function pbs_alpha(pbs::TBLTEOutput)
+    t = AcousticMetrics.observer_time(pbs)
+    dt = AcousticMetrics.timestep(pbs)
+    cbands = AcousticMetrics.center_bands(pbs)
+    return AcousticMetrics.ProportionalBandSpectrumWithTime(t, dt, cbands, pbs.G_alpha)
+end
 
 function _tble_te_s(freq, U, M, Re_c, Dh, r_er, Δr, deltastar_s, St_peak_s, St_peak_p, St_peak_alpha, k_1, deep_stall)
     St_s = freq*deltastar_s/U
