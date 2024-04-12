@@ -354,6 +354,9 @@ end
 @inline pressure_monopole(ap::F1APressureTimeHistory) = ap.p_m
 @inline pressure_dipole(ap::F1APressureTimeHistory) = ap.p_d
 
+apth_monopole(ap::F1APressureTimeHistory) = AcousticMetrics.PressureTimeHistory(pressure_monopole(ap), AcousticMetrics.timestep(ap), AcousticMetrics.starttime(ap))
+apth_dipole(ap::F1APressureTimeHistory) = AcousticMetrics.PressureTimeHistory(pressure_dipole(ap), AcousticMetrics.timestep(ap), AcousticMetrics.starttime(ap))
+
 """
     combine!(apth_out::F1APressureTimeHistory, apth::AbstractArray{<:F1AOutput}, axis; f_interp=akima)
 
