@@ -5,7 +5,8 @@ using KinematicCoordinateTransformations: KinematicTransformation, SteadyRotXTra
 using StaticArrays: SVector
 using Test
 
-struct DummyElement{Ty0dot,Ty1dot,Ttime,TSoS} <: AcousticAnalogies.AbstractCompactSourceElement
+# struct DummyElement{Ty0dot,Ty1dot,Ttime,TSoS} <: AcousticAnalogies.AbstractCompactSourceElement
+struct DummyElement{Ty0dot,Ty1dot,Ttime,TSoS} <: AcousticAnalogies.AbstractBroadbandSourceElement{AcousticAnalogies.BPMDirectivity,false}
     # Source position and its time derivatives.
     y0dot::Ty0dot
     y1dot::Ty1dot

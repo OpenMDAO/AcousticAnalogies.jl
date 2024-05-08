@@ -8,6 +8,6 @@ include("anopp2_comparison.jl")
 include("forwarddiff_test.jl")
 include("doppler_tests.jl")
 include("bpm_tests.jl")
-include("tblte_source_element_tests.jl")
+include("broadband_source_element_tests.jl")
 
 end # module

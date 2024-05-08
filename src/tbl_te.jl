@@ -307,14 +307,18 @@ abstract type AbstractDirectivity end
 struct BPMDirectivity <: AbstractDirectivity end
 struct BrooksBurleyDirectivity <: AbstractDirectivity end
 
+abstract type AbstractBroadbandSourceElement{TDirect,TUInduction} <: AbstractCompactSourceElement end
+
+orientation(se::AbstractBroadbandSourceElement) = se.span_uvec
+
 """
-    doppler_factor(se::CompactSourceElement, obs::AbstractAcousticObserver, t_obs)
+    doppler_factor(se::AbstractBroadbandSourceElement, obs::AbstractAcousticObserver, t_obs)
 
 Calculate the Doppler shift factor for noise emitted by source element `se` and recieved by observer `obs` at time `t_obs`, i.e. the ratio between an observer frequency `f` and emitted frequency `f_0`.
 
 The correct value for `t_obs` can be found using [`adv_time`](@ref).
 """
-function doppler_factor(se::AbstractCompactSourceElement, obs::AbstractAcousticObserver, t_obs)
+function doppler_factor(se::AbstractBroadbandSourceElement, obs::AbstractAcousticObserver, t_obs)
     # Location of the observer at the observer time.
     x_obs = obs(t_obs)
 
@@ -339,116 +343,20 @@ function doppler_factor(se::AbstractCompactSourceElement, obs::AbstractAcousticO
 end
 
 """
-    doppler_factor(se::CompactSourceElement, obs::AbstractAcousticObserver)
+    doppler_factor(se::AbstractBroadbandSourceElement, obs::AbstractAcousticObserver)
 
 Calculate the Doppler shift factor for noise emitted by source element `se` and recieved by observer `obs`, i.e. the ratio between an observer frequency `f` and emitted frequency `f_0`.
 
 The correct value for `t_obs` will be found using [`adv_time`](@ref) internally.
 """
-function doppler_factor(se::AbstractCompactSourceElement, obs::AbstractAcousticObserver)
+function doppler_factor(se::AbstractBroadbandSourceElement, obs::AbstractAcousticObserver)
     # Do the advanced time calculation.
     t_obs = adv_time(se, obs)
 
     return doppler_factor(se, obs, t_obs)
 end
 
-@concrete struct TBLTESourceElement{TDirect<:AbstractDirectivity,TUInduction} <: AbstractCompactSourceElement
-    # Speed of sound, m/s.
-    c0
-    # Kinematic viscosity, m^2/s
-    nu
-    # Radial/spanwise length of element, m.
-    Δr
-    # chord length of element, m.
-    chord
-    # Source position, m.
-    y0dot
-    # Source velocity, m/s.
-    y1dot
-    # Fluid velocity, m/s.
-    y1dot_fluid
-    # Source time, s.
-    τ
-    # Time step size, i.e. the amount of time this source element "exists" at with these properties, s.
-    Δτ
-    # Radial/spanwise unit vector, aka unit vector aligned with the element's span direction.
-    span_uvec
-    # Chordwise unit vector, aka unit vector aligned with the element's chord line, pointing from leading edge to trailing edge.
-    chord_uvec
-    # Boundary layer struct, i.e. an AbstractBoundaryLayer.
-    bl
-    # `Bool` indicating chord_uvec×span_uvec will give a vector pointing from bottom side (usually pressure side) to top side (usually suction side) if `true`, or the opposite if `false`.
-    chord_cross_span_to_get_top_uvec
-end
-
-# Default to using the `BrooksBurleyDirectivity` directivity function, and include induction in the flow speed normal to span (TUInduction == true).
-function TBLTESourceElement(c0, nu, Δr, chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
-    return TBLTESourceElement{BrooksBurleyDirectivity,true}(c0, nu, Δr, chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
-end
-
-orientation(se::TBLTESourceElement) = se.span_uvec
-
-"""
-    TBLTESourceElement(c0, nu, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
-
-Construct a source element for predicting turbulent boundary layer-trailing edge (TBLTE) noise using the BPM/Brooks and Burley method, using position and velocity data expressed in a cylindrical coordinate system.
-
-The `r` and `θ` arguments are used to define the radial and circumferential position of the source element in a cylindrical coordinate system.
-Likewise, the `vn`, `vr`, and `vc` arguments are used to define the normal, radial, and circumferential velocity of the fluid (in a reference frame moving with the element) in the same cylindrical coordinate system.
-The cylindrical coordinate system is defined as follows:
-
-  * The normal/axial direction is in the positive x axis
-  * The circumferential/azimuth angle `θ` is defined such that `θ = 0` means the radial direction is aligned with the positive y axis, and a positive `θ` indicates a right-handed rotation around the positive x axis.
-
-The `twist_about_positive_y` is a `Bool` controling how the `ϕ` argument is handled, which in turn controls the orientation of a unit vector defining `chord_uvec` indicating the orientation of the chord line, from leading edge to trailing edge.
-If `twist_about_positive_y` is `true`, `chord_uvec` will initially be pointed in the negative-z direction, and then rotated around the positive y axis by an amount `ϕ` before being rotated by the azimuth angle `θ`.
-(This would typcially be appropriate for a source element rotating around the positive x axis.)
-If `twist_about_positive_y` is `false`, `chord_uvec` will initially be pointed in the positive-z direction, and then rotated around the negative y axis by an amount `ϕ` before being rotated by the azimuth angle `θ`.
-(This would typcially be appropriate for a source element rotating around the negative x axis.)
-
-Note that, for a proper noise prediction, the source element needs to be transformed into the "global" frame, aka, the reference frame of the fluid.
-This can be done easily with the transformations provided by the `KinematicCoordinateTransformations` package, or manually by modifying the components of the source element struct.
-
-# Arguments
-- c0: Ambient speed of sound (m/s)
-- nu: Kinematic viscosity (m^2/s)
-- r: radial coordinate of the element in the blade-fixed coordinate system (m)
-- θ: angular offest of the element in the blade-fixed coordinate system (rad)
-- Δr: length of the element (m)
-- chord: chord length of blade element (m)
-- ϕ: twist of blade element (rad)
-- vn: normal velocity of fluid (m/s)
-- vr: radial velocity of fluid (m/s)
-- vc: circumferential velocity of the fluid (m/s)
-- τ: source time (s)
-- Δτ: source time duration (s)
-- bl: Boundary layer struct, i.e. an AbstractBoundaryLayer.
-- twist_about_positive_y: if `true`, apply twist ϕ about positive y axis, negative y axis otherwise
-"""
-function TBLTESourceElement{TDirect,TUInduction}(c0, nu, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y) where {TDirect,TUInduction}
-    sθ, cθ = sincos(θ)
-    sϕ, cϕ = sincos(ϕ)
-    y0dot = @SVector [0, r*cθ, r*sθ]
-    T = eltype(y0dot)
-    y1dot = @SVector zeros(T, 3)
-    y1dot_fluid = @SVector [vn, vr*cθ - vc*sθ, vr*sθ + vc*cθ]
-    span_uvec = @SVector [0, cθ, sθ]
-    if twist_about_positive_y
-        chord_uvec = @SVector [-sϕ, cϕ*sθ, -cϕ*cθ]
-    else
-        chord_uvec = @SVector [-sϕ, -cϕ*sθ, cϕ*cθ]
-    end
-
-    chord_cross_span_to_get_top_uvec = twist_about_positive_y
-    return TBLTESourceElement{TDirect,TUInduction}(c0, nu, Δr, chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
-end
-
-# Default to using the `BrooksBurleyDirectivity` directivity function, and include induction in the flow speed normal to span (TUInduction == true).
-function TBLTESourceElement(c0, nu, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
-    return TBLTESourceElement{BrooksBurleyDirectivity,true}(c0, nu, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
-end
-
-function directivity(se::TBLTESourceElement{BrooksBurleyDirectivity}, x_obs, top_is_suction)
+function directivity(se::AbstractBroadbandSourceElement{BrooksBurleyDirectivity}, x_obs, top_is_suction)
     # Position vector from source to observer.
     rv = x_obs .- se.y0dot
 
@@ -549,7 +457,7 @@ function directivity(se::TBLTESourceElement{BrooksBurleyDirectivity}, x_obs, top
     return r_er, Dl, Dh
 end
 
-function directivity(se::TBLTESourceElement{BPMDirectivity}, x_obs, top_is_suction)
+function directivity(se::AbstractBroadbandSourceElement{BPMDirectivity}, x_obs, top_is_suction)
     # Position vector from source to observer.
     rv = x_obs .- se.y0dot
 
@@ -666,6 +574,146 @@ function directivity(se::TBLTESourceElement{BPMDirectivity}, x_obs, top_is_sucti
     Dh = (twosin2halfΘer*sin2Φer)*conv_amp_h
 
     return r_er, Dl, Dh
+end
+
+function angle_of_attack(se::AbstractBroadbandSourceElement)
+    # Find the total velocity of the fluid from the perspective of the blade element, which is just the total velocity of the blade element from the perspective of the fluid with the sign switched.
+    # Vtotal = -(se.y1dot - se.y1dot_fluid)
+    Vtotal = se.y1dot_fluid - se.y1dot 
+
+    # To get the angle of attack, I need to find the components of the velocity in the chordwise direction, and the direction normal to both the chord and span.
+    # So, first need to get a vector normal to both the chord and span, pointing from pressure side to suction side.
+    normal_uvec_tmp = ifelse(se.chord_cross_span_to_get_top_uvec,
+        cross(se.chord_uvec, se.span_uvec),
+        cross(se.span_uvec, se.chord_uvec))
+    normal_uvec = normal_uvec_tmp ./ norm_cs_safe(normal_uvec_tmp)
+
+    # Now get the component of velocity in the chord_uvec and normal_uvec directions.
+    V_chordwise = dot_cs_safe(Vtotal, se.chord_uvec)
+    V_normal = dot_cs_safe(Vtotal, normal_uvec)
+
+    # Now we can find the angle of attack.
+    alphastar = atan_cs_safe(V_normal, V_chordwise)
+    # alphastar = atan(V_normal, V_chordwise)
+    
+    return alphastar
+end
+
+function speed_normal_to_span(se::AbstractBroadbandSourceElement{TDirect,true}) where {TDirect}
+    # Find the total velocity of the fluid including induction, from the perspective of the blade element, which is just the total velocity of the blade element from the perspective of the fluid with the sign switched.
+    Vtotal = se.y1dot_fluid - se.y1dot
+    # Find the component of the velocity in the direction of the span.
+    Vspan = dot_cs_safe(Vtotal, se.span_uvec)*se.span_uvec
+    # Subtract that from the total velocity to get the velocity normal to the span, then get the norm for the speed normal to span.
+    return norm_cs_safe(Vtotal - Vspan)
+end
+
+function speed_normal_to_span(se::AbstractBroadbandSourceElement{TDirect,false}) where {TDirect}
+    # Find the total velocity of the fluid, not including induction, from the perspective of the blade element, which is just the total velocity of the blade element from the perspective of the fluid with the sign switched.
+    Vtotal = -se.y1dot
+    # Find the component of the velocity in the direction of the span.
+    Vspan = dot_cs_safe(Vtotal, se.span_uvec)*se.span_uvec
+    # Subtract that from the total velocity to get the velocity normal to the span, then get the norm for the speed normal to span.
+    return norm_cs_safe(Vtotal - Vspan)
+end
+
+function noise(se::AbstractBroadbandSourceElement, obs::AbstractAcousticObserver, freqs)
+    t_obs = adv_time(se, obs)
+    return noise(se, obs, t_obs, freqs)
+end
+
+@concrete struct TBLTESourceElement{TDirect<:AbstractDirectivity,TUInduction} <: AbstractBroadbandSourceElement{TDirect,TUInduction}
+    # Speed of sound, m/s.
+    c0
+    # Kinematic viscosity, m^2/s
+    nu
+    # Radial/spanwise length of element, m.
+    Δr
+    # chord length of element, m.
+    chord
+    # Source position, m.
+    y0dot
+    # Source velocity, m/s.
+    y1dot
+    # Fluid velocity, m/s.
+    y1dot_fluid
+    # Source time, s.
+    τ
+    # Time step size, i.e. the amount of time this source element "exists" at with these properties, s.
+    Δτ
+    # Radial/spanwise unit vector, aka unit vector aligned with the element's span direction.
+    span_uvec
+    # Chordwise unit vector, aka unit vector aligned with the element's chord line, pointing from leading edge to trailing edge.
+    chord_uvec
+    # Boundary layer struct, i.e. an AbstractBoundaryLayer.
+    bl
+    # `Bool` indicating chord_uvec×span_uvec will give a vector pointing from bottom side (usually pressure side) to top side (usually suction side) if `true`, or the opposite if `false`.
+    chord_cross_span_to_get_top_uvec
+end
+
+# Default to using the `BrooksBurleyDirectivity` directivity function, and include induction in the flow speed normal to span (TUInduction == true).
+function TBLTESourceElement(c0, nu, Δr, chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
+    return TBLTESourceElement{BrooksBurleyDirectivity,true}(c0, nu, Δr, chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
+end
+
+"""
+    TBLTESourceElement(c0, nu, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
+
+Construct a source element for predicting turbulent boundary layer-trailing edge (TBLTE) noise using the BPM/Brooks and Burley method, using position and velocity data expressed in a cylindrical coordinate system.
+
+The `r` and `θ` arguments are used to define the radial and circumferential position of the source element in a cylindrical coordinate system.
+Likewise, the `vn`, `vr`, and `vc` arguments are used to define the normal, radial, and circumferential velocity of the fluid (in a reference frame moving with the element) in the same cylindrical coordinate system.
+The cylindrical coordinate system is defined as follows:
+
+  * The normal/axial direction is in the positive x axis
+  * The circumferential/azimuth angle `θ` is defined such that `θ = 0` means the radial direction is aligned with the positive y axis, and a positive `θ` indicates a right-handed rotation around the positive x axis.
+
+The `twist_about_positive_y` is a `Bool` controling how the `ϕ` argument is handled, which in turn controls the orientation of a unit vector defining `chord_uvec` indicating the orientation of the chord line, from leading edge to trailing edge.
+If `twist_about_positive_y` is `true`, `chord_uvec` will initially be pointed in the negative-z direction, and then rotated around the positive y axis by an amount `ϕ` before being rotated by the azimuth angle `θ`.
+(This would typcially be appropriate for a source element rotating around the positive x axis.)
+If `twist_about_positive_y` is `false`, `chord_uvec` will initially be pointed in the positive-z direction, and then rotated around the negative y axis by an amount `ϕ` before being rotated by the azimuth angle `θ`.
+(This would typcially be appropriate for a source element rotating around the negative x axis.)
+
+Note that, for a proper noise prediction, the source element needs to be transformed into the "global" frame, aka, the reference frame of the fluid.
+This can be done easily with the transformations provided by the `KinematicCoordinateTransformations` package, or manually by modifying the components of the source element struct.
+
+# Arguments
+- c0: Ambient speed of sound (m/s)
+- nu: Kinematic viscosity (m^2/s)
+- r: radial coordinate of the element in the blade-fixed coordinate system (m)
+- θ: angular offest of the element in the blade-fixed coordinate system (rad)
+- Δr: length of the element (m)
+- chord: chord length of blade element (m)
+- ϕ: twist of blade element (rad)
+- vn: normal velocity of fluid (m/s)
+- vr: radial velocity of fluid (m/s)
+- vc: circumferential velocity of the fluid (m/s)
+- τ: source time (s)
+- Δτ: source time duration (s)
+- bl: Boundary layer struct, i.e. an AbstractBoundaryLayer.
+- twist_about_positive_y: if `true`, apply twist ϕ about positive y axis, negative y axis otherwise
+"""
+function TBLTESourceElement{TDirect,TUInduction}(c0, nu, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y) where {TDirect,TUInduction}
+    sθ, cθ = sincos(θ)
+    sϕ, cϕ = sincos(ϕ)
+    y0dot = @SVector [0, r*cθ, r*sθ]
+    T = eltype(y0dot)
+    y1dot = @SVector zeros(T, 3)
+    y1dot_fluid = @SVector [vn, vr*cθ - vc*sθ, vr*sθ + vc*cθ]
+    span_uvec = @SVector [0, cθ, sθ]
+    if twist_about_positive_y
+        chord_uvec = @SVector [-sϕ, cϕ*sθ, -cϕ*cθ]
+    else
+        chord_uvec = @SVector [-sϕ, -cϕ*sθ, cϕ*cθ]
+    end
+
+    chord_cross_span_to_get_top_uvec = twist_about_positive_y
+    return TBLTESourceElement{TDirect,TUInduction}(c0, nu, Δr, chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
+end
+
+# Default to using the `BrooksBurleyDirectivity` directivity function, and include induction in the flow speed normal to span (TUInduction == true).
+function TBLTESourceElement(c0, nu, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
+    return TBLTESourceElement{BrooksBurleyDirectivity,true}(c0, nu, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
 end
 
 #function Dbar_l(se::TBLTESourceElement, obs::AbstractAcousticObserver, t_obs)
@@ -791,47 +839,6 @@ end
 #    return D
 #end
 
-function angle_of_attack(se::TBLTESourceElement)
-    # Find the total velocity of the fluid from the perspective of the blade element, which is just the total velocity of the blade element from the perspective of the fluid with the sign switched.
-    # Vtotal = -(se.y1dot - se.y1dot_fluid)
-    Vtotal = se.y1dot_fluid - se.y1dot 
-
-    # To get the angle of attack, I need to find the components of the velocity in the chordwise direction, and the direction normal to both the chord and span.
-    # So, first need to get a vector normal to both the chord and span, pointing from pressure side to suction side.
-    normal_uvec_tmp = ifelse(se.chord_cross_span_to_get_top_uvec,
-        cross(se.chord_uvec, se.span_uvec),
-        cross(se.span_uvec, se.chord_uvec))
-    normal_uvec = normal_uvec_tmp ./ norm_cs_safe(normal_uvec_tmp)
-
-    # Now get the component of velocity in the chord_uvec and normal_uvec directions.
-    V_chordwise = dot_cs_safe(Vtotal, se.chord_uvec)
-    V_normal = dot_cs_safe(Vtotal, normal_uvec)
-
-    # Now we can find the angle of attack.
-    alphastar = atan_cs_safe(V_normal, V_chordwise)
-    # alphastar = atan(V_normal, V_chordwise)
-    
-    return alphastar
-end
-
-function speed_normal_to_span(se::TBLTESourceElement{TDirect,true}) where {TDirect}
-    # Find the total velocity of the fluid including induction, from the perspective of the blade element, which is just the total velocity of the blade element from the perspective of the fluid with the sign switched.
-    Vtotal = se.y1dot_fluid - se.y1dot
-    # Find the component of the velocity in the direction of the span.
-    Vspan = dot_cs_safe(Vtotal, se.span_uvec)*se.span_uvec
-    # Subtract that from the total velocity to get the velocity normal to the span, then get the norm for the speed normal to span.
-    return norm_cs_safe(Vtotal - Vspan)
-end
-
-function speed_normal_to_span(se::TBLTESourceElement{TDirect,false}) where {TDirect}
-    # Find the total velocity of the fluid, not including induction, from the perspective of the blade element, which is just the total velocity of the blade element from the perspective of the fluid with the sign switched.
-    Vtotal = -se.y1dot
-    # Find the component of the velocity in the direction of the span.
-    Vspan = dot_cs_safe(Vtotal, se.span_uvec)*se.span_uvec
-    # Subtract that from the total velocity to get the velocity normal to the span, then get the norm for the speed normal to span.
-    return norm_cs_safe(Vtotal - Vspan)
-end
-
 """
     (trans::KinematicTransformation)(se::TBLTESourceElement)
 
@@ -848,11 +855,18 @@ function (trans::KinematicTransformation)(se::TBLTESourceElement{TDirect,TUInduc
     return TBLTESourceElement{TDirect,TUInduction}(se.c0, se.nu, se.Δr, se.chord, y0dot, y1dot, y1dot_fluid, se.τ, se.Δτ, span_uvec, chord_uvec, se.bl, se.chord_cross_span_to_get_top_uvec)
 end
 
+abstract type AbstractBroadbandOutput{NO,TF} <: AcousticMetrics.AbstractProportionalBandSpectrum{NO,TF} end
+
+@inline AcousticMetrics.has_observer_time(pbs::AbstractBroadbandOutput) = true
+@inline AcousticMetrics.timestep(pbs::AbstractBroadbandOutput) = pbs.dt
+@inline AcousticMetrics.observer_time(pbs::AbstractBroadbandOutput) = pbs.t
+@inline AcousticMetrics.time_scaler(pbs::AbstractBroadbandOutput, period) = AcousticMetrics.timestep(pbs)/period
+doppler(pbs::AbstractBroadbandOutput) = AcousticMetrics.freq_scaler(pbs.cbands)
+
 """
 Output of the turbulent boundary layer-trailing edge (TBL-TE) calculation: the acoustic pressure autospectrum centered at time `t` over observer duration `dt` and observer frequencies `cbands` for the suction side `G_s`, pressure side `G_p`, and the separation `G_alpha`.
-`doppler` is the appropriate Doppler shift factor for the `se`-`obs` combination, i.e., the observer frequencies can be calculated via `freqs_obs = doppler.*freqs_src` and the observer time step can be calculated via `dt = dτ/doppler`.
 """
-struct TBLTEOutput{NO,TF,TG<:AbstractVector{TF},TFreqs<:AcousticMetrics.AbstractProportionalBands{NO,:center},TDTime,TTime} <: AcousticMetrics.AbstractProportionalBandSpectrum{NO,TF}
+struct TBLTEOutput{NO,TF,TG<:AbstractVector{TF},TFreqs<:AcousticMetrics.AbstractProportionalBands{NO,:center},TDTime,TTime} <: AbstractBroadbandOutput{NO,TF}
     G_s::TG
     G_p::TG
     G_alpha::TG
@@ -869,16 +883,10 @@ struct TBLTEOutput{NO,TF,TG<:AbstractVector{TF},TFreqs<:AcousticMetrics.Abstract
         return new{NO,eltype(TG),TG,typeof(cbands),typeof(dt),typeof(t)}(G_s, G_p, G_alpha, cbands, dt, t)
     end
 end
-@inline AcousticMetrics.has_observer_time(pbs::TBLTEOutput) = true
-@inline AcousticMetrics.timestep(pbs::TBLTEOutput) = pbs.dt
-@inline AcousticMetrics.observer_time(pbs::TBLTEOutput) = pbs.t
-@inline AcousticMetrics.time_scaler(pbs::TBLTEOutput, period) = AcousticMetrics.timestep(pbs)/period
 @inline function Base.getindex(pbs::TBLTEOutput, i::Int)
     @boundscheck checkbounds(pbs, i)
     return pbs.G_s[i] + pbs.G_p[i] + pbs.G_alpha[i]
 end
-
-doppler(pbs::TBLTEOutput) = AcousticMetrics.freq_scaler(pbs.cbands)
 
 function pbs_suction(pbs::TBLTEOutput)
     t = AcousticMetrics.observer_time(pbs)
@@ -901,48 +909,115 @@ function pbs_alpha(pbs::TBLTEOutput)
     return AcousticMetrics.ProportionalBandSpectrumWithTime(pbs.G_alpha, cbands, dt, t)
 end
 
-function _tble_te_s(freq, U, M, Re_c, Dh, r_er, Δr, deltastar_s, St_peak_s, St_peak_p, St_peak_alpha, k_1, deep_stall)
-    St_s = freq*deltastar_s/U
-    St_peak_s = 0.5*(St_peak_p + St_peak_alpha)
+# function _tble_te_s(freq, U, M, Re_c, Dh, r_er, Δr, deltastar_s, St_peak_s, St_peak_p, St_peak_alpha, k_1, deep_stall)
+#     St_s = freq*deltastar_s/U
+#     St_peak_s = 0.5*(St_peak_p + St_peak_alpha)
 
+#     A_s = A(St_s/St_peak_s, Re_c)
+
+#     # SPL_s = 10*log10((deltastar_s*M^5*L*Dh)/(r_er^2)) + A_s + k_1 - 3
+#     # Brooks and Burley AIAA 2001-2210 style.
+#     H_s = 10^(0.1*(A_s + k_1 - 3))
+#     G_s = (deltastar_s*M^5*Δr*Dh)/(r_er^2)*H_s
+
+#     return ifelse(deep_stall, 10^(0.1*(-100))*one(typeof(G_s)), G_s)
+# end
+# function _Hs(freq, deltastar_s_U, Re_c, St_peak_s, k_1)
+#     St_s = freq*deltastar_s_U
+#     A_s = A(St_s/St_peak_s, Re_c)
+#     return 10^(0.1*(A_s + k_1 - 3))
+# end
+function _tble_te_s(freq, deltastar_s_U, Re_c, St_peak_s, k_1, scaler, deep_stall)
+    St_s = freq*deltastar_s_U
     A_s = A(St_s/St_peak_s, Re_c)
 
     # SPL_s = 10*log10((deltastar_s*M^5*L*Dh)/(r_er^2)) + A_s + k_1 - 3
     # Brooks and Burley AIAA 2001-2210 style.
     H_s = 10^(0.1*(A_s + k_1 - 3))
-    G_s = (deltastar_s*M^5*Δr*Dh)/(r_er^2)*H_s
+    # G_s = (deltastar_s*M^5*Δr*Dh)/(r_er^2)*H_s
+    G_s = scaler*H_s
 
     return ifelse(deep_stall, 10^(0.1*(-100))*one(typeof(G_s)), G_s)
 end
 
-function _tble_te_p(freq, U, M, Re_c, Dh, r_er, Δr, deltastar_p, St_peak_p, k_1, Δk_1, deep_stall)
+# function _tble_te_p(freq, U, M, Re_c, Dh, r_er, Δr, deltastar_p, St_peak_p, k_1, Δk_1, deep_stall)
 
-    St_p = freq*deltastar_p/U
+#     St_p = freq*deltastar_p/U
+
+#     A_p = A(St_p/St_peak_p, Re_c)
+
+#     # SPL_p = 10*log10((deltastar_p*M^5*L*Dh)/(r_er^2)) + A_p + k_1 - 3 + Δk_1
+#     # Brooks and Burley AIAA 2001-2210 style.
+#     H_p = 10^(0.1*(A_p + k_1 - 3 + Δk_1))
+#     G_p = (deltastar_p*M^5*Δr*Dh)/(r_er^2)*H_p
+
+#     return ifelse(deep_stall, 10^(0.1*(-100))*one(typeof(G_p)), G_p)
+# end
+# function _Hp(freq, deltastar_p_U, Re_c, St_peak_p, k_1, Δk_1)
+#     St_p = freq*deltastar_p_U
+#     A_p = A(St_p/St_peak_p, Re_c)
+#     return 10^(0.1*(A_p + k_1 - 3 + Δk_1))
+# end
+function _tble_te_p(freq, deltastar_p_U, Re_c, St_peak_p, k_1, Δk_1, scaler, deep_stall)
+
+    St_p = freq*deltastar_p_U
 
     A_p = A(St_p/St_peak_p, Re_c)
 
     # SPL_p = 10*log10((deltastar_p*M^5*L*Dh)/(r_er^2)) + A_p + k_1 - 3 + Δk_1
     # Brooks and Burley AIAA 2001-2210 style.
     H_p = 10^(0.1*(A_p + k_1 - 3 + Δk_1))
-    G_p = (deltastar_p*M^5*Δr*Dh)/(r_er^2)*H_p
+    # G_p = (deltastar_p*M^5*Δr*Dh)/(r_er^2)*H_p
+    G_p = scaler*H_p
 
     return ifelse(deep_stall, 10^(0.1*(-100))*one(typeof(G_p)), G_p)
 end
 
-function _tble_te_alpha(freq, U, M, Re_c, Dl, Dh, r_er, Δr, deltastar_s, St_peak_alpha, k_2, deep_stall)
-    St_s = freq*deltastar_s/U
+# function _tble_te_alpha(freq, U, M, Re_c, Dl, Dh, r_er, Δr, deltastar_s, St_peak_alpha, k_2, deep_stall)
+#     St_s = freq*deltastar_s/U
+
+#     A_prime_stall = A(St_s/St_peak_alpha, 3*Re_c)
+#     # SPL_alpha = 10*log10((deltastar_s*M^5*L*D)/(r_er^2)) + A_prime + k_2
+#     # Brooks and Burley AIAA 2001-2210 style.
+#     H_alpha_stall = 10^(0.1*(A_prime_stall + k_2))
+#     G_alpha_stall = (deltastar_s*M^5*Δr*Dl)/(r_er^2)*H_alpha_stall
+
+#     B_alpha = B(St_s/St_peak_alpha, Re_c)
+#     # SPL_alpha = 10*log10((deltastar_s*M^5*L*Dh)/(r_er^2)) + B_alpha + k_2
+#     # Brooks and Burley AIAA 2001-2210 style.
+#     H_alpha = 10^(0.1*(B_alpha + k_2))
+#     G_alpha = (deltastar_s*M^5*Δr*Dh)/(r_er^2)*H_alpha
+
+#     return ifelse(deep_stall, G_alpha_stall, G_alpha)
+# end
+# function _Halpha_not_stalled(freq, Re_c, deltastar_s_U, St_peak_alpha, k_2)
+#     St_s = freq*deltastar_s_U
+#     B_alpha = B(St_s/St_peak_alpha, Re_c)
+#     return 10^(0.1*(B_alpha + k_2))
+# end
+# function _Halpha_stalled(freq, Re_c, deltastar_s_U, St_peak_alpha, k_2)
+#     St_s = freq*deltastar_s_U
+#     A_prime_stall = A(St_s/St_peak_alpha, 3*Re_c)
+#     return 10^(0.1*(A_prime_stall + k_2))
+# end
+function _tble_te_alpha(freq, Re_c, deltastar_s_U, St_peak_alpha, k_2, scaler_l, scaler_h, deep_stall)
+    # Don't know if this is really necessary.
+    T = promote_type(typeof(freq), typeof(Re_c), typeof(deltastar_s_U), typeof(St_peak_alpha), typeof(k_2), typeof(scaler_l), typeof(scaler_h))
+    St_s = freq*deltastar_s_U
 
     A_prime_stall = A(St_s/St_peak_alpha, 3*Re_c)
     # SPL_alpha = 10*log10((deltastar_s*M^5*L*D)/(r_er^2)) + A_prime + k_2
     # Brooks and Burley AIAA 2001-2210 style.
     H_alpha_stall = 10^(0.1*(A_prime_stall + k_2))
-    G_alpha_stall = (deltastar_s*M^5*Δr*Dl)/(r_er^2)*H_alpha_stall
+    # G_alpha_stall = (deltastar_s*M^5*Δr*Dl)/(r_er^2)*H_alpha_stall
+    G_alpha_stall = scaler_l*H_alpha_stall*one(T)
 
     B_alpha = B(St_s/St_peak_alpha, Re_c)
     # SPL_alpha = 10*log10((deltastar_s*M^5*L*Dh)/(r_er^2)) + B_alpha + k_2
     # Brooks and Burley AIAA 2001-2210 style.
     H_alpha = 10^(0.1*(B_alpha + k_2))
-    G_alpha = (deltastar_s*M^5*Δr*Dh)/(r_er^2)*H_alpha
+    # G_alpha = (deltastar_s*M^5*Δr*Dh)/(r_er^2)*H_alpha
+    G_alpha = scaler_h*H_alpha*one(T)
 
     return ifelse(deep_stall, G_alpha_stall, G_alpha)
 end
@@ -1002,11 +1077,49 @@ function noise(se::TBLTESourceElement, obs::AbstractAcousticObserver, t_obs, fre
     k_2 = K_2(Re_c, M, alphastar_positive)
     Δk_1 = DeltaK_1(alphastar_positive, Re_deltastar_p)
 
+    deltastar_s_U = deltastar_s/U
+    deltastar_p_U = deltastar_p/U
+
+    # pref2 = 4e-10
+    # TGs = promote_type(deltastar_s, M, se.Δr, Dh, r_er, eltype(freqs), deltastar_s_U, Re_c, St_peak_s, k_1, pref2)
+    # TGp = promote_type(deltastar_p, M, se.Δr, Dh, r_er, eltype(freqs), deltastar_p_U, Re_c, St_peak_p, k1, Δk_1, pref2)
+
+    # G_s = _tble_te_s.(freqs, U, M, Re_c, Dh, r_er, se.Δr, deltastar_s, St_peak_s, St_peak_p, St_peak_alpha, k_1, deep_stall).*pref2
+
+    # G_p = _tble_te_p.(freqs, U, M, Re_c, Dh, r_er, se.Δr, deltastar_p, St_peak_p, k_1, Δk_1, deep_stall).*pref2
+
+    # G_alpha = _tble_te_alpha.(freqs, U, M, Re_c, Dl, Dh, r_er, se.Δr, deltastar_s, St_peak_alpha, k_2, deep_stall).*pref2
+    # G_alpha = (deltastar_s*M^5*Δr*Dh)/(r_er^2) .* _Halpha_not_stalled.(freqs, Re_c, deltastar_s_U, St_peak_alpha, k_2) .* pref2
+
+    # The Brooks and Burley autospectrums appear to be scaled by the usual squared reference pressure (20 μPa)^2, but I'd like things in dimensional units, so multiply through by that.
+    # if deep_stall
+    #     G_s = 10^(0.1*(-100))*ones(TGs, length(freqs))
+    #     G_p = 10^(0.1*(-100))*ones(TGp, length(freqs))
+    #     G_alpha = (deltastar_s*M^5*Δr*Dl) .* _Halpha_stalled.(freqs, Re_c, deltastar_s_U, St_peak_alpha, k_2) .* pref2
+    # else
+    #     G_s = (deltastar_s*M^5*Δr*Dh)/(r_er^2) .* _Hs.(freqs, deltastar_s_U, Re_c, St_peak_s, k_1) .* pref2
+    #     G_p = (deltastar_p*M^5*Δr*Dh)/(r_er^2) .* _Hp.(freqs, deltastar_p_U, Re_c, St_peak_p, k_1, Δk_1) .* pref2
+    #     G_alpha = (deltastar_s*M^5*Δr*Dh)/(r_er^2) .* _Halpha_not_stalled.(freqs, Re_c, deltastar_s_U, St_peak_alpha, k_2) .* pref2
+    # end
+
+    # if deep_stall
+    #     G_s = 10^(0.1*(-100))*ones(eltype(G_s, size(G_s)))
+    #     G_p = 10^(0.1*(-100))*ones(eltype(G_p, size(G_p)))
+    #     G_alpha = (deltastar_s*M^5*Δr*Dl) .* _Halpha_stalled.(freqs, Re_c, deltastar_s_U, St_peak_alpha, k_2) .* pref2
+    # else
+    # end
+
     # The Brooks and Burley autospectrums appear to be scaled by the usual squared reference pressure (20 μPa)^2, but I'd like things in dimensional units, so multiply through by that.
     pref2 = 4e-10
-    G_s = _tble_te_s.(freqs, U, M, Re_c, Dh, r_er, se.Δr, deltastar_s, St_peak_s, St_peak_p, St_peak_alpha, k_1, deep_stall).*pref2
-    G_p = _tble_te_p.(freqs, U, M, Re_c, Dh, r_er, se.Δr, deltastar_p, St_peak_p, k_1, Δk_1, deep_stall).*pref2
-    G_alpha = _tble_te_alpha.(freqs, U, M, Re_c, Dl, Dh, r_er, se.Δr, deltastar_s, St_peak_alpha, k_2, deep_stall).*pref2
+    G_s_scaler = (deltastar_s*M^5*se.Δr*Dh)/(r_er^2)
+    G_s = _tble_te_s.(freqs, deltastar_s_U, Re_c, St_peak_s, k_1, G_s_scaler, deep_stall).*pref2
+
+    G_p_scaler = (deltastar_p*M^5*se.Δr*Dh)/(r_er^2)
+    G_p = _tble_te_p.(freqs, deltastar_p_U, Re_c, St_peak_p, k_1, Δk_1, G_p_scaler, deep_stall).*pref2
+
+    G_alpha_scaler_l = (deltastar_s*M^5*se.Δr*Dl)/(r_er^2)
+    G_alpha_scaler_h = G_s_scaler
+    G_alpha = _tble_te_alpha.(freqs, Re_c, deltastar_s_U, St_peak_alpha, k_2, G_alpha_scaler_l, G_alpha_scaler_h, deep_stall).*pref2
 
     # Also need the Doppler shift for this source-observer combination.
     doppler = doppler_factor(se, obs, t_obs)
@@ -1017,9 +1130,4 @@ function noise(se::TBLTESourceElement, obs::AbstractAcousticObserver, t_obs, fre
 
     # All done.
     return TBLTEOutput(G_s, G_p, G_alpha, freqs_obs, dt, t_obs)
-end
-
-function noise(se::TBLTESourceElement, obs::AbstractAcousticObserver, freqs)
-    t_obs = adv_time(se, obs)
-    return noise(se, obs, t_obs, freqs)
 end

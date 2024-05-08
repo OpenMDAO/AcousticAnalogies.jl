@@ -128,7 +128,7 @@ end
 
             # Get the AcousticAnalogies.jl implementation.
             alpha_deg_jl = range(minimum(alpha_deg), maximum(alpha_deg); length=50)
-            delta_jl = AcousticAnalogies.bl_thickness_p.(Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()), alpha_deg_jl.*pi/180)
+            delta_jl = AcousticAnalogies._bl_thickness_p.(Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()), alpha_deg_jl.*pi/180)
 
             # Interpolate the BPM report onto the uniform alpha spacing.
             delta_bpm_interp = linear(alpha_deg, delta_bpm, alpha_deg_jl)
