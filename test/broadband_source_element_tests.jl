@@ -415,7 +415,7 @@ end
 
 @testset "BPM Report tests" begin
 
-    function calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl; do_lblvs=false)
+    function calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl; do_lblvs=false, do_tip_vortex=false, blade_tip=nothing, do_tebvs=false, h=nothing, Psi=nothing)
         M_c = 0.8*M
         # How we're going to set this up:
         #
@@ -456,6 +456,12 @@ end
         if do_lblvs
             se_lblvs = AcousticAnalogies.LBLVSSourceElement{AcousticAnalogies.BPMDirectivity,false}(c0, nu, r, θ, L, chord, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
         end
+        if do_tip_vortex
+            se_tip = AcousticAnalogies.TipVortexSourceElement{AcousticAnalogies.BPMDirectivity,false}(c0, r, θ, L, chord, ϕ, vn, vr, vc, τ, Δτ, bl, blade_tip, twist_about_positive_y)
+        end
+        if do_tebvs
+            se_tebvs = AcousticAnalogies.TEBVSSourceElement{AcousticAnalogies.BPMDirectivity,false}(c0, nu, r, θ, L, chord, h, Psi, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
+        end
 
         # Let's check that things are what we expect.
         @test se_tblte.y0dot ≈ [0.0, 0.0, 0.0]
@@ -479,6 +485,30 @@ end
             @test isapprox(AcousticAnalogies.angle_of_attack(se_lblvs), alphastar; atol=1e-12)
         end
 
+        if do_tip_vortex
+            # Let's check that things are what we expect.
+            @test se_tip.y0dot ≈ [0.0, 0.0, 0.0]
+            @test se_tip.y1dot ≈ [0.0, 0.0, 0.0]
+            @test se_tip.y1dot_fluid ≈ [M_c*c0, 0.0, 0.0]
+            # @test se_tip.y1dot_fluid ≈ [M_c*c0*cos(alphastar), 0.0, M_c*c0*sin(alphastar)]
+            @test se_tip.span_uvec ≈ [0.0, 1.0, 0.0]
+            @test se_tip.chord_uvec ≈ [cos(alphastar), 0.0, -sin(alphastar)]
+            # @test se_tip.chord_uvec ≈ [1.0, 0.0, 0.0]
+            @test isapprox(AcousticAnalogies.angle_of_attack(se_tip), alphastar; atol=1e-12)
+        end
+
+        if do_tebvs
+            # Let's check that things are what we expect.
+            @test se_tebvs.y0dot ≈ [0.0, 0.0, 0.0]
+            @test se_tebvs.y1dot ≈ [0.0, 0.0, 0.0]
+            @test se_tebvs.y1dot_fluid ≈ [M_c*c0, 0.0, 0.0]
+            # @test se_tebvs.y1dot_fluid ≈ [M_c*c0*cos(alphastar), 0.0, M_c*c0*sin(alphastar)]
+            @test se_tebvs.span_uvec ≈ [0.0, 1.0, 0.0]
+            @test se_tebvs.chord_uvec ≈ [cos(alphastar), 0.0, -sin(alphastar)]
+            # @test se_tebvs.chord_uvec ≈ [1.0, 0.0, 0.0]
+            @test isapprox(AcousticAnalogies.angle_of_attack(se_tebvs), alphastar; atol=1e-12)
+        end
+
         # Now we want to transform the source element into the global frame, which just means we make it move with speed `U` in the negative x direction.
         trans = KinematicCoordinateTransformations.ConstantVelocityTransformation(τ, [0.0, 0.0, 0.0], [-U, 0.0, 0.0])
         # No, that's not right, I want it to move in the direction of the velocity, which isn't aligned with the x axis any more.
@@ -486,6 +516,12 @@ end
         se_tblte_global = trans(se_tblte)
         if do_lblvs
             se_lblvs_global = trans(se_lblvs)
+        end
+        if do_tip_vortex
+            se_tip_global = trans(se_tip)
+        end
+        if do_tebvs
+            se_tebvs_global = trans(se_tebvs)
         end
 
         # Will that change the angle of attack?
@@ -512,6 +548,30 @@ end
             @test se_lblvs_global.chord_uvec ≈ [cos(alphastar), 0.0, -sin(alphastar)]
             # @test se_lblvs_global.chord_uvec ≈ [1.0, 0.0, 0.0]
             @test isapprox(AcousticAnalogies.angle_of_attack(se_lblvs_global), alphastar; atol=1e-12)
+        end
+
+        if do_tip_vortex
+            @test se_tip_global.y0dot ≈ [0.0, 0.0, 0.0]
+            @test se_tip_global.y1dot ≈ [-U, 0.0, 0.0]
+            # @test se_tip_global.y1dot ≈ [-U*cos(alphastar), 0.0, -U*sin(alphastar)]
+            @test se_tip_global.y1dot_fluid ≈ [M_c*c0 - U, 0.0, 0.0]
+            # @test se_tip_global.y1dot_fluid ≈ [(M_c*c0 - U)*cos(alphastar), 0.0, (M_c*c0 - U)*sin(alphastar)]
+            @test se_tip_global.span_uvec ≈ [0.0, 1.0, 0.0]
+            @test se_tip_global.chord_uvec ≈ [cos(alphastar), 0.0, -sin(alphastar)]
+            # @test se_tip_global.chord_uvec ≈ [1.0, 0.0, 0.0]
+            @test isapprox(AcousticAnalogies.angle_of_attack(se_tip_global), alphastar; atol=1e-12)
+        end
+
+        if do_tebvs
+            @test se_tebvs_global.y0dot ≈ [0.0, 0.0, 0.0]
+            @test se_tebvs_global.y1dot ≈ [-U, 0.0, 0.0]
+            # @test se_tebvs_global.y1dot ≈ [-U*cos(alphastar), 0.0, -U*sin(alphastar)]
+            @test se_tebvs_global.y1dot_fluid ≈ [M_c*c0 - U, 0.0, 0.0]
+            # @test se_tebvs_global.y1dot_fluid ≈ [(M_c*c0 - U)*cos(alphastar), 0.0, (M_c*c0 - U)*sin(alphastar)]
+            @test se_tebvs_global.span_uvec ≈ [0.0, 1.0, 0.0]
+            @test se_tebvs_global.chord_uvec ≈ [cos(alphastar), 0.0, -sin(alphastar)]
+            # @test se_tebvs_global.chord_uvec ≈ [1.0, 0.0, 0.0]
+            @test isapprox(AcousticAnalogies.angle_of_attack(se_tebvs_global), alphastar; atol=1e-12)
         end
 
         # If the angle of attack is negative, then the pressure and suction sides of the airfoil section switch, and so the coordinate system does too.
@@ -541,29 +601,57 @@ end
         if do_lblvs
             @test AcousticAnalogies.adv_time(se_lblvs_global, obs) ≈ t_final
         end
+        if do_tip_vortex
+            @test AcousticAnalogies.adv_time(se_tip_global, obs) ≈ t_final
+        end
+        if do_tebvs
+            @test AcousticAnalogies.adv_time(se_tebvs_global, obs) ≈ t_final
+        end
 
         # So now I should be able to do a noise prediction.
         freqs = AcousticMetrics.ExactThirdOctaveCenterBands(0.2, 20e3)
         tblte_out = AcousticAnalogies.noise(se_tblte_global, obs, freqs)
-        SPL_s_jl = 10.0 .* log10.(tblte_out.G_s./((20e-6)^2))
-        SPL_p_jl = 10.0 .* log10.(tblte_out.G_p./((20e-6)^2))
-        SPL_alpha_jl = 10.0 .* log10.(tblte_out.G_alpha./((20e-6)^2))
+        tblte_s_out = AcousticAnalogies.pbs_suction(tblte_out)
+        tblte_p_out = AcousticAnalogies.pbs_pressure(tblte_out)
+        tblte_alpha_out = AcousticAnalogies.pbs_alpha(tblte_out)
+        SPL_s_jl = 10.0 .* log10.(tblte_s_out./((20e-6)^2))
+        SPL_p_jl = 10.0 .* log10.(tblte_p_out./((20e-6)^2))
+        SPL_alpha_jl = 10.0 .* log10.(tblte_alpha_out./((20e-6)^2))
         if do_lblvs
             lblvs_out = AcousticAnalogies.noise(se_lblvs_global, obs, freqs)
-            SPL_lbl_vs = 10.0 .* log10.(lblvs_out.G./((20e-6)^2))
+            SPL_lbl_vs = 10.0 .* log10.(lblvs_out./((20e-6)^2))
+        end
+        if do_tip_vortex
+            tip_out = AcousticAnalogies.noise(se_tip_global, obs, freqs)
+            SPL_tip = 10.0 .* log10.(tip_out./((20e-6)^2))
+        end
+        if do_tebvs
+            tebvs_out = AcousticAnalogies.noise(se_tebvs_global, obs, freqs)
+            SPL_teb = 10.0 .* log10.(tebvs_out./((20e-6)^2))
         end
 
-        # @test tblte_out.doppler ≈ 1
         @test AcousticAnalogies.doppler(tblte_out) ≈ 1
         if do_lblvs
             @test AcousticAnalogies.doppler(lblvs_out) ≈ 1
         end
-
-        if do_lblvs
-            return freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_lbl_vs
-        else
-            return freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl
+        if do_tip_vortex
+            @test AcousticAnalogies.doppler(tip_out) ≈ 1
         end
+        if do_tebvs
+            @test AcousticAnalogies.doppler(tebvs_out) ≈ 1
+        end
+
+        res = (freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl)
+        if do_lblvs
+            res = (res..., SPL_lbl_vs)
+        end
+        if do_tip_vortex
+            res = (res..., SPL_tip)
+        end
+        if do_tebvs
+            res = (res..., SPL_teb)
+        end
+        return res
     end
 
     @testset "BPM Figure 11a" begin
@@ -1163,6 +1251,384 @@ end
         end
     end
 
+    @testset "BPM Figure 91" begin
+        nu = 1.4529e-5  # kinematic viscosity, m^2/s
+        L = 30.48e-2  # span in meters
+        chord = 15.24e-2  # chord in meters
+        speedofsound = 340.46
+        U = 71.3  # freestream velocity in m/s
+        # M = 0.209  # Mach number, corresponds to U = 71.3 m/s in BPM report
+        M = U/speedofsound
+        r_e = 1.22 # radiation distance in meters
+        θ_e = 90*pi/180 
+        Φ_e = 90*pi/180
+        # alphatip = 0.71*10.8*pi/180
+        alphastar = 10.8*pi/180
+        bl = AcousticAnalogies.UntrippedN0012BoundaryLayer()
+        blade_tip = AcousticAnalogies.RoundedTip{AcousticAnalogies.BPMTipAlphaCorrection}()
+
+        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure91-tip.csv")
+        bpm = DelimitedFiles.readdlm(fname, ',')
+        f_tip = bpm[:, 1]
+        SPL_tip = bpm[:, 2]
+
+        for angle_of_attack_sign in [1, -1]
+            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_tip_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; do_tip_vortex=true, blade_tip=blade_tip)
+
+            SPL_tip_jl_interp = linear(freqs, SPL_tip_jl, f_tip.*1e3)
+            vmin, vmax = extrema(SPL_tip)
+            err = abs.(SPL_tip_jl_interp .- SPL_tip)./(vmax - vmin)
+            @test maximum(err) < 0.047
+        end
+    end
+
+    @testset "BPM Figure 98b" begin
+        nu = 1.4529e-5  # kinematic viscosity, m^2/s
+        L = 45.72e-2  # span in meters
+        chord = 60.96e-2  # chord in meters
+        U = 69.5  # freestream velocity in m/s
+        M = U/340.46
+        h = 1.1e-3  # trailing edge bluntness in meters
+        Psi = 14*pi/180  # bluntness angle in radians
+        r_e = 1.22 # radiation distance in meters
+        θ_e = 90*pi/180 
+        Φ_e = 90*pi/180
+        alphastar = 0.0*pi/180
+        bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
+
+        # Now, need to get the data from the BPM report.
+        # Figures 98 a-d only differ in trailing edge bluntness, so the other sources are all the same.
+        # And TBL-TE is the only significant source, other than bluntness.
+        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure98-a-TBL-TE-suction.csv")
+        bpm = DelimitedFiles.readdlm(fname, ',')
+        f_s = bpm[:, 1]
+        SPL_s = bpm[:, 2]
+
+        # Suction and pressure are the same for zero angle of attack.
+        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure98-a-TBL-TE-suction.csv")
+        bpm = DelimitedFiles.readdlm(fname, ',')
+        f_p = bpm[:, 1]
+        SPL_p = bpm[:, 2]
+
+        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure98-b-bluntness.csv")
+        bpm = DelimitedFiles.readdlm(fname, ',')
+        f_teb_vs = bpm[:, 1]
+        SPL_teb_vs = bpm[:, 2]
+
+        for angle_of_attack_sign in [1, -1]
+            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_teb_vs_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; do_tebvs=true, h=h, Psi=Psi)
+
+            # Now compare...
+            SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
+            vmin, vmax = extrema(SPL_s)
+            err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
+            @test maximum(err) < 0.053
+
+            SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
+            vmin, vmax = extrema(SPL_p)
+            err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
+            @test maximum(err) < 0.053
+
+            SPL_teb_vs_jl_interp = linear(freqs, SPL_teb_vs_jl, f_teb_vs.*1e3)
+            vmin, vmax = extrema(SPL_teb_vs)
+            err = abs.(SPL_teb_vs_jl_interp .- SPL_teb_vs)./(vmax - vmin)
+            # Last two points are off.
+            # Not sure why.
+            @test maximum(err[1:end-2]) < 0.052
+            @test maximum(err[1:end-1]) < 0.060
+            @test maximum(err) < 0.171
+        end
+    end
+
+    @testset "BPM Figure 98c" begin
+        nu = 1.4529e-5  # kinematic viscosity, m^2/s
+        L = 45.72e-2  # span in meters
+        chord = 60.96e-2  # chord in meters
+        U = 69.5  # freestream velocity in m/s
+        M = U/340.46
+        h = 1.9e-3  # trailing edge bluntness in meters
+        Psi = 14*pi/180  # bluntness angle in radians
+        r_e = 1.22 # radiation distance in meters
+        θ_e = 90*pi/180 
+        Φ_e = 90*pi/180
+        M_c = 0.8*M
+        alphastar = 0.0*pi/180
+        bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
+
+        # Now, need to get the data from the BPM report.
+        # Figures 98 a-d only differ in trailing edge bluntness, so the other sources are all the same.
+        # And TBL-TE is the only significant source, other than bluntness.
+        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure98-a-TBL-TE-suction.csv")
+        bpm = DelimitedFiles.readdlm(fname, ',')
+        f_s = bpm[:, 1]
+        SPL_s = bpm[:, 2]
+
+        # Suction and pressure are the same for zero angle of attack.
+        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure98-a-TBL-TE-suction.csv")
+        bpm = DelimitedFiles.readdlm(fname, ',')
+        f_p = bpm[:, 1]
+        SPL_p = bpm[:, 2]
+
+        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure98-c-bluntness.csv")
+        bpm = DelimitedFiles.readdlm(fname, ',')
+        f_teb_vs = bpm[:, 1]
+        SPL_teb_vs = bpm[:, 2]
+
+        for angle_of_attack_sign in [1, -1]
+            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_teb_vs_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; do_tebvs=true, h=h, Psi=Psi)
+
+            # Now compare...
+            SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
+            vmin, vmax = extrema(SPL_s)
+            err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
+            @test maximum(err) < 0.053
+
+            SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
+            vmin, vmax = extrema(SPL_p)
+            err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
+            @test maximum(err) < 0.053
+
+            SPL_teb_vs_jl_interp = linear(freqs, SPL_teb_vs_jl, f_teb_vs.*1e3)
+            vmin, vmax = extrema(SPL_teb_vs)
+            err = abs.(SPL_teb_vs_jl_interp .- SPL_teb_vs)./(vmax - vmin)
+            # Last two points are off.
+            # Not sure why.
+            @test maximum(err[1:end-2]) < 0.040
+            @test maximum(err[1:end-1]) < 0.189
+            @test err[end] < 0.111
+        end
+    end
+
+    @testset "BPM Figure 98d" begin
+        nu = 1.4529e-5  # kinematic viscosity, m^2/s
+        L = 45.72e-2  # span in meters
+        chord = 60.96e-2  # chord in meters
+        U = 69.5  # freestream velocity in m/s
+        M = U/340.46
+        h = 2.5e-3  # trailing edge bluntness in meters
+        Psi = 14*pi/180  # bluntness angle in radians
+        r_e = 1.22 # radiation distance in meters
+        θ_e = 90*pi/180 
+        Φ_e = 90*pi/180
+        alphastar = 0.0*pi/180
+        bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
+
+        # Now, need to get the data from the BPM report.
+        # Figures 98 a-d only differ in trailing edge bluntness, so the other sources are all the same.
+        # And TBL-TE is the only significant source, other than bluntness.
+        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure98-a-TBL-TE-suction.csv")
+        bpm = DelimitedFiles.readdlm(fname, ',')
+        f_s = bpm[:, 1]
+        SPL_s = bpm[:, 2]
+
+        # Suction and pressure are the same for zero angle of attack.
+        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure98-a-TBL-TE-suction.csv")
+        bpm = DelimitedFiles.readdlm(fname, ',')
+        f_p = bpm[:, 1]
+        SPL_p = bpm[:, 2]
+
+        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure98-d-bluntness.csv")
+        bpm = DelimitedFiles.readdlm(fname, ',')
+        f_teb_vs = bpm[:, 1]
+        SPL_teb_vs = bpm[:, 2]
+
+        for angle_of_attack_sign in [1, -1]
+            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_teb_vs_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; do_tebvs=true, h=h, Psi=Psi)
+
+            # Now compare...
+            SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
+            vmin, vmax = extrema(SPL_s)
+            err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
+            @test maximum(err) < 0.053
+
+            SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
+            vmin, vmax = extrema(SPL_p)
+            err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
+            @test maximum(err) < 0.053
+
+            SPL_teb_vs_jl_interp = linear(freqs, SPL_teb_vs_jl, f_teb_vs.*1e3)
+            vmin, vmax = extrema(SPL_teb_vs)
+            err = abs.(SPL_teb_vs_jl_interp .- SPL_teb_vs)./(vmax - vmin)
+            # Last two points are off.
+            # Not sure why.
+            @test maximum(err[1:end-2]) < 0.044
+            @test err[end-1] < 0.089
+            @test err[end] < 0.089
+        end
+    end
+
+    @testset "BPM Figure 99b" begin
+        nu = 1.4529e-5  # kinematic viscosity, m^2/s
+        L = 45.72e-2  # span in meters
+        chord = 60.96e-2  # chord in meters
+        U = 38.6  # freestream velocity in m/s
+        M = U/340.46
+        h = 1.1e-3  # trailing edge bluntness in meters
+        Psi = 14*pi/180  # bluntness angle in radians
+        r_e = 1.22 # radiation distance in meters
+        θ_e = 90*pi/180 
+        Φ_e = 90*pi/180
+        alphastar = 0.0*pi/180
+        bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
+
+        # Now, need to get the data from the BPM report.
+        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure99-b-TBL-TE-suction.csv")
+        bpm = DelimitedFiles.readdlm(fname, ',')
+        f_s = bpm[:, 1]
+        SPL_s = bpm[:, 2]
+
+        # Suction and pressure are the same for zero angle of attack.
+        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure99-b-TBL-TE-suction.csv")
+        bpm = DelimitedFiles.readdlm(fname, ',')
+        f_p = bpm[:, 1]
+        SPL_p = bpm[:, 2]
+
+        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure99-b-bluntness.csv")
+        bpm = DelimitedFiles.readdlm(fname, ',')
+        f_teb_vs = bpm[:, 1]
+        SPL_teb_vs = bpm[:, 2]
+
+        for angle_of_attack_sign in [1, -1]
+            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_teb_vs_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; do_tebvs=true, h=h, Psi=Psi)
+
+            # Now compare...
+            SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
+            vmin, vmax = extrema(SPL_s)
+            err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
+            @test maximum(err) < 0.077
+
+            SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
+            vmin, vmax = extrema(SPL_p)
+            err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
+            @test maximum(err) < 0.077
+
+            SPL_teb_vs_jl_interp = linear(freqs, SPL_teb_vs_jl, f_teb_vs.*1e3)
+            vmin, vmax = extrema(SPL_teb_vs)
+            err = abs.(SPL_teb_vs_jl_interp .- SPL_teb_vs)./(vmax - vmin)
+            # Last two points are off.
+            # Not sure why.
+            @test maximum(err[1:end-2]) < 0.091
+            @test         err[  end-1]  < 0.251
+            @test         err[  end  ]  < 0.400
+        end
+    end
+
+    @testset "BPM Figure 99c" begin
+        nu = 1.4529e-5  # kinematic viscosity, m^2/s
+        L = 45.72e-2  # span in meters
+        chord = 60.96e-2  # chord in meters
+        U = 38.6  # freestream velocity in m/s
+        M = U/340.46
+        h = 1.9e-3  # trailing edge bluntness in meters
+        Psi = 14*pi/180  # bluntness angle in radians
+        r_e = 1.22 # radiation distance in meters
+        θ_e = 90*pi/180 
+        Φ_e = 90*pi/180
+        alphastar = 0.0*pi/180
+        bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
+
+        # Now, need to get the data from the BPM report.
+        # Figures 99 a-d only differ in trailing edge bluntness, so the other sources are all the same.
+        # And TBL-TE is the only significant source, other than bluntness.
+        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure99-b-TBL-TE-suction.csv")
+        bpm = DelimitedFiles.readdlm(fname, ',')
+        f_s = bpm[:, 1]
+        SPL_s = bpm[:, 2]
+
+        # Suction and pressure are the same for zero angle of attack.
+        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure99-b-TBL-TE-suction.csv")
+        bpm = DelimitedFiles.readdlm(fname, ',')
+        f_p = bpm[:, 1]
+        SPL_p = bpm[:, 2]
+
+        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure99-c-bluntness.csv")
+        bpm = DelimitedFiles.readdlm(fname, ',')
+        f_teb_vs = bpm[:, 1]
+        SPL_teb_vs = bpm[:, 2]
+
+        for angle_of_attack_sign in [1, -1]
+            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_teb_vs_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; do_tebvs=true, h=h, Psi=Psi)
+
+            # Now compare...
+            SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
+            vmin, vmax = extrema(SPL_s)
+            err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
+            @test maximum(err) < 0.077
+
+            SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
+            vmin, vmax = extrema(SPL_p)
+            err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
+            @test maximum(err) < 0.077
+
+            SPL_teb_vs_jl_interp = linear(freqs, SPL_teb_vs_jl, f_teb_vs.*1e3)
+            vmin, vmax = extrema(SPL_teb_vs)
+            err = abs.(SPL_teb_vs_jl_interp .- SPL_teb_vs)./(vmax - vmin)
+            # Last two points are off.
+            # Not sure why.
+            @test maximum(err[1:end-2]) < 0.057
+            @test         err[  end-1]  < 0.070
+            @test         err[  end  ]  < 0.256
+        end
+    end
+
+    @testset "BPM Figure 99d" begin
+        nu = 1.4529e-5  # kinematic viscosity, m^2/s
+        L = 45.72e-2  # span in meters
+        chord = 60.96e-2  # chord in meters
+        U = 38.6  # freestream velocity in m/s
+        M = U/340.46
+        h = 2.5e-3  # trailing edge bluntness in meters
+        Psi = 14*pi/180  # bluntness angle in radians
+        r_e = 1.22 # radiation distance in meters
+        θ_e = 90*pi/180 
+        Φ_e = 90*pi/180
+        alphastar = 0.0*pi/180
+        bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
+
+        # Now, need to get the data from the BPM report.
+        # Figures 99 a-d only differ in trailing edge bluntness, so the other sources are all the same.
+        # And TBL-TE is the only significant source, other than bluntness.
+        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure99-b-TBL-TE-suction.csv")
+        bpm = DelimitedFiles.readdlm(fname, ',')
+        f_s = bpm[:, 1]
+        SPL_s = bpm[:, 2]
+
+        # Suction and pressure are the same for zero angle of attack.
+        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure99-b-TBL-TE-suction.csv")
+        bpm = DelimitedFiles.readdlm(fname, ',')
+        f_p = bpm[:, 1]
+        SPL_p = bpm[:, 2]
+
+        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure99-d-bluntness.csv")
+        bpm = DelimitedFiles.readdlm(fname, ',')
+        f_teb_vs = bpm[:, 1]
+        SPL_teb_vs = bpm[:, 2]
+
+        for angle_of_attack_sign in [1, -1]
+            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_teb_vs_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; do_tebvs=true, h=h, Psi=Psi)
+
+            # Now compare...
+            SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
+            vmin, vmax = extrema(SPL_s)
+            err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
+            @test maximum(err) < 0.077
+
+            SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
+            vmin, vmax = extrema(SPL_p)
+            err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
+            @test maximum(err) < 0.077
+
+            SPL_teb_vs_jl_interp = linear(freqs, SPL_teb_vs_jl, f_teb_vs.*1e3)
+            vmin, vmax = extrema(SPL_teb_vs)
+            err = abs.(SPL_teb_vs_jl_interp .- SPL_teb_vs)./(vmax - vmin)
+            # Last two points are off.
+            # Not sure why.
+            @test maximum(err[1:end-3]) < 0.047
+            @test err[end-2] < 0.068
+            @test err[end-1] < 0.213
+            @test err[end] < 0.225
+        end
+    end
 end
 
 end # module

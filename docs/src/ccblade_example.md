@@ -121,7 +121,8 @@ So let's try that:
 ```@example first_example
 using AcousticAnalogies: source_elements_ccblade, ConstVelocityAcousticObserver, f1a, combine, pressure_monopole, pressure_dipole
 bpp = 2*pi/omega/num_blades  # blade passing period
-ses = source_elements_ccblade(rotor, sections, ops, outs, [area_over_chord_squared], 4*bpp, 64)
+positive_x_rotation = true
+ses = source_elements_ccblade(rotor, sections, ops, outs, [area_over_chord_squared], 4*bpp, 64, positive_x_rotation)
 nothing # hide
 ```
 

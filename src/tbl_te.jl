@@ -716,129 +716,6 @@ function TBLTESourceElement(c0, nu, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ,
     return TBLTESourceElement{BrooksBurleyDirectivity,true}(c0, nu, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
 end
 
-#function Dbar_l(se::TBLTESourceElement, obs::AbstractAcousticObserver, t_obs)
-#    # Position of the observer.
-#    x_obs = obs(t_obs)
-
-#    # Position vector from source to observer.
-#    rv = x_obs .- se.y0dot
-
-#    # Distance from source to observer.
-#    r_er = norm_cs_safe(rv)
-
-#    # Unit vector normal to both the span and chord directions.
-#    # Does the order matter?
-#    # Doesn't look like it, since we're only using it to find z_er, which we square.
-#    z_uvec_tmp = cross(se.chord_uvec, se.span_uvec)
-#    z_uvec = z_uvec_tmp / norm_cs_safe(z_uvec_tmp)
-    
-#    # Component of rv along the chord line (see Figure 11 in Brooks and Burley AIAA 2001-2210).
-#    x_er = dot_cs_safe(rv, se.chord_uvec)
-
-#    # Component of rv along the span line (see Figure 11 in Brooks and Burley AIAA 2001-2210).
-#    y_er = dot_cs_safe(rv, se.span_uvec)
-
-#    # Component of rv in the direction normal to both span and chord (see Figure 11 in Brooks and Burley AIAA 2001-2210).
-#    z_er = dot_cs_safe(rv, z_uvec)
-
-#    # Need to find sin(Θ_er)^2, where Θ_er = acos(x_er/r_er), equation (21) from Brooks and Burley AIAA 2001-2210.
-#    # But sin(acos(x_er/r_er)) = sqrt(r_er^2 - x_er^2)/r_er, and so sin(Θ_er)^2 = (r_er^2 - x_er^2)/r_er^2
-#    sin2Θer = (r_er^2 - x_er^2)/r_er^2
-
-#    # Need to find sin(Φ_er)^2, where Φ_er = acos(y_er/sqrt(y_er^2 + z_er^2)), equation (21) from Brooks and Burley AIAA 2001-2210.
-#    # But sin(acos(y_er/sqrt(y_er^2 + z_er^2))) = z_er/sqrt(y_er^2 + z_er^2), and so sin(Φ_er)^2 = z_er^2/(y_er_^2 + z_er^2).
-#    sin2Φer = (z_er^2)/(y_er^2 + z_er^2)
-
-#    # Now just need the denominator: (1 - M_tot*cos(ξR))^4.
-#    # M_tot is the "total" velocity from... hmm... what perspective?
-#    # Let's see... it looks like it's suppose to be from the fluid, aka the global frame.
-#    # The definition is Brooks and Burley AIAA 2001-2210, equation (14):
-#    #
-#    #   V_tot = V - V_wt - V_ind
-#    #
-#    # where 
-#    #
-#    #   * V is the velocity due to the rotation of the blade element
-#    #   * V_wt is the wind tunnel velocity, which is positive when it goes against the motion of the blade element.
-#    #   * V_ind is "the induced velocity due to the near and far wake of the rotor," and appears to be positive in roughly the thrust direction.
-#    #
-#    # So if I calculate V - V_wt, that's the "actual" velocity of the blade element, i.e., the velocity of the blade element relative to the fluid far away from the blade element, since it doesn't include the induced velocity.
-#    # That's what I usually think of as the "actual" velocity, since it's what a stationary observer would observe on a calm day.
-#    # But when we add in the induced velocity, I think what we're finding is the velocity of the blade element relative to the nearfield velocity.
-#    # Cool.
-#    # But does that mean I add or subtract `se.y1dot_fluid` from `se.y1dot`?
-#    # Well, let's think about that.
-#    # First, let's say I start with stuff in the blade-fixed frame.
-#    # And let's say I'm imagining that, from the global frame, I'm assuming the
-#    # blade element is moving in the positive x direction, initially aligned
-#    # with the y axis
-#    # So I think all I need to do is just use se.y1dot_fluid + se.y1dot.
-#    # Now, cos(ξ_r) is defined by equation (18) in Brooks and Burley AIAA 2001-2210, which is the angle between the radiation vector (rv here) and the total velocity (se.y1dot here).
-#    # But I can simplify that by just finding the unit radiation vector, then dotting that with the velocity vector, and dividing by c0.
-
-#    # Unit radiation vector.
-#    r_uvec = rv./r_er
-#    # Equation 14 from Brooks and Burley AIAA 2001-2210.
-#    Vtotal = se.y1dot - se.y1dot_fluid
-#    # Mach number vectory in the direction of the radiation vector.
-#    Mtotcosξr = dot_cs_safe(Vtotal, r_uvec)/se.c0
-
-#    # Now I can finally find the directivity function!
-#    # Equation (19) from Brooks and Burley AIAA 2001-2210.
-#    D = (sin2Θer*sin2Φer)/(1 - Mtotcosξr)^4
-
-#    return D
-#end
-
-#function Dbar_h(se::TBLTESourceElement, obs::AbstractAcousticObserver, t_obs)
-#    # Position of the observer.
-#    x_obs = obs(t_obs)
-
-#    # Position vector from source to observer.
-#    rv = x_obs .- se.y0dot
-
-#    # Distance from source to observer.
-#    r_er = norm_cs_safe(rv)
-
-#    # Unit vector normal to both the span and chord directions.
-#    # Does the order matter?
-#    # Doesn't look like it, since we're only using it to find z_er, which we square.
-#    z_uvec_tmp = cross(se.chord_uvec, se.span_uvec)
-#    z_uvec = z_uvec_tmp / norm_cs_safe(z_uvec_tmp)
-    
-#    # Component of rv along the chord line (see Figure 11 in Brooks and Burley AIAA 2001-2210).
-#    x_er = dot_cs_safe(rv, se.chord_uvec)
-
-#    # Component of rv along the span line (see Figure 11 in Brooks and Burley AIAA 2001-2210).
-#    y_er = dot_cs_safe(rv, se.span_uvec)
-
-#    # Component of rv in the direction normal to both span and chord (see Figure 11 in Brooks and Burley AIAA 2001-2210).
-#    z_er = dot_cs_safe(rv, z_uvec)
-
-#    # Need to find 2*sin(0.5*Θ_er)^2, where Θ_er = acos(x_er/r_er), equation (21) from Brooks and Burley AIAA 2001-2210.
-#    # But there is a half-angle identity that says sin(θ/2)^2 = 0.5*(1 - cos(θ)).
-#    # So I actually want 2*sin(0.5*Θ_er)^2 = 2*0.5*(1 - cos(Θ_er)) = (1 - cos(Θ_er)).
-#    # But I can substitute in Θ_er = acos(x_er/r_er) and get 2*sin(0.5*Θ_er)^2 = 1 - x_er/r_er.
-#    twosin2halfΘer = 1 - x_er/r_er
-
-#    # Need to find sin(Φ_er)^2, where Φ_er = acos(y_er/sqrt(y_er^2 + z_er^2)), equation (21) from Brooks and Burley AIAA 2001-2210.
-#    # But sin(acos(y_er/sqrt(y_er^2 + z_er^2))) = z_er/sqrt(y_er^2 + z_er^2), and so sin(Φ_er)^2 = z_er^2/(y_er_^2 + z_er^2).
-#    sin2Φer = (z_er^2)/(y_er^2 + z_er^2)
-
-#    # Unit radiation vector.
-#    r_uvec = rv./r_er
-#    # Equation 14 from Brooks and Burley AIAA 2001-2210.
-#    Vtotal = se.y1dot - se.y1dot_fluid
-#    # Mach number vectory in the direction of the radiation vector.
-#    Mtotcosξr = dot_cs_safe(Vtotal, r_uvec)/se.c0
-
-#    # Now I can finally find the directivity function!
-#    # Equation (20) from Brooks and Burley AIAA 2001-2210.
-#    D = (twosin2halfΘer*sin2Φer)/(1 - Mtotcosξr)^4
-
-#    return D
-#end
-
 """
     (trans::KinematicTransformation)(se::TBLTESourceElement)
 
@@ -855,18 +732,12 @@ function (trans::KinematicTransformation)(se::TBLTESourceElement{TDirect,TUInduc
     return TBLTESourceElement{TDirect,TUInduction}(se.c0, se.nu, se.Δr, se.chord, y0dot, y1dot, y1dot_fluid, se.τ, se.Δτ, span_uvec, chord_uvec, se.bl, se.chord_cross_span_to_get_top_uvec)
 end
 
-abstract type AbstractBroadbandOutput{NO,TF} <: AcousticMetrics.AbstractProportionalBandSpectrum{NO,TF} end
-
-@inline AcousticMetrics.has_observer_time(pbs::AbstractBroadbandOutput) = true
-@inline AcousticMetrics.timestep(pbs::AbstractBroadbandOutput) = pbs.dt
-@inline AcousticMetrics.observer_time(pbs::AbstractBroadbandOutput) = pbs.t
-@inline AcousticMetrics.time_scaler(pbs::AbstractBroadbandOutput, period) = AcousticMetrics.timestep(pbs)/period
-doppler(pbs::AbstractBroadbandOutput) = AcousticMetrics.freq_scaler(pbs.cbands)
+doppler(pbs::AcousticMetrics.AbstractProportionalBandSpectrum) = AcousticMetrics.freq_scaler(pbs)
 
 """
 Output of the turbulent boundary layer-trailing edge (TBL-TE) calculation: the acoustic pressure autospectrum centered at time `t` over observer duration `dt` and observer frequencies `cbands` for the suction side `G_s`, pressure side `G_p`, and the separation `G_alpha`.
 """
-struct TBLTEOutput{NO,TF,TG<:AbstractVector{TF},TFreqs<:AcousticMetrics.AbstractProportionalBands{NO,:center},TDTime,TTime} <: AbstractBroadbandOutput{NO,TF}
+struct TBLTEOutput{NO,TF,TG<:AbstractVector{TF},TFreqs<:AcousticMetrics.AbstractProportionalBands{NO,:center},TDTime,TTime} <: AcousticMetrics.AbstractProportionalBandSpectrum{NO,TF}
     G_s::TG
     G_p::TG
     G_alpha::TG
@@ -885,7 +756,7 @@ struct TBLTEOutput{NO,TF,TG<:AbstractVector{TF},TFreqs<:AcousticMetrics.Abstract
 end
 @inline function Base.getindex(pbs::TBLTEOutput, i::Int)
     @boundscheck checkbounds(pbs, i)
-    return pbs.G_s[i] + pbs.G_p[i] + pbs.G_alpha[i]
+    return @inbounds pbs.G_s[i] + pbs.G_p[i] + pbs.G_alpha[i]
 end
 
 function pbs_suction(pbs::TBLTEOutput)
@@ -909,24 +780,6 @@ function pbs_alpha(pbs::TBLTEOutput)
     return AcousticMetrics.ProportionalBandSpectrumWithTime(pbs.G_alpha, cbands, dt, t)
 end
 
-# function _tble_te_s(freq, U, M, Re_c, Dh, r_er, Δr, deltastar_s, St_peak_s, St_peak_p, St_peak_alpha, k_1, deep_stall)
-#     St_s = freq*deltastar_s/U
-#     St_peak_s = 0.5*(St_peak_p + St_peak_alpha)
-
-#     A_s = A(St_s/St_peak_s, Re_c)
-
-#     # SPL_s = 10*log10((deltastar_s*M^5*L*Dh)/(r_er^2)) + A_s + k_1 - 3
-#     # Brooks and Burley AIAA 2001-2210 style.
-#     H_s = 10^(0.1*(A_s + k_1 - 3))
-#     G_s = (deltastar_s*M^5*Δr*Dh)/(r_er^2)*H_s
-
-#     return ifelse(deep_stall, 10^(0.1*(-100))*one(typeof(G_s)), G_s)
-# end
-# function _Hs(freq, deltastar_s_U, Re_c, St_peak_s, k_1)
-#     St_s = freq*deltastar_s_U
-#     A_s = A(St_s/St_peak_s, Re_c)
-#     return 10^(0.1*(A_s + k_1 - 3))
-# end
 function _tble_te_s(freq, deltastar_s_U, Re_c, St_peak_s, k_1, scaler, deep_stall)
     St_s = freq*deltastar_s_U
     A_s = A(St_s/St_peak_s, Re_c)
@@ -940,24 +793,6 @@ function _tble_te_s(freq, deltastar_s_U, Re_c, St_peak_s, k_1, scaler, deep_stal
     return ifelse(deep_stall, 10^(0.1*(-100))*one(typeof(G_s)), G_s)
 end
 
-# function _tble_te_p(freq, U, M, Re_c, Dh, r_er, Δr, deltastar_p, St_peak_p, k_1, Δk_1, deep_stall)
-
-#     St_p = freq*deltastar_p/U
-
-#     A_p = A(St_p/St_peak_p, Re_c)
-
-#     # SPL_p = 10*log10((deltastar_p*M^5*L*Dh)/(r_er^2)) + A_p + k_1 - 3 + Δk_1
-#     # Brooks and Burley AIAA 2001-2210 style.
-#     H_p = 10^(0.1*(A_p + k_1 - 3 + Δk_1))
-#     G_p = (deltastar_p*M^5*Δr*Dh)/(r_er^2)*H_p
-
-#     return ifelse(deep_stall, 10^(0.1*(-100))*one(typeof(G_p)), G_p)
-# end
-# function _Hp(freq, deltastar_p_U, Re_c, St_peak_p, k_1, Δk_1)
-#     St_p = freq*deltastar_p_U
-#     A_p = A(St_p/St_peak_p, Re_c)
-#     return 10^(0.1*(A_p + k_1 - 3 + Δk_1))
-# end
 function _tble_te_p(freq, deltastar_p_U, Re_c, St_peak_p, k_1, Δk_1, scaler, deep_stall)
 
     St_p = freq*deltastar_p_U
@@ -973,33 +808,6 @@ function _tble_te_p(freq, deltastar_p_U, Re_c, St_peak_p, k_1, Δk_1, scaler, de
     return ifelse(deep_stall, 10^(0.1*(-100))*one(typeof(G_p)), G_p)
 end
 
-# function _tble_te_alpha(freq, U, M, Re_c, Dl, Dh, r_er, Δr, deltastar_s, St_peak_alpha, k_2, deep_stall)
-#     St_s = freq*deltastar_s/U
-
-#     A_prime_stall = A(St_s/St_peak_alpha, 3*Re_c)
-#     # SPL_alpha = 10*log10((deltastar_s*M^5*L*D)/(r_er^2)) + A_prime + k_2
-#     # Brooks and Burley AIAA 2001-2210 style.
-#     H_alpha_stall = 10^(0.1*(A_prime_stall + k_2))
-#     G_alpha_stall = (deltastar_s*M^5*Δr*Dl)/(r_er^2)*H_alpha_stall
-
-#     B_alpha = B(St_s/St_peak_alpha, Re_c)
-#     # SPL_alpha = 10*log10((deltastar_s*M^5*L*Dh)/(r_er^2)) + B_alpha + k_2
-#     # Brooks and Burley AIAA 2001-2210 style.
-#     H_alpha = 10^(0.1*(B_alpha + k_2))
-#     G_alpha = (deltastar_s*M^5*Δr*Dh)/(r_er^2)*H_alpha
-
-#     return ifelse(deep_stall, G_alpha_stall, G_alpha)
-# end
-# function _Halpha_not_stalled(freq, Re_c, deltastar_s_U, St_peak_alpha, k_2)
-#     St_s = freq*deltastar_s_U
-#     B_alpha = B(St_s/St_peak_alpha, Re_c)
-#     return 10^(0.1*(B_alpha + k_2))
-# end
-# function _Halpha_stalled(freq, Re_c, deltastar_s_U, St_peak_alpha, k_2)
-#     St_s = freq*deltastar_s_U
-#     A_prime_stall = A(St_s/St_peak_alpha, 3*Re_c)
-#     return 10^(0.1*(A_prime_stall + k_2))
-# end
 function _tble_te_alpha(freq, Re_c, deltastar_s_U, St_peak_alpha, k_2, scaler_l, scaler_h, deep_stall)
     # Don't know if this is really necessary.
     T = promote_type(typeof(freq), typeof(Re_c), typeof(deltastar_s_U), typeof(St_peak_alpha), typeof(k_2), typeof(scaler_l), typeof(scaler_h))
@@ -1079,35 +887,6 @@ function noise(se::TBLTESourceElement, obs::AbstractAcousticObserver, t_obs, fre
 
     deltastar_s_U = deltastar_s/U
     deltastar_p_U = deltastar_p/U
-
-    # pref2 = 4e-10
-    # TGs = promote_type(deltastar_s, M, se.Δr, Dh, r_er, eltype(freqs), deltastar_s_U, Re_c, St_peak_s, k_1, pref2)
-    # TGp = promote_type(deltastar_p, M, se.Δr, Dh, r_er, eltype(freqs), deltastar_p_U, Re_c, St_peak_p, k1, Δk_1, pref2)
-
-    # G_s = _tble_te_s.(freqs, U, M, Re_c, Dh, r_er, se.Δr, deltastar_s, St_peak_s, St_peak_p, St_peak_alpha, k_1, deep_stall).*pref2
-
-    # G_p = _tble_te_p.(freqs, U, M, Re_c, Dh, r_er, se.Δr, deltastar_p, St_peak_p, k_1, Δk_1, deep_stall).*pref2
-
-    # G_alpha = _tble_te_alpha.(freqs, U, M, Re_c, Dl, Dh, r_er, se.Δr, deltastar_s, St_peak_alpha, k_2, deep_stall).*pref2
-    # G_alpha = (deltastar_s*M^5*Δr*Dh)/(r_er^2) .* _Halpha_not_stalled.(freqs, Re_c, deltastar_s_U, St_peak_alpha, k_2) .* pref2
-
-    # The Brooks and Burley autospectrums appear to be scaled by the usual squared reference pressure (20 μPa)^2, but I'd like things in dimensional units, so multiply through by that.
-    # if deep_stall
-    #     G_s = 10^(0.1*(-100))*ones(TGs, length(freqs))
-    #     G_p = 10^(0.1*(-100))*ones(TGp, length(freqs))
-    #     G_alpha = (deltastar_s*M^5*Δr*Dl) .* _Halpha_stalled.(freqs, Re_c, deltastar_s_U, St_peak_alpha, k_2) .* pref2
-    # else
-    #     G_s = (deltastar_s*M^5*Δr*Dh)/(r_er^2) .* _Hs.(freqs, deltastar_s_U, Re_c, St_peak_s, k_1) .* pref2
-    #     G_p = (deltastar_p*M^5*Δr*Dh)/(r_er^2) .* _Hp.(freqs, deltastar_p_U, Re_c, St_peak_p, k_1, Δk_1) .* pref2
-    #     G_alpha = (deltastar_s*M^5*Δr*Dh)/(r_er^2) .* _Halpha_not_stalled.(freqs, Re_c, deltastar_s_U, St_peak_alpha, k_2) .* pref2
-    # end
-
-    # if deep_stall
-    #     G_s = 10^(0.1*(-100))*ones(eltype(G_s, size(G_s)))
-    #     G_p = 10^(0.1*(-100))*ones(eltype(G_p, size(G_p)))
-    #     G_alpha = (deltastar_s*M^5*Δr*Dl) .* _Halpha_stalled.(freqs, Re_c, deltastar_s_U, St_peak_alpha, k_2) .* pref2
-    # else
-    # end
 
     # The Brooks and Burley autospectrums appear to be scaled by the usual squared reference pressure (20 μPa)^2, but I'd like things in dimensional units, so multiply through by that.
     pref2 = 4e-10

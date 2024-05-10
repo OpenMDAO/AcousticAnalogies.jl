@@ -130,7 +130,7 @@ function CompactSourceElement(rotor::CCBlade.Rotor, section::CCBlade.Section, op
 end
 
 """
-    source_elements_ccblade(rotor::CCBlade.Rotor, sections::Vector{CCBlade.Section}, ops::Vector{CCBlade.OperatingPoint}, outputs::Vector{CCBlade.Outputs}, area_per_chord2::Vector{AbstractFloat}, period, num_src_times, positive_x_rotation=true)
+    source_elements_ccblade(rotor::CCBlade.Rotor, sections::Vector{CCBlade.Section}, ops::Vector{CCBlade.OperatingPoint}, outputs::Vector{CCBlade.Outputs}, area_per_chord2::Vector{AbstractFloat}, period, num_src_times, positive_x_rotation)
 
 Construct and return an array of CompactSourceElement objects from CCBlade structs.
 

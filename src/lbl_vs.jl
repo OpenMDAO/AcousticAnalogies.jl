@@ -190,28 +190,6 @@ function (trans::KinematicTransformation)(se::LBLVSSourceElement{TDirect,TUInduc
     return LBLVSSourceElement{TDirect,TUInduction}(se.c0, se.nu, se.Δr, se.chord, y0dot, y1dot, y1dot_fluid, se.τ, se.Δτ, span_uvec, chord_uvec, se.bl, se.chord_cross_span_to_get_top_uvec)
 end
 
-"""
-Output of the laminar boundary layer-vortex shedding (LBL-VS) calculation: the acoustic pressure autospectrum `G_` centered at time `t` over observer duration `dt` and observer frequencies `cbands`.
-"""
-struct LBLVSOutput{NO,TF,TG<:AbstractVector{TF},TFreqs<:AcousticMetrics.AbstractProportionalBands{NO,:center},TDTime,TTime} <:  AbstractBroadbandOutput{NO,TF}
-    G::TG
-    cbands::TFreqs
-    dt::TDTime
-    t::TTime
-
-    function LBLVSOutput(G::TG, cbands::AcousticMetrics.AbstractProportionalBands{NO,:center}, dt, t) where {NO,TG}
-        ncbands = length(cbands)
-        length(G) == ncbands || throw(ArgumentError("length(G) must match length(cbands)"))
-        dt > zero(dt) || throw(ArgumentError("dt must be positive"))
-        return new{NO,eltype(TG),TG,typeof(cbands),typeof(dt),typeof(t)}(G, cbands, dt, t)
-    end
-end
-
-@inline function Base.getindex(pbs::LBLVSOutput, i::Int)
-    @boundscheck checkbounds(pbs, i)
-    return pbs.G[i]
-end
-
 function _lbl_vs(freq, delta_p_U, St_p_p, g2, g3, scaler)
     # St_prime = freq*deltastar_p/U
     # St_prime_over_St_peak_prime = St_prime/St_p_p
@@ -223,11 +201,6 @@ function _lbl_vs(freq, delta_p_U, St_p_p, g2, g3, scaler)
     # G_lbl_vs = (deltastar_p*M^5*Δr*Dh)/(r_er^2)*H_l
     G_lbl_vs = scaler*H_l
 end
-# function _Hl(freq, deltastar_p_U, St_p_p, g2, g3)
-#     St_prime = freq*deltastar_p_U
-#     St_prime_over_St_peak_prime = St_prime/St_p_p
-#     return 10^(0.1*(G1(St_prime_over_St_peak_prime) + g2 + g3))
-# end
 
 function noise(se::LBLVSSourceElement, obs::AbstractAcousticObserver, t_obs, freqs)
     # Position of the observer:
@@ -289,5 +262,5 @@ function noise(se::LBLVSSourceElement, obs::AbstractAcousticObserver, t_obs, fre
     freqs_obs = AcousticMetrics.center_bands(freqs, doppler)
 
     # All done.
-    return LBLVSOutput(G_lbl_vs, freqs_obs, dt, t_obs)
+    return AcousticMetrics.ProportionalBandSpectrumWithTime(G_lbl_vs, freqs_obs, dt, t_obs)
 end

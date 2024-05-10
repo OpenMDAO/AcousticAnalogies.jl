@@ -389,8 +389,8 @@ with the `F1AAcousticPressure` returned by `combine`:
 using AcousticMetrics
 # Calculate the overall sound pressure level from the acoustic pressure time history.
 oaspl_from_apth = AcousticMetrics.OASPL(apth_total)
-# Calculate the narrowband spectrum.
-nbs = AcousticMetrics.NarrowbandSpectrum(apth_total)
+# Calculate the narrowband spectrum of mean-squared pressure.
+nbs = AcousticMetrics.MSPSpectrumAmplitude(apth_total)
 # Calculate the OASPL from the NBS.
 oaspl_from_nbs = AcousticMetrics.OASPL(nbs)
 (oaspl_from_apth, oaspl_from_nbs)

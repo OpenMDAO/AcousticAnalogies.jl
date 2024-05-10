@@ -559,7 +559,7 @@ deltastar_bpm = bpm_pressure_side[:, 2]
 scatter!(ax1, alpha_deg, deltastar_bpm, color=colors[1], markersize=4, label="pressure side, BPM report")
 
 alpha_deg_jl = range(minimum(alpha_deg), maximum(alpha_deg); length=50)
-deltastar_jl = AcousticAnalogies.disp_thickness_p.(Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()), alpha_deg_jl.*pi/180)
+deltastar_jl = AcousticAnalogies._disp_thickness_p.(Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()), alpha_deg_jl.*pi/180)
 lines!(ax1, alpha_deg_jl, deltastar_jl; color=colors[1], label="pressure side, Julia")
 
 # Interpolate:
@@ -577,7 +577,7 @@ deltastar_bpm = bpm_suction_side[:, 2]
 scatter!(ax1, alpha_deg, deltastar_bpm, markersize=4, color=colors[2], label="suction side, BPM report")
 
 alpha_deg_jl = range(minimum(alpha_deg), maximum(alpha_deg); length=50)
-deltastar_jl = AcousticAnalogies.disp_thickness_s.(Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()), alpha_deg_jl.*pi/180)
+deltastar_jl = AcousticAnalogies._disp_thickness_s.(Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()), alpha_deg_jl.*pi/180)
 lines!(ax1, alpha_deg_jl, deltastar_jl; color=colors[2], label="suction side, Julia")
 
 # Interpolate:
@@ -622,7 +622,7 @@ deltastar_bpm = bpm_pressure_side[:, 2]
 scatter!(ax1, alpha_deg, deltastar_bpm, color=colors[1], markersize=4, label="pressure side, BPM report")
 
 alpha_deg_jl = range(minimum(alpha_deg), maximum(alpha_deg); length=50)
-deltastar_jl = AcousticAnalogies.bl_thickness_p.(Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()), alpha_deg_jl.*pi/180)
+deltastar_jl = AcousticAnalogies._bl_thickness_p.(Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()), alpha_deg_jl.*pi/180)
 lines!(ax1, alpha_deg_jl, deltastar_jl; color=colors[1], label="pressure side, Julia")
 
 # Interpolate:
@@ -667,7 +667,7 @@ deltastar_bpm = bpm_pressure_side[:, 2]
 scatter!(ax1, alpha_deg, deltastar_bpm, color=colors[1], markersize=4, label="pressure side, BPM report")
 
 alpha_deg_jl = range(minimum(alpha_deg), maximum(alpha_deg); length=50)
-deltastar_jl = AcousticAnalogies.disp_thickness_p.(Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()), alpha_deg_jl.*pi/180)
+deltastar_jl = AcousticAnalogies._disp_thickness_p.(Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()), alpha_deg_jl.*pi/180)
 lines!(ax1, alpha_deg_jl, deltastar_jl; color=colors[1], label="pressure side, Julia")
 
 # Interpolate:
@@ -685,7 +685,7 @@ deltastar_bpm = bpm_suction_side[:, 2]
 scatter!(ax1, alpha_deg, deltastar_bpm, markersize=4, color=colors[2], label="suction side, BPM report")
 
 alpha_deg_jl = range(minimum(alpha_deg), maximum(alpha_deg); length=50)
-deltastar_jl = AcousticAnalogies.disp_thickness_s.(Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()), alpha_deg_jl.*pi/180)
+deltastar_jl = AcousticAnalogies._disp_thickness_s.(Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()), alpha_deg_jl.*pi/180)
 lines!(ax1, alpha_deg_jl, deltastar_jl; color=colors[2], label="suction side, Julia")
 
 # Interpolate:
