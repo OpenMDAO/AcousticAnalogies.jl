@@ -226,6 +226,11 @@ function TEBVSSourceElement{TDirect,TUInduction}(c0, nu, r, θ, Δr, chord, h, P
     return TEBVSSourceElement{TDirect,TUInduction}(c0, nu, Δr, chord, h, Psi, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
 end
 
+# Default to using the `BrooksBurleyDirectivity` directivity function, and include induction in the flow speed normal to span (TUInduction == true).
+function TEBVSSourceElement(c0, nu, r, θ, Δr, chord, h, Psi, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
+    return TEBVSSourceElement{BrooksBurleyDirectivity,true}(c0, nu, r, θ, Δr, chord, h, Psi, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
+end
+
 """
     (trans::KinematicTransformation)(se::TEBVSSourceElement)
 

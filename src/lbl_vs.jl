@@ -200,6 +200,7 @@ function _lbl_vs(freq, delta_p_U, St_p_p, g2, g3, scaler)
     H_l = 10^(0.1*(G1(St_prime_over_St_peak_prime) + g2 + g3))
     # G_lbl_vs = (deltastar_p*M^5*Δr*Dh)/(r_er^2)*H_l
     G_lbl_vs = scaler*H_l
+    return G_lbl_vs
 end
 
 function noise(se::LBLVSSourceElement, obs::AbstractAcousticObserver, t_obs, freqs)

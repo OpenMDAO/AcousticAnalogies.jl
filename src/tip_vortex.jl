@@ -87,6 +87,11 @@ end
     chord_cross_span_to_get_top_uvec
 end
 
+# Default to using the `BrooksBurleyDirectivity` directivity function, and include induction in the flow speed normal to span (TUInduction == true).
+function TipVortexSourceElement(c0, Δr, chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, blade_tip, chord_cross_span_to_get_top_uvec)
+    return TipVortexSourceElement{BrooksBurleyDirectivity,true}(c0, Δr, chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, blade_tip, chord_cross_span_to_get_top_uvec)
+end
+
 """
     TipVortexSourceElement(c0, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, blade_tip, twist_about_positive_y)
 
@@ -143,10 +148,9 @@ function TipVortexSourceElement{TDirect,TUInduction}(c0, r, θ, Δr, chord, ϕ, 
 end
 
 # Default to using the `BrooksBurleyDirectivity` directivity function, and include induction in the flow speed normal to span (TUInduction == true).
-function TipVortexSourceElement(c0, Δr, chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, blade_tip, chord_cross_span_to_get_top_uvec)
-    return TipVortexSourceElement{BrooksBurleyDirectivity,true}(c0, Δr, chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, blade_tip, chord_cross_span_to_get_top_uvec)
+function TipVortexSourceElement(c0, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, blade_tip, twist_about_positive_y)
+    return TipVortexSourceElement{BrooksBurleyDirectivity,true}(c0, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, blade_tip, twist_about_positive_y)
 end
-
 """
     (trans::KinematicTransformation)(se::TipVortexSourceElement)
 

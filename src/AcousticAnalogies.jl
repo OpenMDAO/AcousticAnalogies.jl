@@ -20,7 +20,7 @@ include("boundary_layers.jl")
 export AbstractBoundaryLayer, TrippedN0012BoundaryLayer, UntrippedN0012BoundaryLayer
 
 include("core.jl")
-export CompactSourceElement, TBLTESourceElement
+export CompactSourceElement
 export AbstractAcousticObserver, StationaryAcousticObserver, ConstVelocityAcousticObserver
 export F1AOutput, F1APressureTimeHistory
 export adv_time
@@ -29,9 +29,13 @@ export common_obs_time
 export combine!, combine
 
 include("tbl_te.jl")
+export TBLTESourceElement
 include("lbl_vs.jl")
+export LBLVSSourceElement
 include("tip_vortex.jl")
+export TipVortexSourceElement
 include("teb_vs.jl")
+export TEBVSSourceElement
 
 include("ccblade_helpers.jl")
 export source_elements_ccblade, tblte_source_elements_ccblade
