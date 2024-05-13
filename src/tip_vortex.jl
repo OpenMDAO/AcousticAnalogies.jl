@@ -5,18 +5,36 @@ struct BPMTipAlphaCorrection <: AbstractTipAlphaCorrection end
 
 abstract type AbstractBladeTip{TipAlphaCorrection} end
 
-struct RoundedTip{TipAlphaCorrection} <: AbstractBladeTip{TipAlphaCorrection} end
-RoundedTip() = RoundedTip{NoTipAlphaCorrection}()
+alpha_zerolift(blade_tip::AbstractBladeTip) = blade_tip.alpha0lift
 
-struct FlatTip{TipAlphaCorrection} <: AbstractBladeTip{TipAlphaCorrection} end
-FlatTip() = FlatTip{NoTipAlphaCorrection}()
+@concrete struct RoundedTip{TipAlphaCorrection} <: AbstractBladeTip{TipAlphaCorrection} 
+    alpha0lift
+end
+RoundedTip(alpha0lift=0.0) = RoundedTip{NoTipAlphaCorrection}(alpha0lift)
+RoundedTip{TipAlphaCorrection}() where {TipAlphaCorrection} = RoundedTip{TipAlphaCorrection}(0.0)
+# RoundedTip() = RoundedTip{NoTipAlphaCorrection}(0.0)
 
-function tip_vortex_alpha_correction(::AbstractBladeTip{NoTipAlphaCorrection}, alphatip)
+@concrete struct FlatTip{TipAlphaCorrection} <: AbstractBladeTip{TipAlphaCorrection}
+    alpha0lift
+end
+FlatTip(alpha0lift=0.0) = FlatTip{NoTipAlphaCorrection}(alpha0lift)
+FlatTip{TipAlphaCorrection}() where {TipAlphaCorrection} = FlatTip{TipAlphaCorrection}(0.0)
+# FlatTip() = FlatTip{NoTipAlphaCorrection}(0.0)
+
+function tip_vortex_alpha_correction(blade_tip::AbstractBladeTip{NoTipAlphaCorrection}, alphatip)
     return alphatip
 end
 
-function tip_vortex_alpha_correction(::AbstractBladeTip{BPMTipAlphaCorrection}, alphatip)
-    return 0.71*alphatip
+function tip_vortex_alpha_correction(blade_tip::AbstractBladeTip{BPMTipAlphaCorrection}, alphatip)
+    # Referencing the tip vortex angle of attack correction to the zero-lift angle of attack ensures that the correction will never cause the angle of attack to drop below the zero-lift value, assuming the correction factor (0.71 here) is between 0 and 1.
+    return 0.71*(alphatip - alpha_zerolift(blade_tip)) + alpha_zerolift(blade_tip)
+    # return 0.71*alphatip + (1 - 0.71)*alpha_zerolift(blade_tip)
+end
+
+function tip_vortex_size_c(::RoundedTip, alphatip)
+    # Equation 63 in the BPM report.
+    alphatip_deg = alphatip*180/pi
+    return 0.008*alphatip_deg
 end
 
 function tip_vortex_size_c(::RoundedTip, alphatip)
@@ -151,6 +169,7 @@ end
 function TipVortexSourceElement(c0, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, blade_tip, twist_about_positive_y)
     return TipVortexSourceElement{BrooksBurleyDirectivity,true}(c0, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, blade_tip, twist_about_positive_y)
 end
+
 """
     (trans::KinematicTransformation)(se::TipVortexSourceElement)
 

@@ -1132,6 +1132,16 @@ end
 @testset "BPM Report tests" begin
 
     function calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl; do_lblvs=false, do_tip_vortex=false, blade_tip=nothing, do_tebvs=false, h=nothing, Psi=nothing)
+        if do_tebvs
+            if do_tip_vortex
+                combined_calc = :with_tip
+            else
+                combined_calc = :no_tip
+            end
+        else
+            combined_calc = :none
+        end
+
         M_c = 0.8*M
         # How we're going to set this up:
         #
@@ -1177,6 +1187,13 @@ end
         end
         if do_tebvs
             se_tebvs = AcousticAnalogies.TEBVSSourceElement{AcousticAnalogies.BPMDirectivity,false}(c0, nu, r, θ, L, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
+        end
+
+
+        if combined_calc == :no_tip
+            se_combined = AcousticAnalogies.CombinedNoTipBroadbandSourceElement{AcousticAnalogies.BPMDirectivity,false}(c0, nu, r, θ, L, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
+        elseif combined_calc == :with_tip
+            se_combined = AcousticAnalogies.CombinedWithTipBroadbandSourceElement{AcousticAnalogies.BPMDirectivity,false}(c0, nu, r, θ, L, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, blade_tip, twist_about_positive_y)
         end
 
         # Let's check that things are what we expect.
@@ -1225,6 +1242,18 @@ end
             @test isapprox(AcousticAnalogies.angle_of_attack(se_tebvs), alphastar; atol=1e-12)
         end
 
+        if combined_calc != :none
+            # Let's check that things are what we expect.
+            @test se_combined.y0dot ≈ [0.0, 0.0, 0.0]
+            @test se_combined.y1dot ≈ [0.0, 0.0, 0.0]
+            @test se_combined.y1dot_fluid ≈ [M_c*c0, 0.0, 0.0]
+            # @test se_combined.y1dot_fluid ≈ [M_c*c0*cos(alphastar), 0.0, M_c*c0*sin(alphastar)]
+            @test se_combined.span_uvec ≈ [0.0, 1.0, 0.0]
+            @test se_combined.chord_uvec ≈ [cos(alphastar), 0.0, -sin(alphastar)]
+            # @test se_combined.chord_uvec ≈ [1.0, 0.0, 0.0]
+            @test isapprox(AcousticAnalogies.angle_of_attack(se_combined), alphastar; atol=1e-12)
+        end
+
         # Now we want to transform the source element into the global frame, which just means we make it move with speed `U` in the negative x direction.
         trans = KinematicCoordinateTransformations.ConstantVelocityTransformation(τ, [0.0, 0.0, 0.0], [-U, 0.0, 0.0])
         # No, that's not right, I want it to move in the direction of the velocity, which isn't aligned with the x axis any more.
@@ -1238,6 +1267,9 @@ end
         end
         if do_tebvs
             se_tebvs_global = trans(se_tebvs)
+        end
+        if combined_calc != :none
+            se_combined_global = trans(se_combined)
         end
 
         # Will that change the angle of attack?
@@ -1290,6 +1322,18 @@ end
             @test isapprox(AcousticAnalogies.angle_of_attack(se_tebvs_global), alphastar; atol=1e-12)
         end
 
+        if combined_calc != :none
+            @test se_combined_global.y0dot ≈ [0.0, 0.0, 0.0]
+            @test se_combined_global.y1dot ≈ [-U, 0.0, 0.0]
+            # @test se_combined_global.y1dot ≈ [-U*cos(alphastar), 0.0, -U*sin(alphastar)]
+            @test se_combined_global.y1dot_fluid ≈ [M_c*c0 - U, 0.0, 0.0]
+            # @test se_combined_global.y1dot_fluid ≈ [(M_c*c0 - U)*cos(alphastar), 0.0, (M_c*c0 - U)*sin(alphastar)]
+            @test se_combined_global.span_uvec ≈ [0.0, 1.0, 0.0]
+            @test se_combined_global.chord_uvec ≈ [cos(alphastar), 0.0, -sin(alphastar)]
+            # @test se_combined_global.chord_uvec ≈ [1.0, 0.0, 0.0]
+            @test isapprox(AcousticAnalogies.angle_of_attack(se_combined_global), alphastar; atol=1e-12)
+        end
+
         # If the angle of attack is negative, then the pressure and suction sides of the airfoil section switch, and so the coordinate system does too.
         if (alphastar - AcousticAnalogies.alpha_zerolift(bl)) < 0
             Φ_e *= -1
@@ -1323,6 +1367,9 @@ end
         if do_tebvs
             @test AcousticAnalogies.adv_time(se_tebvs_global, obs) ≈ t_final
         end
+        if combined_calc != :none
+            @test AcousticAnalogies.adv_time(se_combined_global, obs) ≈ t_final
+        end
 
         # So now I should be able to do a noise prediction.
         freqs = AcousticMetrics.ExactThirdOctaveCenterBands(0.2, 20e3)
@@ -1345,6 +1392,9 @@ end
             tebvs_out = AcousticAnalogies.noise(se_tebvs_global, obs, freqs)
             SPL_teb = 10.0 .* log10.(tebvs_out./((20e-6)^2))
         end
+        if combined_calc != :none
+            combined_out = AcousticAnalogies.noise(se_combined_global, obs, freqs)
+        end
 
         @test AcousticAnalogies.doppler(tblte_out) ≈ 1
         if do_lblvs
@@ -1355,6 +1405,19 @@ end
         end
         if do_tebvs
             @test AcousticAnalogies.doppler(tebvs_out) ≈ 1
+        end
+        if combined_calc != :none
+            @test AcousticAnalogies.doppler(combined_out) ≈ 1
+        end
+
+        if combined_calc in (:no_tip, :with_tip)
+            @test all(pbs_suction(combined_out) .≈ tblte_s_out)
+            @test all(pbs_pressure(combined_out) .≈ tblte_p_out)
+            @test all(pbs_alpha(combined_out) .≈ tblte_alpha_out)
+            @test all(pbs_teb(combined_out) .≈ tebvs_out)
+        end
+        if combined_calc in (:with_tip,)
+            @test all(pbs_tip(combined_out) .≈ tip_out)
         end
 
         res = (freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl)

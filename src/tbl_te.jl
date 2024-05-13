@@ -754,31 +754,32 @@ struct TBLTEOutput{NO,TF,TG<:AbstractVector{TF},TFreqs<:AcousticMetrics.Abstract
         return new{NO,eltype(TG),TG,typeof(cbands),typeof(dt),typeof(t)}(G_s, G_p, G_alpha, cbands, dt, t)
     end
 end
+
 @inline function Base.getindex(pbs::TBLTEOutput, i::Int)
     @boundscheck checkbounds(pbs, i)
     return @inbounds pbs.G_s[i] + pbs.G_p[i] + pbs.G_alpha[i]
 end
 
-function pbs_suction(pbs::TBLTEOutput)
-    t = AcousticMetrics.observer_time(pbs)
-    dt = AcousticMetrics.timestep(pbs)
-    cbands = AcousticMetrics.center_bands(pbs)
-    return AcousticMetrics.ProportionalBandSpectrumWithTime(pbs.G_s, cbands, dt, t)
-end
+# function pbs_suction(pbs::TBLTEOutput)
+#     t = AcousticMetrics.observer_time(pbs)
+#     dt = AcousticMetrics.timestep(pbs)
+#     cbands = AcousticMetrics.center_bands(pbs)
+#     return AcousticMetrics.ProportionalBandSpectrumWithTime(pbs.G_s, cbands, dt, t)
+# end
 
-function pbs_pressure(pbs::TBLTEOutput)
-    t = AcousticMetrics.observer_time(pbs)
-    dt = AcousticMetrics.timestep(pbs)
-    cbands = AcousticMetrics.center_bands(pbs)
-    return AcousticMetrics.ProportionalBandSpectrumWithTime(pbs.G_p, cbands, dt, t)
-end
+# function pbs_pressure(pbs::TBLTEOutput)
+#     t = AcousticMetrics.observer_time(pbs)
+#     dt = AcousticMetrics.timestep(pbs)
+#     cbands = AcousticMetrics.center_bands(pbs)
+#     return AcousticMetrics.ProportionalBandSpectrumWithTime(pbs.G_p, cbands, dt, t)
+# end
 
-function pbs_alpha(pbs::TBLTEOutput)
-    t = AcousticMetrics.observer_time(pbs)
-    dt = AcousticMetrics.timestep(pbs)
-    cbands = AcousticMetrics.center_bands(pbs)
-    return AcousticMetrics.ProportionalBandSpectrumWithTime(pbs.G_alpha, cbands, dt, t)
-end
+# function pbs_alpha(pbs::TBLTEOutput)
+#     t = AcousticMetrics.observer_time(pbs)
+#     dt = AcousticMetrics.timestep(pbs)
+#     cbands = AcousticMetrics.center_bands(pbs)
+#     return AcousticMetrics.ProportionalBandSpectrumWithTime(pbs.G_alpha, cbands, dt, t)
+# end
 
 function _tble_te_s(freq, deltastar_s_U, Re_c, St_peak_s, k_1, scaler, deep_stall)
     St_s = freq*deltastar_s_U

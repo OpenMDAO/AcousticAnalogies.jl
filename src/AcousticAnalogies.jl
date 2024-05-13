@@ -36,6 +36,8 @@ include("tip_vortex.jl")
 export TipVortexSourceElement
 include("teb_vs.jl")
 export TEBVSSourceElement
+include("combined_broadband.jl")
+export pbs_suction, pbs_pressure, pbs_alpha, pbs_teb, pbs_tip
 
 include("ccblade_helpers.jl")
 export source_elements_ccblade, tblte_source_elements_ccblade, lblvs_source_elements_ccblade, tebvs_source_elements_ccblade, tip_vortex_source_elements_ccblade
