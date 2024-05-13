@@ -165,12 +165,12 @@ end
 end
 
 # Default to using the `BrooksBurleyDirectivity` directivity function, and include induction in the flow speed normal to span (TUInduction == true).
-function TEBVSSourceElement(c0, nu, Δr, h, Psi, chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
+function TEBVSSourceElement(c0, nu, Δr, chord, h, Psi, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
     return TEBVSSourceElement{BrooksBurleyDirectivity,true}(c0, nu, Δr, chord, h, Psi, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
 end
 
 """
-    TEBVSSourceElement(c0, nu, r, θ, Δr, chord, h, Psi, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
+    TEBVSSourceElement(c0, nu, r, θ, Δr, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
 
 Construct a source element for predicting trailing edge bluntness-vortex shedding (TEBVS) noise using the BPM/Brooks and Burley method, using position and velocity data expressed in a cylindrical coordinate system.
 
@@ -197,9 +197,9 @@ This can be done easily with the transformations provided by the `KinematicCoord
 - θ: angular offest of the element in the blade-fixed coordinate system (rad)
 - Δr: length of the element (m)
 - chord: chord length of blade element (m)
+- ϕ: twist of blade element (rad)
 - h: trailing edge thickness (m)
 - Psi: solid angle between the blade surfaces immediately upstream of the trailing edge (rad)
-- ϕ: twist of blade element (rad)
 - vn: normal velocity of fluid (m/s)
 - vr: radial velocity of fluid (m/s)
 - vc: circumferential velocity of the fluid (m/s)
@@ -208,7 +208,7 @@ This can be done easily with the transformations provided by the `KinematicCoord
 - bl: Boundary layer struct, i.e. an AbstractBoundaryLayer.
 - twist_about_positive_y: if `true`, apply twist ϕ about positive y axis, negative y axis otherwise
 """
-function TEBVSSourceElement{TDirect,TUInduction}(c0, nu, r, θ, Δr, chord, h, Psi, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y) where {TDirect,TUInduction}
+function TEBVSSourceElement{TDirect,TUInduction}(c0, nu, r, θ, Δr, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y) where {TDirect,TUInduction}
     sθ, cθ = sincos(θ)
     sϕ, cϕ = sincos(ϕ)
     y0dot = @SVector [0, r*cθ, r*sθ]
@@ -227,8 +227,8 @@ function TEBVSSourceElement{TDirect,TUInduction}(c0, nu, r, θ, Δr, chord, h, P
 end
 
 # Default to using the `BrooksBurleyDirectivity` directivity function, and include induction in the flow speed normal to span (TUInduction == true).
-function TEBVSSourceElement(c0, nu, r, θ, Δr, chord, h, Psi, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
-    return TEBVSSourceElement{BrooksBurleyDirectivity,true}(c0, nu, r, θ, Δr, chord, h, Psi, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
+function TEBVSSourceElement(c0, nu, r, θ, Δr, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
+    return TEBVSSourceElement{BrooksBurleyDirectivity,true}(c0, nu, r, θ, Δr, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
 end
 
 """

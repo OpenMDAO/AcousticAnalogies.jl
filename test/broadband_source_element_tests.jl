@@ -11,6 +11,10 @@ using JLD2
 using Test
 using LinearAlgebra: norm, dot, cross
 
+include("gen_test_data/gen_ccblade_data/constants.jl")
+using .CCBladeTestCaseConstants
+ccbc = CCBladeTestCaseConstants
+
 @testset "TBLTESourceElement twist and rotation tests" begin
     # So, the way this should work: first do the twist, then do the theta rotation.
     # The twist could be either about the positive y axis or negative y axis.
@@ -122,6 +126,97 @@ end
                     se_no_twist = se |> trans_phi
                     @test se_no_twist.chord_uvec ≈ chord_uvec_check
                 end
+            end
+        end
+    end
+end
+
+@testset "CCBlade TBLTESourceElement complete test" begin
+    for positive_x_rotation in [true, false]
+        omega = 2200*(2*pi/60)
+
+        # Create the CCBlade objects.
+        rotor = Rotor(ccbc.Rhub, ccbc.Rtip, ccbc.num_blades; turbine=false)
+        sections = Section.(ccbc.radii, ccbc.chord, ccbc.theta, nothing)
+        ops = simple_op.(ccbc.v, omega, ccbc.radii, ccbc.rho; asound=ccbc.c0)
+        # What actually matters in the output structs are just W and phi.
+        phi = range(45.0, 10.0; length=length(sections)) .* (pi/180)
+        W = range(10.0, 11.0; length=length(sections))
+        outs = Outputs.(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, phi, 0.0, W, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+
+        # Set the source time stuff.
+        num_blade_passes = 3
+        steps_per_blade_pass = 8
+        num_src_times = num_blade_passes*steps_per_blade_pass
+        bpp = 2*pi/omega/ccbc.num_blades
+        src_time_range = num_blade_passes*bpp
+
+        # Finally get all the source elements.
+        bls = [AcousticAnalogies.TrippedN0012BoundaryLayer()]
+        ses_helper = tblte_source_elements_ccblade(rotor, sections, ops, outs, bls, src_time_range, num_src_times, positive_x_rotation)
+
+        # Now need to get the source elements the "normal" way.
+        # First get the transformation objects.
+        rot_axis = @SVector [1.0, 0.0, 0.0]
+        blade_axis = @SVector [0.0, 1.0, 0.0]
+        y0_hub = @SVector [0.0, 0.0, 0.0]  # m
+        v0_hub = ccbc.v.*rot_axis
+        t0 = 0.0
+        if positive_x_rotation
+            rot_trans = SteadyRotXTransformation(t0, omega, 0.0)
+        else
+            rot_trans = SteadyRotXTransformation(t0, -omega, 0.0)
+        end
+        const_vel_trans = ConstantVelocityTransformation(t0, y0_hub, v0_hub)
+
+        # Need the source times.
+        dt = src_time_range/num_src_times
+        src_times = t0 .+ (0:num_src_times-1).*dt
+
+        # This is just an array of the angular offsets of each blade.
+        θs = 2*pi/ccbc.num_blades.*(0:(ccbc.num_blades-1))
+
+        # Radial spacing.
+        dradii = get_dradii(ccbc.radii, ccbc.Rhub, ccbc.Rtip)
+
+        # Need the kinematic viscosity.
+        nus = getproperty.(ops, :mu) ./ getproperty.(ops, :rho)
+
+        # Also need the velocity in each direction.
+        if positive_x_rotation
+            vn = @. -W*sin(phi)
+            vr = zeros(eltype(vn), length(vn))
+            vc = @. -W*cos(phi)
+        else
+            vn = @. -W*sin(phi)
+            vr = zeros(eltype(vn), length(vn))
+            vc = @. W*cos(phi)
+        end
+
+        # Reshape stuff for broadcasting.
+        radii_rs = reshape(ccbc.radii, 1, :, 1)
+        dradii_rs = reshape(dradii, 1, :, 1)
+        phi_rs = reshape(phi, 1, :, 1)
+        W_rs = reshape(W, 1, :, 1)
+        src_times_rs = reshape(src_times, :, 1, 1)  # This isn't really necessary.
+        θs_rs = reshape(θs, 1, 1, :)
+        nus_rs = reshape(nus, 1, :, 1)
+        twist_rs = reshape(getproperty.(sections, :theta), 1, :, 1)
+        chord_rs = reshape(getproperty.(sections, :chord), 1, :, 1)
+        vn_rs = reshape(vn, 1, :, 1)
+        vr_rs = reshape(vr, 1, :, 1)
+        vc_rs = reshape(vc, 1, :, 1)
+
+        # Get all the transformations.
+        trans = compose.(src_times, Ref(const_vel_trans), Ref(rot_trans))
+
+        # Transform the source elements.
+        ses = TBLTESourceElement.(ccbc.c0, nus_rs, radii_rs, θs_rs, dradii_rs, chord_rs, twist_rs, vn_rs, vr_rs, vc_rs, src_times_rs, dt, bls, positive_x_rotation) .|> trans
+
+        # Now check that we got the same thing.
+        for field in fieldnames(TBLTESourceElement)
+            if !(field in (:bl,))
+                @test all(getproperty.(ses_helper, field) .≈ getproperty.(ses, field))
             end
         end
     end
@@ -243,6 +338,97 @@ end
     end
 end
 
+@testset "CCBlade LBLVSSourceElement complete test" begin
+    for positive_x_rotation in [true, false]
+        omega = 2200*(2*pi/60)
+
+        # Create the CCBlade objects.
+        rotor = Rotor(ccbc.Rhub, ccbc.Rtip, ccbc.num_blades; turbine=false)
+        sections = Section.(ccbc.radii, ccbc.chord, ccbc.theta, nothing)
+        ops = simple_op.(ccbc.v, omega, ccbc.radii, ccbc.rho; asound=ccbc.c0)
+        # What actually matters in the output structs are just W and phi.
+        phi = range(45.0, 10.0; length=length(sections)) .* (pi/180)
+        W = range(10.0, 11.0; length=length(sections))
+        outs = Outputs.(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, phi, 0.0, W, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+
+        # Set the source time stuff.
+        num_blade_passes = 3
+        steps_per_blade_pass = 8
+        num_src_times = num_blade_passes*steps_per_blade_pass
+        bpp = 2*pi/omega/ccbc.num_blades
+        src_time_range = num_blade_passes*bpp
+
+        # Finally get all the source elements.
+        bls = [AcousticAnalogies.TrippedN0012BoundaryLayer()]
+        ses_helper = lblvs_source_elements_ccblade(rotor, sections, ops, outs, bls, src_time_range, num_src_times, positive_x_rotation)
+
+        # Now need to get the source elements the "normal" way.
+        # First get the transformation objects.
+        rot_axis = @SVector [1.0, 0.0, 0.0]
+        blade_axis = @SVector [0.0, 1.0, 0.0]
+        y0_hub = @SVector [0.0, 0.0, 0.0]  # m
+        v0_hub = ccbc.v.*rot_axis
+        t0 = 0.0
+        if positive_x_rotation
+            rot_trans = SteadyRotXTransformation(t0, omega, 0.0)
+        else
+            rot_trans = SteadyRotXTransformation(t0, -omega, 0.0)
+        end
+        const_vel_trans = ConstantVelocityTransformation(t0, y0_hub, v0_hub)
+
+        # Need the source times.
+        dt = src_time_range/num_src_times
+        src_times = t0 .+ (0:num_src_times-1).*dt
+
+        # This is just an array of the angular offsets of each blade.
+        θs = 2*pi/ccbc.num_blades.*(0:(ccbc.num_blades-1))
+
+        # Radial spacing.
+        dradii = get_dradii(ccbc.radii, ccbc.Rhub, ccbc.Rtip)
+
+        # Need the kinematic viscosity.
+        nus = getproperty.(ops, :mu) ./ getproperty.(ops, :rho)
+
+        # Also need the velocity in each direction.
+        if positive_x_rotation
+            vn = @. -W*sin(phi)
+            vr = zeros(eltype(vn), length(vn))
+            vc = @. -W*cos(phi)
+        else
+            vn = @. -W*sin(phi)
+            vr = zeros(eltype(vn), length(vn))
+            vc = @. W*cos(phi)
+        end
+
+        # Reshape stuff for broadcasting.
+        radii_rs = reshape(ccbc.radii, 1, :, 1)
+        dradii_rs = reshape(dradii, 1, :, 1)
+        phi_rs = reshape(phi, 1, :, 1)
+        W_rs = reshape(W, 1, :, 1)
+        src_times_rs = reshape(src_times, :, 1, 1)  # This isn't really necessary.
+        θs_rs = reshape(θs, 1, 1, :)
+        nus_rs = reshape(nus, 1, :, 1)
+        twist_rs = reshape(getproperty.(sections, :theta), 1, :, 1)
+        chord_rs = reshape(getproperty.(sections, :chord), 1, :, 1)
+        vn_rs = reshape(vn, 1, :, 1)
+        vr_rs = reshape(vr, 1, :, 1)
+        vc_rs = reshape(vc, 1, :, 1)
+
+        # Get all the transformations.
+        trans = compose.(src_times, Ref(const_vel_trans), Ref(rot_trans))
+
+        # Transform the source elements.
+        ses = LBLVSSourceElement.(ccbc.c0, nus_rs, radii_rs, θs_rs, dradii_rs, chord_rs, twist_rs, vn_rs, vr_rs, vc_rs, src_times_rs, dt, bls, positive_x_rotation) .|> trans
+
+        # Now check that we got the same thing.
+        for field in fieldnames(LBLVSSourceElement)
+            if !(field in (:bl,))
+                @test all(getproperty.(ses_helper, field) .≈ getproperty.(ses, field))
+            end
+        end
+    end
+end
+
 @testset "TEBVSSourceElement twist and rotation tests" begin
     # So, the way this should work: first do the twist, then do the theta rotation.
     # The twist could be either about the positive y axis or negative y axis.
@@ -261,7 +447,7 @@ end
     Psi = 0.2
     bl = 2.0 # should be a boundary layer struct, but doesn't matter for these tests.
     for twist_about_positive_y in [true, false]
-        se_0twist0theta = TEBVSSourceElement(c0, nu, r, 0.0, Δr, chord, h, Psi, 0.0, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
+        se_0twist0theta = TEBVSSourceElement(c0, nu, r, 0.0, Δr, chord, 0.0, h, Psi, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
         for θ in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
             trans_theta = SteadyRotXTransformation(τ, 0.0, -θ)
 
@@ -272,7 +458,7 @@ end
                 else
                     alpha_check = ϕ - atan(-vn, vc)
                 end
-                se = TEBVSSourceElement(c0, nu, r, θ, Δr, chord, h, Psi, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y) |> trans_theta
+                se = TEBVSSourceElement(c0, nu, r, θ, Δr, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y) |> trans_theta
                 # Adjust the angles of attack to always be between -pi and pi.
                 alpha_check = rem2pi(alpha_check+pi, RoundNearest) - pi
                 alpha = rem2pi(AcousticAnalogies.angle_of_attack(se)+pi, RoundNearest) - pi
@@ -363,6 +549,101 @@ end
     end
 end
 
+@testset "CCBlade TEBVSSourceElement complete test" begin
+    for positive_x_rotation in [true, false]
+        omega = 2200*(2*pi/60)
+
+        # Create the CCBlade objects.
+        rotor = Rotor(ccbc.Rhub, ccbc.Rtip, ccbc.num_blades; turbine=false)
+        sections = Section.(ccbc.radii, ccbc.chord, ccbc.theta, nothing)
+        ops = simple_op.(ccbc.v, omega, ccbc.radii, ccbc.rho; asound=ccbc.c0)
+        # What actually matters in the output structs are just W and phi.
+        phi = range(45.0, 10.0; length=length(sections)) .* (pi/180)
+        W = range(10.0, 11.0; length=length(sections))
+        outs = Outputs.(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, phi, 0.0, W, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+
+        # Set the source time stuff.
+        num_blade_passes = 3
+        steps_per_blade_pass = 8
+        num_src_times = num_blade_passes*steps_per_blade_pass
+        bpp = 2*pi/omega/ccbc.num_blades
+        src_time_range = num_blade_passes*bpp
+
+        # Finally get all the source elements.
+        bls = [AcousticAnalogies.TrippedN0012BoundaryLayer()]
+        hs = range(0.1, 0.2; length=length(sections))
+        Psis = range(0.2, 0.3; length=length(sections))
+        ses_helper = tebvs_source_elements_ccblade(rotor, sections, ops, outs, hs, Psis, bls, src_time_range, num_src_times, positive_x_rotation)
+
+        # Now need to get the source elements the "normal" way.
+        # First get the transformation objects.
+        rot_axis = @SVector [1.0, 0.0, 0.0]
+        blade_axis = @SVector [0.0, 1.0, 0.0]
+        y0_hub = @SVector [0.0, 0.0, 0.0]  # m
+        v0_hub = ccbc.v.*rot_axis
+        t0 = 0.0
+        if positive_x_rotation
+            rot_trans = SteadyRotXTransformation(t0, omega, 0.0)
+        else
+            rot_trans = SteadyRotXTransformation(t0, -omega, 0.0)
+        end
+        const_vel_trans = ConstantVelocityTransformation(t0, y0_hub, v0_hub)
+
+        # Need the source times.
+        dt = src_time_range/num_src_times
+        src_times = t0 .+ (0:num_src_times-1).*dt
+
+        # This is just an array of the angular offsets of each blade.
+        θs = 2*pi/ccbc.num_blades.*(0:(ccbc.num_blades-1))
+
+        # Radial spacing.
+        dradii = get_dradii(ccbc.radii, ccbc.Rhub, ccbc.Rtip)
+
+        # Need the kinematic viscosity.
+        nus = getproperty.(ops, :mu) ./ getproperty.(ops, :rho)
+
+        # Also need the velocity in each direction.
+        if positive_x_rotation
+            vn = @. -W*sin(phi)
+            vr = zeros(eltype(vn), length(vn))
+            vc = @. -W*cos(phi)
+        else
+            vn = @. -W*sin(phi)
+            vr = zeros(eltype(vn), length(vn))
+            vc = @. W*cos(phi)
+        end
+
+        # Reshape stuff for broadcasting.
+        radii_rs = reshape(ccbc.radii, 1, :, 1)
+        dradii_rs = reshape(dradii, 1, :, 1)
+        phi_rs = reshape(phi, 1, :, 1)
+        W_rs = reshape(W, 1, :, 1)
+        src_times_rs = reshape(src_times, :, 1, 1)  # This isn't really necessary.
+        θs_rs = reshape(θs, 1, 1, :)
+        nus_rs = reshape(nus, 1, :, 1)
+        twist_rs = reshape(getproperty.(sections, :theta), 1, :, 1)
+        chord_rs = reshape(getproperty.(sections, :chord), 1, :, 1)
+        vn_rs = reshape(vn, 1, :, 1)
+        vr_rs = reshape(vr, 1, :, 1)
+        vc_rs = reshape(vc, 1, :, 1)
+        h_rs = reshape(hs, 1, :, 1)
+        Psi_rs = reshape(Psis, 1, :, 1)
+
+        # Get all the transformations.
+        trans = compose.(src_times, Ref(const_vel_trans), Ref(rot_trans))
+
+        # Transform the source elements.
+        ses = TEBVSSourceElement.(ccbc.c0, nus_rs, radii_rs, θs_rs, dradii_rs, chord_rs, twist_rs, h_rs, Psi_rs, vn_rs, vr_rs, vc_rs, src_times_rs, dt, bls, positive_x_rotation) .|> trans
+
+        # Now check that we got the same thing.
+        for field in fieldnames(TEBVSSourceElement)
+            if !(field in (:bl,))
+                @test all(getproperty.(ses_helper, field) .≈ getproperty.(ses, field))
+            end
+        end
+    end
+end
+
 @testset "TipVortexSourceElement twist and rotation tests" begin
     # So, the way this should work: first do the twist, then do the theta rotation.
     # The twist could be either about the positive y axis or negative y axis.
@@ -377,8 +658,6 @@ end
     vc = 4.0
     τ = 0.1
     Δτ = 0.02
-    h = 0.1
-    Psi = 0.2
     bl = 2.0 # should be a boundary layer struct, but doesn't matter for these tests.
     blade_tip = 3.0 # should be a blade tip struct, but doesn't matter for these tests.
     for twist_about_positive_y in [true, false]
@@ -417,6 +696,148 @@ end
                 end
                 se_no_twist = se |> trans_phi
                 @test se_no_twist.chord_uvec ≈ chord_uvec_check
+            end
+        end
+    end
+end
+
+@testset "TipVortexSourceElement twist and rotation tests, CCBlade" begin
+    # Create the CCBlade objects.
+    τ = 0.1
+    Δτ = 0.02
+    bl = AcousticAnalogies.UntrippedN0012BoundaryLayer()
+    blade_tip = AcousticAnalogies.RoundedTip()
+    ccblade_fname = joinpath(@__DIR__, "gen_test_data", "gen_ccblade_data", "ccblade_omega11.jld2")
+    out, section_loaded, Δr, op, rotor0precone = nothing, nothing, nothing, nothing, nothing
+    jldopen(ccblade_fname, "r") do f
+        out = f["outs"][1]
+        section_loaded = f["sections"][1]
+        Δr = f["sections"][2].r - f["sections"][1].r
+        op = f["ops"][1]
+        rotor0precone = f["rotor"]
+        @test rotor0precone.precone ≈ 0.0
+    end
+    for positive_x_rotation in [true, false]
+        for twist in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
+            section = CCBlade.Section(section_loaded.r, section_loaded.chord, twist, section_loaded.af)
+            se_0theta0precone = TipVortexSourceElement(rotor0precone, section, op, out, 0.0, Δr, τ, Δτ, bl, blade_tip, positive_x_rotation)
+            for precone in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
+                rotor = CCBlade.Rotor(rotor0precone.Rhub, rotor0precone.Rtip, rotor0precone.B; turbine=rotor0precone.turbine, precone=precone)
+                # This is tricky: in my "normal" coordinate system, the blade is rotating around the x axis, moving axially in the positive x direction, and is initially aligned with the y axis.
+                # That means that the precone should be a rotation around the negative z axis.
+                # And so to undo it, we want a positive rotation around the positive z axis.
+                trans_precone = SteadyRotZTransformation(τ, 0.0, precone)
+                for θ in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
+                    trans_theta = SteadyRotXTransformation(τ, 0.0, -θ)
+                    # Create a transformation that reverses the theta and precone rotations.
+                    # The precone happens first, then theta.
+                    # So to reverse it we need to do theta, then precone.
+                    trans = KinematicCoordinateTransformations.compose(τ, trans_precone, trans_theta)
+                    # Create a source element with the theta and precone rotations, then undo it.
+                    se = TipVortexSourceElement(rotor, section, op, out, θ, Δr, τ, Δτ, bl, blade_tip, positive_x_rotation) |> trans
+                    # Check that we got the same thing:
+                    for field in fieldnames(TipVortexSourceElement)
+                        # The twist changes the unit vector in the chord direction, but nothing else, so ignore that for now.
+                        if !(field in (:chord_uvec, :bl, :blade_tip))
+                            @test getproperty(se, field) ≈ getproperty(se_0theta0precone, field)
+                        end
+                    end
+
+                    if positive_x_rotation
+                        # If we're doing a positive-x rotation, we're applying the twist about the positive y axis.
+                        # If we're applying the twist about the positive y axis, then we need to do a negative rotation about the y axis to undo it.
+                        trans_phi = SteadyRotYTransformation(τ, 0.0, -twist)
+                        chord_uvec_check = @SVector [0.0, 0.0, -1.0]
+                    else
+                        # If we're doing a negative-x rotation, we're applying the twist about the negative y axis.
+                        # If we're applying the twist about the negative y axis, then we need to do a positive rotation about the y axis to undo it.
+                        trans_phi = SteadyRotYTransformation(τ, 0.0, twist)
+                        chord_uvec_check = @SVector [0.0, 0.0, 1.0]
+                    end
+                    se_no_twist = se |> trans_phi
+                    @test se_no_twist.chord_uvec ≈ chord_uvec_check
+                end
+            end
+        end
+    end
+end
+
+@testset "CCBlade TipVortexSourceElement complete test" begin
+    for positive_x_rotation in [true, false]
+        omega = 2200*(2*pi/60)
+
+        # Create the CCBlade objects.
+        rotor = Rotor(ccbc.Rhub, ccbc.Rtip, ccbc.num_blades; turbine=false)
+        sections = Section.(ccbc.radii, ccbc.chord, ccbc.theta, nothing)
+        ops = simple_op.(ccbc.v, omega, ccbc.radii, ccbc.rho; asound=ccbc.c0)
+        # What actually matters in the output structs are just W and phi.
+        phi = range(45.0, 10.0; length=length(sections)) .* (pi/180)
+        W = range(10.0, 11.0; length=length(sections))
+        outs = Outputs.(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, phi, 0.0, W, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+
+        # Radial spacing.
+        dradii = get_dradii(ccbc.radii, ccbc.Rhub, ccbc.Rtip)
+
+        # Set the source time stuff.
+        num_blade_passes = 3
+        steps_per_blade_pass = 8
+        num_src_times = num_blade_passes*steps_per_blade_pass
+        bpp = 2*pi/omega/ccbc.num_blades
+        src_time_range = num_blade_passes*bpp
+
+        # Finally get all the source elements.
+        bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
+        blade_tip = AcousticAnalogies.RoundedTip()
+        ses_helper = tip_vortex_source_elements_ccblade(rotor, sections[end], ops[end], outs[end], dradii[end], bl, blade_tip, src_time_range, num_src_times, positive_x_rotation)
+
+        # Now need to get the source elements the "normal" way.
+        # First get the transformation objects.
+        rot_axis = @SVector [1.0, 0.0, 0.0]
+        blade_axis = @SVector [0.0, 1.0, 0.0]
+        y0_hub = @SVector [0.0, 0.0, 0.0]  # m
+        v0_hub = ccbc.v.*rot_axis
+        t0 = 0.0
+        if positive_x_rotation
+            rot_trans = SteadyRotXTransformation(t0, omega, 0.0)
+        else
+            rot_trans = SteadyRotXTransformation(t0, -omega, 0.0)
+        end
+        const_vel_trans = ConstantVelocityTransformation(t0, y0_hub, v0_hub)
+
+        # Need the source times.
+        dt = src_time_range/num_src_times
+        src_times = t0 .+ (0:num_src_times-1).*dt
+
+        # This is just an array of the angular offsets of each blade.
+        θs = 2*pi/ccbc.num_blades.*(0:(ccbc.num_blades-1))
+
+        # Need the kinematic viscosity.
+        # nus = getproperty.(ops, :mu) ./ getproperty.(ops, :rho)
+
+        # Also need the velocity in each direction.
+        if positive_x_rotation
+            vn = @. -W*sin(phi)
+            vr = zeros(eltype(vn), length(vn))
+            vc = @. -W*cos(phi)
+        else
+            vn = @. -W*sin(phi)
+            vr = zeros(eltype(vn), length(vn))
+            vc = @. W*cos(phi)
+        end
+
+        # Reshape stuff for broadcasting.
+        θs_rs = reshape(θs, 1, 1, :)
+
+        # Get all the transformations.
+        trans = compose.(src_times, Ref(const_vel_trans), Ref(rot_trans))
+
+        # Transform the source elements.
+        ses = TipVortexSourceElement.(ccbc.c0, ccbc.radii[end], θs_rs, dradii[end], sections[end].chord, sections[end].theta, vn[end], vr[end], vc[end], src_times, dt, Ref(bl), Ref(blade_tip), positive_x_rotation) .|> trans
+
+        # Now check that we got the same thing.
+        for field in fieldnames(TipVortexSourceElement)
+            if !(field in (:bl, :blade_tip))
+                @test all(getproperty.(ses_helper, field) .≈ getproperty.(ses, field))
             end
         end
     end
@@ -755,7 +1176,7 @@ end
             se_tip = AcousticAnalogies.TipVortexSourceElement{AcousticAnalogies.BPMDirectivity,false}(c0, r, θ, L, chord, ϕ, vn, vr, vc, τ, Δτ, bl, blade_tip, twist_about_positive_y)
         end
         if do_tebvs
-            se_tebvs = AcousticAnalogies.TEBVSSourceElement{AcousticAnalogies.BPMDirectivity,false}(c0, nu, r, θ, L, chord, h, Psi, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
+            se_tebvs = AcousticAnalogies.TEBVSSourceElement{AcousticAnalogies.BPMDirectivity,false}(c0, nu, r, θ, L, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
         end
 
         # Let's check that things are what we expect.

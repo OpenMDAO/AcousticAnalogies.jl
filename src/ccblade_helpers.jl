@@ -227,8 +227,7 @@ function _get_position_velocity_span_uvec_chord_uvec(theta, precone, pitch, r, �
     y0dot = @SVector [r*spc, r*cpc*cθ, r*cpc*sθ]
 
     # In the blade-fixed frame, the source isn't moving, since the blade-fixed reference frame is moving with the source.
-    T = eltype(y0dot)
-    y1dot = @SVector zeros(T, 3)
+    y1dot = @SVector zeros(eltype(y0dot), 3)
 
     # Vx = op.Vx
     # u = out.u

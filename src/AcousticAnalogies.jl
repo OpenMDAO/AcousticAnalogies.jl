@@ -38,7 +38,7 @@ include("teb_vs.jl")
 export TEBVSSourceElement
 
 include("ccblade_helpers.jl")
-export source_elements_ccblade, tblte_source_elements_ccblade
+export source_elements_ccblade, tblte_source_elements_ccblade, lblvs_source_elements_ccblade, tebvs_source_elements_ccblade, tip_vortex_source_elements_ccblade
 
 include("writevtk.jl")
 
