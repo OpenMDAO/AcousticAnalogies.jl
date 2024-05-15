@@ -934,6 +934,178 @@ function tebvs_source_elements_ccblade(rotor, sections, ops, outputs, hs, Psis, 
 end
 
 """
+    CombinedNoTipBroadbandSourceElement(rotor::CCBlade.Rotor, section::CCBlade.Section, op::CCBlade.OperatingPoint, out::CCBlade.Outputs, θ, Δr, h, Psi, τ, Δτ, bl::AbstractBoundaryLayer, positive_x_rotation)
+
+Construct a source element for predicting turbulent boundary layer-trailing edge (TBLTE), laminar boundary layer-vortex shedding (LBLVS) noise, and trailing edge bluntness-vortex shedding (TEBVS) noise using the BPM/Brooks and Burley method from CCBlade structs.
+
+The source element's position is calculated from `section.r`, `rotor.precone`, and the `θ` argument using
+```julia
+    sθ, cθ = sincos(θ)
+    spc, cpc = sincos(precone)
+    y0dot = [r*spc, r*cpc*cθ, r*cpc*sθ]
+```
+where `y0dot` is the position of the source element.
+
+# Arguments
+- `rotor::CCBlade.Rotor`: CCBlade rotor object, needed for the precone angle.
+- `section::CCBlade.Section`: CCBlade section object, needed for the radial location and chord length of the element.
+- `op::CCBlade.OperatingPoint`: CCBlade operating point, needed for atmospheric properties.
+- `out::CCBlade.Outputs`: CCBlade outputs object, needed for the loading.
+- `θ`: polar coordinate of the element, in radians.
+- `Δr`: length of the element, in meters.
+- `h`: trailing edge thickness (m)
+- `Psi`: solid angle between the blade surfaces immediately upstream of the trailing edge (rad)
+- `τ`: source time of the element, in seconds.
+- `Δτ`: source time duration, in seconds.
+- `bl`: `AcousticAnalogies.AbstractBoundaryLayer`, needed for boundary layer properties.
+- `positive_x_rotation`: rotate blade around the positive-x axis if `true`, negative-x axis otherwise.
+"""
+function CombinedNoTipBroadbandSourceElement(rotor::CCBlade.Rotor, section::CCBlade.Section, op::CCBlade.OperatingPoint, out::CCBlade.Outputs, θ, Δr, h, Psi, τ, Δτ, bl::AbstractBoundaryLayer, positive_x_rotation)
+
+    y0dot, y1dot, y1dot_fluid, span_uvec, chord_uvec, chord_cross_span_to_get_top_uvec = _get_position_velocity_span_uvec_chord_uvec(
+        section.theta, rotor.precone, op.pitch, section.r, θ, out.W, out.phi, positive_x_rotation)
+
+    nu = op.mu/op.rho
+
+    return CombinedNoTipBroadbandSourceElement(op.asound, nu, Δr, section.chord, h, Psi, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
+end
+
+"""
+    CombinedWithTipBroadbandSourceElement(rotor::CCBlade.Rotor, section::CCBlade.Section, op::CCBlade.OperatingPoint, out::CCBlade.Outputs, θ, Δr, h, Psi, τ, Δτ, bl::AbstractBoundaryLayer, blade_tip::AbstractBladeTip, positive_x_rotation)
+
+Construct a source element for predicting turbulent boundary layer-trailing edge (TBLTE), laminar boundary layer-vortex shedding (LBLVS) noise, trailing edge bluntness-vortex shedding (TEBVS), and tip vortex noise using the BPM/Brooks and Burley method from CCBlade structs.
+
+The source element's position is calculated from `section.r`, `rotor.precone`, and the `θ` argument using
+```julia
+    sθ, cθ = sincos(θ)
+    spc, cpc = sincos(precone)
+    y0dot = [r*spc, r*cpc*cθ, r*cpc*sθ]
+```
+where `y0dot` is the position of the source element.
+
+# Arguments
+- `rotor::CCBlade.Rotor`: CCBlade rotor object, needed for the precone angle.
+- `section::CCBlade.Section`: CCBlade section object, needed for the radial location and chord length of the element.
+- `op::CCBlade.OperatingPoint`: CCBlade operating point, needed for atmospheric properties.
+- `out::CCBlade.Outputs`: CCBlade outputs object, needed for the loading.
+- `θ`: polar coordinate of the element, in radians.
+- `Δr`: length of the element, in meters.
+- `h`: trailing edge thickness (m)
+- `Psi`: solid angle between the blade surfaces immediately upstream of the trailing edge (rad)
+- `τ`: source time of the element, in seconds.
+- `Δτ`: source time duration, in seconds.
+- `bl`: `AcousticAnalogies.AbstractBoundaryLayer`, needed for boundary layer properties.
+- `blade_tip`: Blade tip struct, i.e. an AbstractBladeTip.
+- `positive_x_rotation`: rotate blade around the positive-x axis if `true`, negative-x axis otherwise.
+"""
+function CombinedWithTipBroadbandSourceElement(rotor::CCBlade.Rotor, section::CCBlade.Section, op::CCBlade.OperatingPoint, out::CCBlade.Outputs, θ, Δr, h, Psi, τ, Δτ, bl::AbstractBoundaryLayer, blade_tip::AbstractBladeTip, positive_x_rotation)
+
+    y0dot, y1dot, y1dot_fluid, span_uvec, chord_uvec, chord_cross_span_to_get_top_uvec = _get_position_velocity_span_uvec_chord_uvec(
+        section.theta, rotor.precone, op.pitch, section.r, θ, out.W, out.phi, positive_x_rotation)
+
+    nu = op.mu/op.rho
+
+    return CombinedWithTipBroadbandSourceElement(op.asound, nu, Δr, section.chord, h, Psi, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, blade_tip, chord_cross_span_to_get_top_uvec)
+end
+
+"""
+    combined_broadband_source_elements_ccblade(rotor::CCBlade.Rotor, sections::Vector{CCBlade.Section}, ops::Vector{CCBlade.OperatingPoint}, outputs::Vector{CCBlade.Outputs}, hs::Vector{Float64}, Psis::Vector{Float64}, bls::Vector{AbstractBoundaryLayer}, blade_tip::AbstractBladeTip, period, num_src_times, positive_x_rotation)
+
+Construct and return an array of broadband prediction source element objects from CCBlade structs.
+
+# Arguments
+- `rotor`: CCBlade rotor object.
+- `sections`: `Vector` of CCBlade section object.
+- `ops`: `Vector` of CCBlade operating point.
+- `outputs`: `Vector` of CCBlade output objects.
+- `hs`: `Vector` of trailing edge thicknesses (m)
+- `Psis`: `Vector` of solid angles between the blade surfaces immediately upstream of the trailing edge (rad)
+- `bls`::`Vector` of boundary layer `AbstractBoundaryLayer` `structs`.
+- `blade_tip`: Blade tip struct, i.e. an AbstractBladeTip.
+- `period`: length of the source time over which the returned source elements will evaluated.
+- `num_src_times`: number of source times.
+- `positive_x_rotation`: rotate blade around the positive-x axis if `true`, negative-x axis otherwise.
+"""
+function combined_broadband_source_elements_ccblade(rotor, sections, ops, outputs, hs, Psis, bls::AbstractVector{<:AbstractBoundaryLayer}, blade_tip, period, num_src_times, positive_x_rotation)
+    # Need to know the radial spacing. (CCBlade doesn't use this—when
+    # integrating stuff [loading to get torque and thrust] it uses the
+    # trapezoidal rule and passes in the radial locations, and assumes that
+    # integrands go to zero at the hub and tip.) Kind of lame that I have to
+    # calcluate it here, but whatever. Maybe I should use StaticArrays for this?
+    # Ah, no, I don't know the length at compile time.
+    dradii = get_ccblade_dradii(rotor, sections)
+
+    # Get the transformation that will put the source elements in the "standard" CCBlade.jl reference frame (moving axially in the positive x axis direction, rotating about the positive x axis, first blade initially aligned with the positive y axis).
+    # Will be size (num_times, num_radial), so we'll need to adjust for the no tip/with tip stuff.
+    src_times, dt, trans = _standard_ccblade_transform(rotor, sections, ops, period, num_src_times, positive_x_rotation)
+
+    # This is just an array of the angular offsets of each blade. First blade is
+    # aligned with the y axis, next one is offset 2*pi/B radians, etc..
+    num_blades = rotor.B
+    θs = 2*pi/num_blades.*(0:(num_blades-1))
+
+    # Reshape for broadcasting. Goal is to make everything work for a size of (num_times, num_radial, num_blades).
+    θs_rs = reshape(θs, 1, 1, :)
+    sections_rs = reshape(sections, 1, :, 1)
+    ops_rs = reshape(ops, 1, :, 1)
+    outputs_rs = reshape(outputs, 1, :, 1)
+    dradii_rs = reshape(dradii, 1, :, 1)
+    hs_rs = reshape(hs, 1, :, 1)
+    Psis_rs = reshape(Psis, 1, :, 1)
+    bls_rs = reshape(bls, 1, :, 1)
+    # src_times = reshape(src_times, :, 1, 1)  # This one isn't necessary.
+
+    # So, I want to create some structs for all the non-blade tip elements, and the blade tip elements.
+    # So I just need to slice things appropriately.
+    sections_rs_no_tip = @view sections_rs[:, begin:end-1, :]
+    ops_rs_no_tip = @view ops_rs[:, begin:end-1, :]
+    outputs_rs_no_tip = @view outputs_rs[:, begin:end-1, :]
+    dradii_rs_no_tip = @view dradii_rs[:, begin:end-1, :]
+    hs_rs_no_tip = @view hs_rs[:, begin:end-1, :]
+    Psis_rs_no_tip = @view Psis_rs[:, begin:end-1, :]
+    bls_rs_no_tip = @view bls_rs[:, begin:end-1, :]
+    trans_no_tip = @view trans[:, begin:end-1]
+
+    sections_rs_with_tip = @view sections_rs[:, end:end, :]
+    ops_rs_with_tip = @view ops_rs[:, end:end, :]
+    outputs_rs_with_tip = @view outputs_rs[:, end:end, :]
+    dradii_rs_with_tip = @view dradii_rs[:, end:end, :]
+    hs_rs_with_tip = @view hs_rs[:, end:end, :]
+    Psis_rs_with_tip = @view Psis_rs[:, end:end, :]
+    bls_rs_with_tip = @view bls_rs[:, end:end, :]
+    trans_with_tip = @view trans[:, end:end]
+
+    # Construct and transform the source elements.
+    ses_no_tip = CombinedNoTipBroadbandSourceElement.(Ref(rotor), sections_rs_no_tip, ops_rs_no_tip, outputs_rs_no_tip, θs_rs, dradii_rs_no_tip, hs_rs_no_tip, Psis_rs_no_tip, src_times, Ref(dt), bls_rs_no_tip, positive_x_rotation) .|> trans_no_tip
+
+    ses_with_tip = CombinedWithTipBroadbandSourceElement.(Ref(rotor), sections_rs_with_tip, ops_rs_with_tip, outputs_rs_with_tip, θs_rs, dradii_rs_with_tip, hs_rs_with_tip, Psis_rs_with_tip, src_times, Ref(dt), bls_rs_with_tip, Ref(blade_tip), positive_x_rotation) .|> trans_with_tip
+
+    return ses_no_tip, ses_with_tip
+end
+
+"""
+    combined_broadband_source_elements_ccblade(rotor::CCBlade.Rotor, sections::Vector{CCBlade.Section}, ops::Vector{CCBlade.OperatingPoint}, outputs::Vector{CCBlade.Outputs}, hs::Vector{Float64}, Psis::Vector{Float64}, bl::AbstractBoundaryLayer, blade_tip::AbstractBladeTip, period, num_src_times, positive_x_rotation)
+
+Construct and return an array of broadband prediction source element objects from CCBlade structs.
+
+# Arguments
+- `rotor`: CCBlade rotor object.
+- `sections`: `Vector` of CCBlade section object.
+- `ops`: `Vector` of CCBlade operating point.
+- `outputs`: `Vector` of CCBlade output objects.
+- `hs`: `Vector` of trailing edge thicknesses (m)
+- `Psis`: `Vector` of solid angles between the blade surfaces immediately upstream of the trailing edge (rad)
+- `bl`:: boundary layer `AbstractBoundaryLayer` `struct`.
+- `blade_tip`: Blade tip struct, i.e. an AbstractBladeTip.
+- `period`: length of the source time over which the returned source elements will evaluated.
+- `num_src_times`: number of source times.
+- `positive_x_rotation`: rotate blade around the positive-x axis if `true`, negative-x axis otherwise.
+"""
+function combined_broadband_source_elements_ccblade(rotor, sections, ops, outputs, hs, Psis, bl::AbstractBoundaryLayer, blade_tip, period, num_src_times, positive_x_rotation)
+    bls = Fill(bl, length(sections))
+    return combined_broadband_source_elements_ccblade(rotor, sections, ops, outputs, hs, Psis, bls, blade_tip, period, num_src_times, positive_x_rotation)
+end
+"""
     get_ccblade_dradii(rotor::CCBlade.Rotor, sections::Vector{CCBlade.Section})
 
 Construct and return a Vector of the lengths of each CCBlade section.
