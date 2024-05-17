@@ -80,7 +80,7 @@ function LBL_VS(freq, nu, L, chord, U, M, M_c, r_e, theta_e, phi_e, alphastar, b
     return SPL
 end
 
-@concrete struct LBLVSSourceElement{TDirect<:AbstractDirectivity,TUInduction} <: AbstractBroadbandSourceElement{TDirect,TUInduction}
+@concrete struct LBLVSSourceElement{TDirect<:AbstractDirectivity,TUInduction} <: AbstractBroadbandSourceElement{TDirect,TUInduction,NoMachCorrection}
     # Speed of sound, m/s.
     c0
     # Kinematic viscosity, m^2/s

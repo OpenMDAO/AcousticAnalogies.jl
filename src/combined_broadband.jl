@@ -1,4 +1,4 @@
-@concrete struct CombinedNoTipBroadbandSourceElement{TDirect<:AbstractDirectivity,TUInduction} <: AbstractBroadbandSourceElement{TDirect,TUInduction}
+@concrete struct CombinedNoTipBroadbandSourceElement{TDirect<:AbstractDirectivity,TUInduction,TMachCorrection} <: AbstractBroadbandSourceElement{TDirect,TUInduction,TMachCorrection}
     # Speed of sound, m/s.
     c0
     # Kinematic viscosity, m^2/s
@@ -33,7 +33,7 @@ end
 
 # Default to using the `BrooksBurleyDirectivity` directivity function, and include induction in the flow speed normal to span (TUInduction == true).
 function CombinedNoTipBroadbandSourceElement(c0, nu, Δr, chord, h, Psi, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
-    return CombinedNoTipBroadbandSourceElement{BrooksBurleyDirectivity,true}(c0, nu, Δr, chord, h, Psi, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
+    return CombinedNoTipBroadbandSourceElement{BrooksBurleyDirectivity,true,PrandtlGlauertMachCorrection}(c0, nu, Δr, chord, h, Psi, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
 end
 
 """
@@ -75,7 +75,7 @@ This can be done easily with the transformations provided by the `KinematicCoord
 - bl: Boundary layer struct, i.e. an AbstractBoundaryLayer.
 - twist_about_positive_y: if `true`, apply twist ϕ about positive y axis, negative y axis otherwise
 """
-function CombinedNoTipBroadbandSourceElement{TDirect,TUInduction}(c0, nu, r, θ, Δr, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y) where {TDirect,TUInduction}
+function CombinedNoTipBroadbandSourceElement{TDirect,TUInduction,TMachCorrection}(c0, nu, r, θ, Δr, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y) where {TDirect,TUInduction,TMachCorrection}
     sθ, cθ = sincos(θ)
     sϕ, cϕ = sincos(ϕ)
     y0dot = @SVector [0, r*cθ, r*sθ]
@@ -90,12 +90,12 @@ function CombinedNoTipBroadbandSourceElement{TDirect,TUInduction}(c0, nu, r, θ,
     end
 
     chord_cross_span_to_get_top_uvec = twist_about_positive_y
-    return CombinedNoTipBroadbandSourceElement{TDirect,TUInduction}(c0, nu, Δr, chord, h, Psi, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
+    return CombinedNoTipBroadbandSourceElement{TDirect,TUInduction,TMachCorrection}(c0, nu, Δr, chord, h, Psi, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
 end
 
 # Default to using the `BrooksBurleyDirectivity` directivity function, and include induction in the flow speed normal to span (TUInduction == true).
 function CombinedNoTipBroadbandSourceElement(c0, nu, r, θ, Δr, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
-    return CombinedNoTipBroadbandSourceElement{BrooksBurleyDirectivity,true}(c0, nu, r, θ, Δr, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
+    return CombinedNoTipBroadbandSourceElement{BrooksBurleyDirectivity,true,PrandtlGlauertMachCorrection}(c0, nu, r, θ, Δr, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
 end
 
 """
@@ -103,7 +103,7 @@ end
 
 Transform the position and orientation of a source element according to the coordinate system transformation `trans`.
 """
-function (trans::KinematicTransformation)(se::CombinedNoTipBroadbandSourceElement{TDirect,TUInduction}) where {TDirect,TUInduction}
+function (trans::KinematicTransformation)(se::CombinedNoTipBroadbandSourceElement{TDirect,TUInduction,TMachCorrection}) where {TDirect,TUInduction,TMachCorrection}
     linear_only = false
     y0dot, y1dot = trans(se.τ, se.y0dot, se.y1dot, linear_only)
     y0dot, y1dot_fluid = trans(se.τ, se.y0dot, se.y1dot_fluid, linear_only)
@@ -111,7 +111,7 @@ function (trans::KinematicTransformation)(se::CombinedNoTipBroadbandSourceElemen
     span_uvec = trans(se.τ, se.span_uvec, linear_only)
     chord_uvec = trans(se.τ, se.chord_uvec, linear_only)
 
-    return CombinedNoTipBroadbandSourceElement{TDirect,TUInduction}(se.c0, se.nu, se.Δr, se.chord, se.h, se.Psi, y0dot, y1dot, y1dot_fluid, se.τ, se.Δτ, span_uvec, chord_uvec, se.bl, se.chord_cross_span_to_get_top_uvec)
+    return CombinedNoTipBroadbandSourceElement{TDirect,TUInduction,TMachCorrection}(se.c0, se.nu, se.Δr, se.chord, se.h, se.Psi, y0dot, y1dot, y1dot_fluid, se.τ, se.Δτ, span_uvec, chord_uvec, se.bl, se.chord_cross_span_to_get_top_uvec)
 end
 
 """
@@ -123,26 +123,33 @@ struct CombinedNoTipOutput{NO,TF,TG<:AbstractVector{TF},TFreqs<:AcousticMetrics.
     G_s::TG
     G_p::TG
     G_alpha::TG
+    G_lblvs::TG
     G_teb::TG
     cbands::TFreqs
     dt::TDTime
     t::TTime
 
-    function CombinedNoTipOutput(G_s::TG, G_p::TG, G_alpha::TG, G_teb::TG, cbands::AcousticMetrics.AbstractProportionalBands{NO,:center}, dt, t) where {NO,TG}
+    function CombinedNoTipOutput(G_s::TG, G_p::TG, G_alpha::TG, G_lblvs, G_teb::TG, cbands::AcousticMetrics.AbstractProportionalBands{NO,:center}, dt, t) where {NO,TG}
         ncbands = length(cbands)
         length(G_s) == ncbands || throw(ArgumentError("length(G_s) must match length(cbands)"))
         length(G_p) == ncbands || throw(ArgumentError("length(G_p) must match length(cbands)"))
         length(G_alpha) == ncbands || throw(ArgumentError("length(G_alpha) must match length(cbands)"))
+        length(G_lblvs) == ncbands || throw(ArgumentError("length(G_lblvs) must match length(cbands)"))
         length(G_teb) == ncbands || throw(ArgumentError("length(G_teb) must match length(cbands)"))
         dt > zero(dt) || throw(ArgumentError("dt must be positive"))
-        return new{NO,eltype(TG),TG,typeof(cbands),typeof(dt),typeof(t)}(G_s, G_p, G_alpha, G_teb, cbands, dt, t)
+        return new{NO,eltype(TG),TG,typeof(cbands),typeof(dt),typeof(t)}(G_s, G_p, G_alpha, G_lblvs, G_teb, cbands, dt, t)
     end
 end
 
 @inline function Base.getindex(pbs::CombinedNoTipOutput, i::Int)
     @boundscheck checkbounds(pbs, i)
-    return @inbounds pbs.G_s[i] + pbs.G_p[i] + pbs.G_alpha[i] + pbs.G_teb[i]
+    return @inbounds pbs.G_s[i] + pbs.G_p[i] + pbs.G_alpha[i] + +pbs.G_lblvs[i] + pbs.G_teb[i]
 end
+
+@inline AcousticMetrics.has_observer_time(pbs::CombinedNoTipOutput) = true
+@inline AcousticMetrics.observer_time(pbs::CombinedNoTipOutput) = pbs.t
+@inline AcousticMetrics.timestep(pbs::CombinedNoTipOutput) = pbs.dt
+@inline AcousticMetrics.time_scaler(pbs::CombinedNoTipOutput, period) = timestep(pbs)/period
 
 function noise(se::CombinedNoTipBroadbandSourceElement, obs::AbstractAcousticObserver, t_obs, freqs)
     # Position of the observer:
@@ -179,6 +186,9 @@ function noise(se::CombinedNoTipBroadbandSourceElement, obs::AbstractAcousticObs
     deltastar_s = disp_thickness_s(se.bl, Re_c, alphastar)*se.chord
     deltastar_p = disp_thickness_p(se.bl, Re_c, alphastar)*se.chord
 
+    # Need the boundary layer thickness for the pressure side for LBL-VS noise.
+    delta_p = bl_thickness_p(se.bl, Re_c, alphastar)*se.chord
+
     # Now that we've decided on the directivity functions and the displacement thickness, and we know the correct value of `top_is_suction` we should be able to switch the sign on `alphastar` if it's negative, and reference it to the zero-lift value, as the BPM report does.
     alphastar_positive = abs_cs_safe(alphastar - alpha_zerolift(se.bl))
 
@@ -202,6 +212,17 @@ function noise(se::CombinedNoTipBroadbandSourceElement, obs::AbstractAcousticObs
     deltastar_s_U = deltastar_s/U
     deltastar_p_U = deltastar_p/U
 
+    # Stuff for LBLVS noise.
+    delta_p_U = delta_p/U
+    St_p_p = St_peak_prime(St_1_prime(Re_c), alphastar_positive)
+    Re_c_over_Re_c0 = Re_c / Re_c0(alphastar_positive)
+    g2 = G2(Re_c_over_Re_c0)
+    g3 = G3(alphastar_positive)
+
+    # Brooks and Burley 2001 recommend a Prandtl-Glauert style Mach number correction, but only for the TBLTE noise.
+    # But whether or not it's included is dependent on the TMachCorrection type parameter for the source element.
+    m_corr = mach_correction(se, M)
+
     # Equation 73 from the BPM report.
     deltastar_avg = 0.5*(deltastar_p + deltastar_s)
 
@@ -212,15 +233,19 @@ function noise(se::CombinedNoTipBroadbandSourceElement, obs::AbstractAcousticObs
 
     # The Brooks and Burley autospectrums appear to be scaled by the usual squared reference pressure (20 μPa)^2, but I'd like things in dimensional units, so multiply through by that.
     pref2 = 4e-10
-    G_s_scaler = (deltastar_s*M^5*se.Δr*Dh)/(r_er^2)
+    G_s_scaler = (deltastar_s*M^5*se.Δr*Dh)/(r_er^2)*m_corr
     G_s = _tble_te_s.(freqs, deltastar_s_U, Re_c, St_peak_s, k_1, G_s_scaler, deep_stall).*pref2
 
-    G_p_scaler = (deltastar_p*M^5*se.Δr*Dh)/(r_er^2)
+    G_p_scaler = (deltastar_p*M^5*se.Δr*Dh)/(r_er^2)*m_corr
     G_p = _tble_te_p.(freqs, deltastar_p_U, Re_c, St_peak_p, k_1, Δk_1, G_p_scaler, deep_stall).*pref2
 
-    G_alpha_scaler_l = (deltastar_s*M^5*se.Δr*Dl)/(r_er^2)
+    G_alpha_scaler_l = (deltastar_s*M^5*se.Δr*Dl)/(r_er^2)*m_corr
     G_alpha_scaler_h = G_s_scaler
     G_alpha = _tble_te_alpha.(freqs, Re_c, deltastar_s_U, St_peak_alpha, k_2, G_alpha_scaler_l, G_alpha_scaler_h, deep_stall).*pref2
+
+    G_lbl_vs_scaler = (delta_p*M^5*se.Δr*Dh)/(r_er^2)
+    G_lbl_vs = _lbl_vs.(freqs, delta_p_U, St_p_p, g2, g3, G_lbl_vs_scaler) .* pref2
+
     G_teb_vs_scaler = (se.h*(M^5.5)*se.Δr*Dh)/(r_er^2)
     G_teb_vs = _teb_vs.(freqs, h_U, h_over_deltastar_avg, St_3pp, se.Psi, g4, G_teb_vs_scaler) .* pref2
 
@@ -232,10 +257,10 @@ function noise(se::CombinedNoTipBroadbandSourceElement, obs::AbstractAcousticObs
     freqs_obs = AcousticMetrics.center_bands(freqs, doppler)
 
     # All done.
-    return CombinedNoTipOutput(G_s, G_p, G_alpha, G_teb_vs, freqs_obs, dt, t_obs)
+    return CombinedNoTipOutput(G_s, G_p, G_alpha, G_lbl_vs, G_teb_vs, freqs_obs, dt, t_obs)
 end
 
-@concrete struct CombinedWithTipBroadbandSourceElement{TDirect<:AbstractDirectivity,TUInduction} <: AbstractBroadbandSourceElement{TDirect,TUInduction}
+@concrete struct CombinedWithTipBroadbandSourceElement{TDirect<:AbstractDirectivity,TUInduction,TMachCorrection} <: AbstractBroadbandSourceElement{TDirect,TUInduction,TMachCorrection}
     # Speed of sound, m/s.
     c0
     # Kinematic viscosity, m^2/s
@@ -270,9 +295,9 @@ end
     chord_cross_span_to_get_top_uvec
 end
 
-# Default to using the `BrooksBurleyDirectivity` directivity function, and include induction in the flow speed normal to span (TUInduction == true).
+# Default to using the `BrooksBurleyDirectivity` directivity function, include induction in the flow speed normal to span (TUInduction == true), and use the PrandtlGlauertMachCorrection.
 function CombinedWithTipBroadbandSourceElement(c0, nu, Δr, chord, h, Psi, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, blade_tip, chord_cross_span_to_get_top_uvec)
-    return CombinedWithTipBroadbandSourceElement{BrooksBurleyDirectivity,true}(c0, nu, Δr, chord, h, Psi, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, blade_tip, chord_cross_span_to_get_top_uvec)
+    return CombinedWithTipBroadbandSourceElement{BrooksBurleyDirectivity,true,PrandtlGlauertMachCorrection}(c0, nu, Δr, chord, h, Psi, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, blade_tip, chord_cross_span_to_get_top_uvec)
 end
 
 """
@@ -315,7 +340,7 @@ This can be done easily with the transformations provided by the `KinematicCoord
 - blade_tip: Blade tip struct, i.e. an AbstractBladeTip.
 - twist_about_positive_y: if `true`, apply twist ϕ about positive y axis, negative y axis otherwise
 """
-function CombinedWithTipBroadbandSourceElement{TDirect,TUInduction}(c0, nu, r, θ, Δr, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, blade_tip, twist_about_positive_y) where {TDirect,TUInduction}
+function CombinedWithTipBroadbandSourceElement{TDirect,TUInduction,TMachCorrection}(c0, nu, r, θ, Δr, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, blade_tip, twist_about_positive_y) where {TDirect,TUInduction,TMachCorrection}
     sθ, cθ = sincos(θ)
     sϕ, cϕ = sincos(ϕ)
     y0dot = @SVector [0, r*cθ, r*sθ]
@@ -330,12 +355,12 @@ function CombinedWithTipBroadbandSourceElement{TDirect,TUInduction}(c0, nu, r, �
     end
 
     chord_cross_span_to_get_top_uvec = twist_about_positive_y
-    return CombinedWithTipBroadbandSourceElement{TDirect,TUInduction}(c0, nu, Δr, chord, h, Psi, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, blade_tip, chord_cross_span_to_get_top_uvec)
+    return CombinedWithTipBroadbandSourceElement{TDirect,TUInduction,TMachCorrection}(c0, nu, Δr, chord, h, Psi, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, blade_tip, chord_cross_span_to_get_top_uvec)
 end
 
-# Default to using the `BrooksBurleyDirectivity` directivity function, and include induction in the flow speed normal to span (TUInduction == true).
+# Default to using the `BrooksBurleyDirectivity` directivity function, include induction in the flow speed normal to span (TUInduction == true), and use the PrandtlGlauertMachCorrection.
 function CombinedWithTipBroadbandSourceElement(c0, nu, r, θ, Δr, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, blade_tip, twist_about_positive_y)
-    return CombinedWithTipBroadbandSourceElement{BrooksBurleyDirectivity,true}(c0, nu, r, θ, Δr, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, blade_tip, twist_about_positive_y)
+    return CombinedWithTipBroadbandSourceElement{BrooksBurleyDirectivity,true,PrandtlGlauertMachCorrection}(c0, nu, r, θ, Δr, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, blade_tip, twist_about_positive_y)
 end
 
 """
@@ -343,7 +368,7 @@ end
 
 Transform the position and orientation of a source element according to the coordinate system transformation `trans`.
 """
-function (trans::KinematicTransformation)(se::CombinedWithTipBroadbandSourceElement{TDirect,TUInduction}) where {TDirect,TUInduction}
+function (trans::KinematicTransformation)(se::CombinedWithTipBroadbandSourceElement{TDirect,TUInduction,TMachCorrection}) where {TDirect,TUInduction,TMachCorrection}
     linear_only = false
     y0dot, y1dot = trans(se.τ, se.y0dot, se.y1dot, linear_only)
     y0dot, y1dot_fluid = trans(se.τ, se.y0dot, se.y1dot_fluid, linear_only)
@@ -351,7 +376,7 @@ function (trans::KinematicTransformation)(se::CombinedWithTipBroadbandSourceElem
     span_uvec = trans(se.τ, se.span_uvec, linear_only)
     chord_uvec = trans(se.τ, se.chord_uvec, linear_only)
 
-    return CombinedWithTipBroadbandSourceElement{TDirect,TUInduction}(se.c0, se.nu, se.Δr, se.chord, se.h, se.Psi, y0dot, y1dot, y1dot_fluid, se.τ, se.Δτ, span_uvec, chord_uvec, se.bl, se.blade_tip, se.chord_cross_span_to_get_top_uvec)
+    return CombinedWithTipBroadbandSourceElement{TDirect,TUInduction,TMachCorrection}(se.c0, se.nu, se.Δr, se.chord, se.h, se.Psi, y0dot, y1dot, y1dot_fluid, se.τ, se.Δτ, span_uvec, chord_uvec, se.bl, se.blade_tip, se.chord_cross_span_to_get_top_uvec)
 end
 
 """
@@ -363,21 +388,23 @@ struct CombinedWithTipOutput{NO,TF,TG<:AbstractVector{TF},TFreqs<:AcousticMetric
     G_s::TG
     G_p::TG
     G_alpha::TG
+    G_lblvs::TG
     G_teb::TG
     G_tip::TG
     cbands::TFreqs
     dt::TDTime
     t::TTime
 
-    function CombinedWithTipOutput(G_s::TG, G_p::TG, G_alpha::TG, G_teb::TG, G_tip,::TG, cbands::AcousticMetrics.AbstractProportionalBands{NO,:center}, dt, t) where {NO,TG}
+    function CombinedWithTipOutput(G_s::TG, G_p::TG, G_alpha::TG, G_lblvs, G_teb::TG, G_tip::TG, cbands::AcousticMetrics.AbstractProportionalBands{NO,:center}, dt, t) where {NO,TG}
         ncbands = length(cbands)
         length(G_s) == ncbands || throw(ArgumentError("length(G_s) must match length(cbands)"))
         length(G_p) == ncbands || throw(ArgumentError("length(G_p) must match length(cbands)"))
         length(G_alpha) == ncbands || throw(ArgumentError("length(G_alpha) must match length(cbands)"))
+        length(G_lblvs) == ncbands || throw(ArgumentError("length(G_lblvs) must match length(cbands)"))
         length(G_teb) == ncbands || throw(ArgumentError("length(G_teb) must match length(cbands)"))
         length(G_tip) == ncbands || throw(ArgumentError("length(G_tip) must match length(cbands)"))
         dt > zero(dt) || throw(ArgumentError("dt must be positive"))
-        return new{NO,eltype(TG),TG,typeof(cbands),typeof(dt),typeof(t)}(G_s, G_p, G_alpha, G_teb, G_tip, cbands, dt, t)
+        return new{NO,eltype(TG),TG,typeof(cbands),typeof(dt),typeof(t)}(G_s, G_p, G_alpha, G_lblvs, G_teb, G_tip, cbands, dt, t)
     end
 end
 
@@ -385,6 +412,11 @@ end
     @boundscheck checkbounds(pbs, i)
     return @inbounds pbs.G_s[i] + pbs.G_p[i] + pbs.G_alpha[i] + pbs.G_teb[i] + pbs.G_tip[i]
 end
+
+@inline AcousticMetrics.has_observer_time(pbs::CombinedWithTipOutput) = true
+@inline AcousticMetrics.observer_time(pbs::CombinedWithTipOutput) = pbs.t
+@inline AcousticMetrics.timestep(pbs::CombinedWithTipOutput) = pbs.dt
+@inline AcousticMetrics.time_scaler(pbs::CombinedWithTipOutput, period) = timestep(pbs)/period
 
 function noise(se::CombinedWithTipBroadbandSourceElement, obs::AbstractAcousticObserver, t_obs, freqs)
     # Position of the observer:
@@ -428,6 +460,9 @@ function noise(se::CombinedWithTipBroadbandSourceElement, obs::AbstractAcousticO
     deltastar_s = disp_thickness_s(se.bl, Re_c, alphastar)*se.chord
     deltastar_p = disp_thickness_p(se.bl, Re_c, alphastar)*se.chord
 
+    # Need the boundary layer thickness for the pressure side for LBL-VS noise.
+    delta_p = bl_thickness_p(se.bl, Re_c, alphastar)*se.chord
+
     # Now that we've decided on the directivity functions and the displacement thickness, and we know the correct value of `top_is_suction` we should be able to switch the sign on `alphastar` if it's negative, and reference it to the zero-lift value, as the BPM report does.
     alphastar_positive = abs_cs_safe(alphastar - alpha_zerolift(se.bl))
 
@@ -454,6 +489,17 @@ function noise(se::CombinedWithTipBroadbandSourceElement, obs::AbstractAcousticO
     deltastar_s_U = deltastar_s/U
     deltastar_p_U = deltastar_p/U
 
+    # Stuff for LBLVS noise.
+    delta_p_U = delta_p/U
+    St_p_p = St_peak_prime(St_1_prime(Re_c), alphastar_positive)
+    Re_c_over_Re_c0 = Re_c / Re_c0(alphastar_positive)
+    g2 = G2(Re_c_over_Re_c0)
+    g3 = G3(alphastar_positive)
+
+    # Brooks and Burley 2001 recommend a Prandtl-Glauert style Mach number correction, but only for the TBLTE noise.
+    # But whether or not it's included is dependent on the TMachCorrection type parameter for the source element.
+    m_corr = mach_correction(se, M)
+
     # Equation 73 from the BPM report.
     deltastar_avg = 0.5*(deltastar_p + deltastar_s)
 
@@ -473,15 +519,19 @@ function noise(se::CombinedWithTipBroadbandSourceElement, obs::AbstractAcousticO
 
     # The Brooks and Burley autospectrums appear to be scaled by the usual squared reference pressure (20 μPa)^2, but I'd like things in dimensional units, so multiply through by that.
     pref2 = 4e-10
-    G_s_scaler = (deltastar_s*M^5*se.Δr*Dh)/(r_er^2)
+    G_s_scaler = (deltastar_s*M^5*se.Δr*Dh)/(r_er^2)*m_corr
     G_s = _tble_te_s.(freqs, deltastar_s_U, Re_c, St_peak_s, k_1, G_s_scaler, deep_stall).*pref2
 
-    G_p_scaler = (deltastar_p*M^5*se.Δr*Dh)/(r_er^2)
+    G_p_scaler = (deltastar_p*M^5*se.Δr*Dh)/(r_er^2)*m_corr
     G_p = _tble_te_p.(freqs, deltastar_p_U, Re_c, St_peak_p, k_1, Δk_1, G_p_scaler, deep_stall).*pref2
 
-    G_alpha_scaler_l = (deltastar_s*M^5*se.Δr*Dl)/(r_er^2)
+    G_alpha_scaler_l = (deltastar_s*M^5*se.Δr*Dl)/(r_er^2)*m_corr
     G_alpha_scaler_h = G_s_scaler
     G_alpha = _tble_te_alpha.(freqs, Re_c, deltastar_s_U, St_peak_alpha, k_2, G_alpha_scaler_l, G_alpha_scaler_h, deep_stall).*pref2
+
+    G_lbl_vs_scaler = (delta_p*M^5*se.Δr*Dh)/(r_er^2)
+    G_lbl_vs = _lbl_vs.(freqs, delta_p_U, St_p_p, g2, g3, G_lbl_vs_scaler) .* pref2
+
     G_teb_vs_scaler = (se.h*(M^5.5)*se.Δr*Dh)/(r_er^2)
     G_teb_vs = _teb_vs.(freqs, h_U, h_over_deltastar_avg, St_3pp, se.Psi, g4, G_teb_vs_scaler) .* pref2
 
@@ -497,7 +547,7 @@ function noise(se::CombinedWithTipBroadbandSourceElement, obs::AbstractAcousticO
     freqs_obs = AcousticMetrics.center_bands(freqs, doppler)
 
     # All done.
-    return CombinedWithTipOutput(G_s, G_p, G_alpha, G_teb_vs, G_tip, freqs_obs, dt, t_obs)
+    return CombinedWithTipOutput(G_s, G_p, G_alpha, G_lbl_vs, G_teb_vs, G_tip, freqs_obs, dt, t_obs)
 end
 
 function pbs_suction(pbs::Union{TBLTEOutput,CombinedNoTipOutput,CombinedWithTipOutput})
@@ -519,6 +569,13 @@ function pbs_alpha(pbs::Union{TBLTEOutput,CombinedNoTipOutput,CombinedWithTipOut
     dt = AcousticMetrics.timestep(pbs)
     cbands = AcousticMetrics.center_bands(pbs)
     return AcousticMetrics.ProportionalBandSpectrumWithTime(pbs.G_alpha, cbands, dt, t)
+end
+
+function pbs_lblvs(pbs::Union{TBLTEOutput,CombinedNoTipOutput,CombinedWithTipOutput})
+    t = AcousticMetrics.observer_time(pbs)
+    dt = AcousticMetrics.timestep(pbs)
+    cbands = AcousticMetrics.center_bands(pbs)
+    return AcousticMetrics.ProportionalBandSpectrumWithTime(pbs.G_lblvs, cbands, dt, t)
 end
 
 function pbs_teb(pbs::Union{CombinedNoTipOutput,CombinedWithTipOutput})

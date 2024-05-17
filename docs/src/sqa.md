@@ -463,6 +463,18 @@ ax1 = fig[1, 1] = Axis(fig; xlabel="Re_c/10^6", ylabel="δ_0/c",
                        xminorticks=IntervalsBetween(9), yminorticks=IntervalsBetween(9),
                        xticks=LogTicks(IntegerTicks()), yticks=LogTicks(IntegerTicks()))
 
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure06-bl_thickness-tripped.csv")
+bpm_tripped = DelimitedFiles.readdlm(fname, ',')
+Re_c_1e6 = bpm_tripped[:, 1]
+deltastar0_c = bpm_tripped[:, 2]
+scatter!(ax1, Re_c_1e6, deltastar0_c, markersize=4, label="tripped, BPM report", color=colors[1])
+
+Re_c_1e6_jl = range(minimum(Re_c_1e6), maximum(Re_c_1e6); length=50)
+deltastar0_c_jl = AcousticAnalogies.bl_thickness_0.(Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()), Re_c_1e6_jl.*1e6)
+@show Re_c_1e6_jl deltastar0_c_jl
+@show typeof(Re_c_1e6_jl) typeof(deltastar0_c_jl)
+lines!(ax1, Re_c_1e6_jl, deltastar0_c_jl, label="tripped, Julia", color=colors[1])
+
 fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure06-bl_thickness-untripped.csv")
 bpm_untripped = DelimitedFiles.readdlm(fname, ',')
 Re_c_1e6 = bpm_untripped[:, 1]
@@ -532,6 +544,69 @@ save("19890016302-figure06-disp_thickness.png", fig)
 ```
 ![](19890016302-figure06-disp_thickness.png)
 
+```@example bpm_bl_thickness_tripped
+using AcousticAnalogies: AcousticAnalogies
+using ColorSchemes: colorschemes
+using DelimitedFiles: DelimitedFiles
+# using FLOWMath: linear
+using GLMakie
+
+# https://docs.makie.org/stable/examples/blocks/axis/index.html#logticks
+struct IntegerTicks end
+Makie.get_tickvalues(::IntegerTicks, vmin, vmax) = ceil(Int, vmin) : floor(Int, vmax)
+
+colors = colorschemes[:tab10]
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig; xlabel="alpha, deg.", ylabel="δ/δ_0",
+                       yscale=log10,
+                       yminorticksvisible=true,
+                       yminorticks=IntervalsBetween(9),
+                       yticks=LogTicks(IntegerTicks())
+                       )
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure07-bl_thickness-pressure_side.csv")
+bpm_pressure_side = DelimitedFiles.readdlm(fname, ',')
+alpha_deg = bpm_pressure_side[:, 1]
+delta_bpm = bpm_pressure_side[:, 2]
+scatter!(ax1, alpha_deg, delta_bpm, color=colors[1], markersize=4, label="pressure side, BPM report")
+
+alpha_deg_jl = range(minimum(alpha_deg), maximum(alpha_deg); length=50)
+delta_jl = AcousticAnalogies._bl_thickness_p.(Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()), alpha_deg_jl.*pi/180)
+lines!(ax1, alpha_deg_jl, delta_jl; color=colors[1], label="pressure side, Julia")
+
+# Interpolate:
+# delta_bpm_interp = linear(alpha_deg, delta_bpm, alpha_deg_jl)
+# lines!(ax1, alpha_deg_jl, delta_bpm_interp, color=colors[1], linestyle=:dash, label="pressure side, interp")
+# Check error.
+# vmin, vmax = extrema(delta_bpm)
+# err = abs.(delta_jl .- delta_bpm_interp)./(vmax - vmin)
+# println("pressure side error =\n$(err)")
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure07-bl_thickness-suction_side.csv")
+bpm_suction_side = DelimitedFiles.readdlm(fname, ',')
+alpha_deg = bpm_suction_side[:, 1]
+delta_bpm = bpm_suction_side[:, 2]
+scatter!(ax1, alpha_deg, delta_bpm, markersize=4, color=colors[2], label="suction side, BPM report")
+
+alpha_deg_jl = range(minimum(alpha_deg), maximum(alpha_deg); length=50)
+delta_jl = AcousticAnalogies._bl_thickness_s.(Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()), alpha_deg_jl.*pi/180)
+lines!(ax1, alpha_deg_jl, delta_jl; color=colors[2], label="suction side, Julia")
+
+# Interpolate:
+# delta_bpm_interp = linear(alpha_deg, delta_bpm, alpha_deg_jl)
+# lines!(ax1, alpha_deg_jl, delta_bpm_interp, color=colors[2], linestyle=:dash, label="suction side, interp")
+# Check error.
+# vmin, vmax = extrema(delta_bpm)
+# err = abs.(delta_jl .- delta_bpm_interp)./(vmax - vmin)
+# println("suction side error =\n$(err)")
+
+xlims!(ax1, 0, 25)
+ylims!(ax1, 0.2, 20)
+axislegend(ax1, position=:lt)
+save("19890016302-figure07-bl_thickness.png", fig)
+```
+![](19890016302-figure07-bl_thickness.png)
+
 ```@example bpm_disp_thickness_star_tripped
 using AcousticAnalogies: AcousticAnalogies
 using ColorSchemes: colorschemes
@@ -595,7 +670,7 @@ save("19890016302-figure07.png", fig)
 ```
 ![](19890016302-figure07.png)
 
-```@example bpm_bl_thickness_star_untripped
+```@example bpm_bl_thickness_untripped
 using AcousticAnalogies: AcousticAnalogies
 using ColorSchemes: colorschemes
 using DelimitedFiles: DelimitedFiles
@@ -632,6 +707,16 @@ lines!(ax1, alpha_deg_jl, deltastar_jl; color=colors[1], label="pressure side, J
 # vmin, vmax = extrema(deltastar_bpm)
 # err = abs.(deltastar_jl .- deltastar_bpm_interp)./(vmax - vmin)
 # println("pressure side error =\n$(err)")
+
+fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "19890016302-figure08-bl_thickness-suction_side.csv")
+bpm_pressure_side = DelimitedFiles.readdlm(fname, ',')
+alpha_deg = bpm_pressure_side[:, 1]
+deltastar_bpm = bpm_pressure_side[:, 2]
+scatter!(ax1, alpha_deg, deltastar_bpm, color=colors[2], markersize=4, label="suction side, BPM report")
+
+alpha_deg_jl = range(minimum(alpha_deg), maximum(alpha_deg); length=50)
+deltastar_jl = AcousticAnalogies._bl_thickness_s.(Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()), alpha_deg_jl.*pi/180)
+lines!(ax1, alpha_deg_jl, deltastar_jl; color=colors[2], label="suction side, Julia")
 
 xlims!(ax1, 0, 25)
 ylims!(ax1, 0.2, 40)

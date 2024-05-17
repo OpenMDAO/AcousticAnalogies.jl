@@ -307,7 +307,7 @@ abstract type AbstractDirectivity end
 struct BPMDirectivity <: AbstractDirectivity end
 struct BrooksBurleyDirectivity <: AbstractDirectivity end
 
-abstract type AbstractBroadbandSourceElement{TDirect,TUInduction} <: AbstractCompactSourceElement end
+abstract type AbstractBroadbandSourceElement{TDirect,TUInduction,TMachCorrection} <: AbstractCompactSourceElement end
 
 orientation(se::AbstractBroadbandSourceElement) = se.span_uvec
 
@@ -622,7 +622,11 @@ function noise(se::AbstractBroadbandSourceElement, obs::AbstractAcousticObserver
     return noise(se, obs, t_obs, freqs)
 end
 
-@concrete struct TBLTESourceElement{TDirect<:AbstractDirectivity,TUInduction} <: AbstractBroadbandSourceElement{TDirect,TUInduction}
+abstract type MachCorrection end
+struct NoMachCorrection <: MachCorrection end
+struct PrandtlGlauertMachCorrection <: MachCorrection end
+
+@concrete struct TBLTESourceElement{TDirect<:AbstractDirectivity,TUInduction,TMachCorrection} <: AbstractBroadbandSourceElement{TDirect,TUInduction,TMachCorrection}
     # Speed of sound, m/s.
     c0
     # Kinematic viscosity, m^2/s
@@ -651,9 +655,9 @@ end
     chord_cross_span_to_get_top_uvec
 end
 
-# Default to using the `BrooksBurleyDirectivity` directivity function, and include induction in the flow speed normal to span (TUInduction == true).
+# Default to using the `BrooksBurleyDirectivity` directivity function, include induction in the flow speed normal to span (TUInduction == true), and use the PrandtlGlauertMachCorrection.
 function TBLTESourceElement(c0, nu, Δr, chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
-    return TBLTESourceElement{BrooksBurleyDirectivity,true}(c0, nu, Δr, chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
+    return TBLTESourceElement{BrooksBurleyDirectivity,true,PrandtlGlauertMachCorrection}(c0, nu, Δr, chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
 end
 
 """
@@ -693,7 +697,7 @@ This can be done easily with the transformations provided by the `KinematicCoord
 - bl: Boundary layer struct, i.e. an AbstractBoundaryLayer.
 - twist_about_positive_y: if `true`, apply twist ϕ about positive y axis, negative y axis otherwise
 """
-function TBLTESourceElement{TDirect,TUInduction}(c0, nu, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y) where {TDirect,TUInduction}
+function TBLTESourceElement{TDirect,TUInduction,TMachCorrection}(c0, nu, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y) where {TDirect,TUInduction,TMachCorrection}
     sθ, cθ = sincos(θ)
     sϕ, cϕ = sincos(ϕ)
     y0dot = @SVector [0, r*cθ, r*sθ]
@@ -708,12 +712,12 @@ function TBLTESourceElement{TDirect,TUInduction}(c0, nu, r, θ, Δr, chord, ϕ, 
     end
 
     chord_cross_span_to_get_top_uvec = twist_about_positive_y
-    return TBLTESourceElement{TDirect,TUInduction}(c0, nu, Δr, chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
+    return TBLTESourceElement{TDirect,TUInduction,TMachCorrection}(c0, nu, Δr, chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
 end
 
-# Default to using the `BrooksBurleyDirectivity` directivity function, and include induction in the flow speed normal to span (TUInduction == true).
+# Default to using the `BrooksBurleyDirectivity` directivity function, include induction in the flow speed normal to span (TUInduction == true), and use the PrandtlGlauertMachCorrection.
 function TBLTESourceElement(c0, nu, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
-    return TBLTESourceElement{BrooksBurleyDirectivity,true}(c0, nu, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
+    return TBLTESourceElement{BrooksBurleyDirectivity,true,PrandtlGlauertMachCorrection}(c0, nu, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
 end
 
 """
@@ -721,7 +725,7 @@ end
 
 Transform the position and orientation of a source element according to the coordinate system transformation `trans`.
 """
-function (trans::KinematicTransformation)(se::TBLTESourceElement{TDirect,TUInduction}) where {TDirect,TUInduction}
+function (trans::KinematicTransformation)(se::TBLTESourceElement{TDirect,TUInduction,TMachCorrection}) where {TDirect,TUInduction,TMachCorrection}
     linear_only = false
     y0dot, y1dot = trans(se.τ, se.y0dot, se.y1dot, linear_only)
     y0dot, y1dot_fluid = trans(se.τ, se.y0dot, se.y1dot_fluid, linear_only)
@@ -729,7 +733,7 @@ function (trans::KinematicTransformation)(se::TBLTESourceElement{TDirect,TUInduc
     span_uvec = trans(se.τ, se.span_uvec, linear_only)
     chord_uvec = trans(se.τ, se.chord_uvec, linear_only)
 
-    return TBLTESourceElement{TDirect,TUInduction}(se.c0, se.nu, se.Δr, se.chord, y0dot, y1dot, y1dot_fluid, se.τ, se.Δτ, span_uvec, chord_uvec, se.bl, se.chord_cross_span_to_get_top_uvec)
+    return TBLTESourceElement{TDirect,TUInduction,TMachCorrection}(se.c0, se.nu, se.Δr, se.chord, y0dot, y1dot, y1dot_fluid, se.τ, se.Δτ, span_uvec, chord_uvec, se.bl, se.chord_cross_span_to_get_top_uvec)
 end
 
 doppler(pbs::AcousticMetrics.AbstractProportionalBandSpectrum) = AcousticMetrics.freq_scaler(pbs)
@@ -759,6 +763,11 @@ end
     @boundscheck checkbounds(pbs, i)
     return @inbounds pbs.G_s[i] + pbs.G_p[i] + pbs.G_alpha[i]
 end
+
+@inline AcousticMetrics.has_observer_time(pbs::TBLTEOutput) = true
+@inline AcousticMetrics.observer_time(pbs::TBLTEOutput) = pbs.t
+@inline AcousticMetrics.timestep(pbs::TBLTEOutput) = pbs.dt
+@inline AcousticMetrics.time_scaler(pbs::TBLTEOutput, period) = timestep(pbs)/period
 
 # function pbs_suction(pbs::TBLTEOutput)
 #     t = AcousticMetrics.observer_time(pbs)
@@ -831,6 +840,15 @@ function _tble_te_alpha(freq, Re_c, deltastar_s_U, St_peak_alpha, k_2, scaler_l,
     return ifelse(deep_stall, G_alpha_stall, G_alpha)
 end
 
+# Should use traits or something for this.
+function mach_correction(se::AbstractBroadbandSourceElement{TDirect,TUInduction,NoMachCorrection}, M) where {TDirect,TUInduction}
+    return one(typeof(M))
+end
+
+function mach_correction(se::AbstractBroadbandSourceElement{TDirect,TUInduction,PrandtlGlauertMachCorrection}, M) where {TDirect,TUInduction}
+    return 1/(1 - M^2)
+end
+
 function noise(se::TBLTESourceElement, obs::AbstractAcousticObserver, t_obs, freqs)
     # Position of the observer:
     x_obs = obs(t_obs)
@@ -889,15 +907,19 @@ function noise(se::TBLTESourceElement, obs::AbstractAcousticObserver, t_obs, fre
     deltastar_s_U = deltastar_s/U
     deltastar_p_U = deltastar_p/U
 
+    # Brooks and Burley 2001 recommend a Prandtl-Glauert style Mach number correction.
+    # But whether or not it's included is dependent on the TMachCorrection type parameter for the source element.
+    m_corr = mach_correction(se, M)
+
     # The Brooks and Burley autospectrums appear to be scaled by the usual squared reference pressure (20 μPa)^2, but I'd like things in dimensional units, so multiply through by that.
     pref2 = 4e-10
-    G_s_scaler = (deltastar_s*M^5*se.Δr*Dh)/(r_er^2)
+    G_s_scaler = (deltastar_s*M^5*se.Δr*Dh)/(r_er^2)*m_corr
     G_s = _tble_te_s.(freqs, deltastar_s_U, Re_c, St_peak_s, k_1, G_s_scaler, deep_stall).*pref2
 
-    G_p_scaler = (deltastar_p*M^5*se.Δr*Dh)/(r_er^2)
+    G_p_scaler = (deltastar_p*M^5*se.Δr*Dh)/(r_er^2)*m_corr
     G_p = _tble_te_p.(freqs, deltastar_p_U, Re_c, St_peak_p, k_1, Δk_1, G_p_scaler, deep_stall).*pref2
 
-    G_alpha_scaler_l = (deltastar_s*M^5*se.Δr*Dl)/(r_er^2)
+    G_alpha_scaler_l = (deltastar_s*M^5*se.Δr*Dl)/(r_er^2)*m_corr
     G_alpha_scaler_h = G_s_scaler
     G_alpha = _tble_te_alpha.(freqs, Re_c, deltastar_s_U, St_peak_alpha, k_2, G_alpha_scaler_l, G_alpha_scaler_h, deep_stall).*pref2
 

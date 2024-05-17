@@ -1330,7 +1330,7 @@ end
                                 for vc_sign in [1, -1]
                                     vn = -(Vx + u)*vn_sign
                                     vc = (-Vy + v)*vc_sign
-                                    se = AcousticAnalogies.TBLTESourceElement{AcousticAnalogies.BrooksBurleyDirectivity,use_induction}(c0, nu, r, θ, dr, chord, twist, vn, vr, vc, τ, dτ, bl, twist_about_positive_y)
+                                    se = AcousticAnalogies.TBLTESourceElement{AcousticAnalogies.BrooksBurleyDirectivity,use_induction,AcousticAnalogies.NoMachCorrection}(c0, nu, r, θ, dr, chord, twist, vn, vr, vc, τ, dτ, bl, twist_about_positive_y)
                                     # And then the angle of attack will be `twist - atan(-vn, -vc)`, where `twist` is the twist of the blade, `vn` is the velocity in the axial direction, and `vc` is the velocity in the circumferential/tangential direction.
                                     # But we need to switch the direction of the velocity vector, since I'm thinking of them in opposite directions (eg the angle of attack is zero when the velocity and chordwise vector from trailing edge to leading edge are exactly opposite).
                                     # The rem2pi will give us back an equivalent angle in the interval [-π, π].
@@ -1551,7 +1551,7 @@ end
         # We're starting at τ = 0, and the time step doesn't matter yet.
         τ = 0.0
         Δτ = 1.0
-        se_tblte = AcousticAnalogies.TBLTESourceElement{AcousticAnalogies.BPMDirectivity,false}(c0, nu, r, θ, L, chord, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
+        se_tblte = AcousticAnalogies.TBLTESourceElement{AcousticAnalogies.BPMDirectivity,false,AcousticAnalogies.NoMachCorrection}(c0, nu, r, θ, L, chord, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
         if do_lblvs
             se_lblvs = AcousticAnalogies.LBLVSSourceElement{AcousticAnalogies.BPMDirectivity,false}(c0, nu, r, θ, L, chord, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
         end
@@ -1564,9 +1564,9 @@ end
 
 
         if combined_calc == :no_tip
-            se_combined = AcousticAnalogies.CombinedNoTipBroadbandSourceElement{AcousticAnalogies.BPMDirectivity,false}(c0, nu, r, θ, L, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
+            se_combined = AcousticAnalogies.CombinedNoTipBroadbandSourceElement{AcousticAnalogies.BPMDirectivity,false,AcousticAnalogies.NoMachCorrection}(c0, nu, r, θ, L, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
         elseif combined_calc == :with_tip
-            se_combined = AcousticAnalogies.CombinedWithTipBroadbandSourceElement{AcousticAnalogies.BPMDirectivity,false}(c0, nu, r, θ, L, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, blade_tip, twist_about_positive_y)
+            se_combined = AcousticAnalogies.CombinedWithTipBroadbandSourceElement{AcousticAnalogies.BPMDirectivity,false,AcousticAnalogies.NoMachCorrection}(c0, nu, r, θ, L, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, blade_tip, twist_about_positive_y)
         end
 
         # Let's check that things are what we expect.

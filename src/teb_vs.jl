@@ -131,7 +131,7 @@ function BLUNT(freq, nu, L, chord, h, Psi, U, M, M_c, r_e, theta_e, phi_e, alpha
     return SPL_blunt
 end
 
-@concrete struct TEBVSSourceElement{TDirect<:AbstractDirectivity,TUInduction} <: AbstractBroadbandSourceElement{TDirect,TUInduction}
+@concrete struct TEBVSSourceElement{TDirect<:AbstractDirectivity,TUInduction} <: AbstractBroadbandSourceElement{TDirect,TUInduction,NoMachCorrection}
     # Speed of sound, m/s.
     c0
     # Kinematic viscosity, m^2/s

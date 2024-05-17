@@ -37,12 +37,6 @@ function tip_vortex_size_c(::RoundedTip, alphatip)
     return 0.008*alphatip_deg
 end
 
-function tip_vortex_size_c(::RoundedTip, alphatip)
-    # Equation 63 in the BPM report.
-    alphatip_deg = alphatip*180/pi
-    return 0.008*alphatip_deg
-end
-
 function tip_vortex_size_c(::FlatTip, alphatip)
     alphatip_deg = alphatip*180/pi
     # Equation 67 in the BPM report.
@@ -76,7 +70,7 @@ function TIP(freq, chord, M, M_c, U_max, M_max, r_e, theta_e, phi_e, alphatip, b
     return SPL_tip
 end
 
-@concrete struct TipVortexSourceElement{TDirect<:AbstractDirectivity,TUInduction} <: AbstractBroadbandSourceElement{TDirect,TUInduction}
+@concrete struct TipVortexSourceElement{TDirect<:AbstractDirectivity,TUInduction} <: AbstractBroadbandSourceElement{TDirect,TUInduction,NoMachCorrection}
     # Speed of sound, m/s.
     c0
     # Radial/spanwise length of element, m.

@@ -13,23 +13,156 @@ using Test
             fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure06-bl_thickness-untripped.csv")
             bpm_untripped = DelimitedFiles.readdlm(fname, ',')
             Re_c_1e6 = bpm_untripped[:, 1]
-            deltastar0_c = bpm_untripped[:, 2]
+            delta0_c = bpm_untripped[:, 2]
 
             # Get the AcousticAnalogies.jl implementation.
             Re_c_1e6_jl = range(minimum(Re_c_1e6), maximum(Re_c_1e6); length=50)
-            deltastar0_c_jl = AcousticAnalogies.bl_thickness_0.(Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()), Re_c_1e6_jl.*1e6)
+            delta0_c_jl = AcousticAnalogies.bl_thickness_0.(Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()), Re_c_1e6_jl.*1e6)
             # Interpolate the BPM report data onto the uniform Re spacing.
-            deltastar0_c_interp = linear(Re_c_1e6, deltastar0_c, Re_c_1e6_jl)
+            delta0_c_interp = linear(Re_c_1e6, delta0_c, Re_c_1e6_jl)
 
             # Find the scaled error.
-            vmin, vmax = extrema(deltastar0_c)
-            err = abs.(deltastar0_c_jl .- deltastar0_c_interp)/(vmax - vmin)
+            vmin, vmax = extrema(delta0_c)
+            err = abs.(delta0_c_jl .- delta0_c_interp)/(vmax - vmin)
             @test maximum(err) < 0.041
+
+        end
+
+        @testset "tripped" begin
+            # Get the digitized data from the BPM report plot.
+            fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure06-bl_thickness-tripped.csv")
+            bpm_tripped = DelimitedFiles.readdlm(fname, ',')
+            Re_c_1e6 = bpm_tripped[:, 1]
+            delta0_c = bpm_tripped[:, 2]
+
+            # Get the AcousticAnalogies.jl implementation.
+            Re_c_1e6_jl = range(minimum(Re_c_1e6), maximum(Re_c_1e6); length=50)
+            delta0_c_jl = AcousticAnalogies.bl_thickness_0.(Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()), Re_c_1e6_jl.*1e6)
+            # Interpolate the BPM report data onto the uniform Re spacing.
+            delta0_c_interp = linear(Re_c_1e6, delta0_c, Re_c_1e6_jl)
+
+            # Find the scaled error.
+            vmin, vmax = extrema(delta0_c)
+            err = abs.(delta0_c_jl .- delta0_c_interp)/(vmax - vmin)
+            @test maximum(err) < 0.0086
+
+        end
+    end
+
+    @testset "non-zero angle of attack, tripped" begin
+        @testset "pressure side" begin
+            # Get the digitized data from the BPM report plot.
+            fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure07-bl_thickness-pressure_side.csv")
+            bpm_pressure_side = DelimitedFiles.readdlm(fname, ',')
+            alpha_deg = bpm_pressure_side[:, 1]
+            delta_bpm = bpm_pressure_side[:, 2]
+
+            # Get the AcousticAnalogies.jl implementation.
+            alpha_deg_jl = range(minimum(alpha_deg), maximum(alpha_deg); length=50)
+            delta_jl = AcousticAnalogies._bl_thickness_p.(Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()), alpha_deg_jl.*pi/180)
+
+            # Interpolate the BPM report data onto the uniform alpha spacing.
+            delta_bpm_interp = linear(alpha_deg, delta_bpm, alpha_deg_jl)
+
+            # Find the scaled error.
+            vmin, vmax = extrema(delta_bpm)
+            err = abs.(delta_jl .- delta_bpm_interp)./(vmax - vmin)
+            @test maximum(err) < 0.032
+        end
+
+        @testset "suction side" begin
+            # Get the digitized data from the BPM report plot.
+            fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure07-bl_thickness-suction_side.csv")
+            bpm_pressure_side = DelimitedFiles.readdlm(fname, ',')
+            alpha_deg = bpm_pressure_side[:, 1]
+            delta_bpm = bpm_pressure_side[:, 2]
+
+            # Get the AcousticAnalogies.jl implementation.
+            alpha_deg_jl = range(minimum(alpha_deg), maximum(alpha_deg); length=50)
+            delta_jl = AcousticAnalogies._bl_thickness_s.(Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()), alpha_deg_jl.*pi/180)
+
+            # Interpolate the BPM report data onto the uniform alpha spacing.
+            delta_bpm_interp = linear(alpha_deg, delta_bpm, alpha_deg_jl)
+
+            # Find the scaled error.
+            vmin, vmax = extrema(delta_bpm)
+            err = abs.(delta_jl .- delta_bpm_interp)./(vmax - vmin)
+            @test maximum(err) < 0.023
         end
     end
 
     @testset "non-zero angle of attack, untripped" begin
         @testset "pressure side" begin
+            # Non-zero boundary layer thickness for the pressure side is the same for tripped and untripped, so getting the data for the tripped case.
+            # Get the digitized data from the BPM report plot.
+            fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure07-bl_thickness-pressure_side.csv")
+            bpm_pressure_side = DelimitedFiles.readdlm(fname, ',')
+            alpha_deg = bpm_pressure_side[:, 1]
+            delta_bpm = bpm_pressure_side[:, 2]
+
+            # Get the AcousticAnalogies.jl implementation.
+            alpha_deg_jl = range(minimum(alpha_deg), maximum(alpha_deg); length=50)
+            delta_jl = AcousticAnalogies._bl_thickness_p.(Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()), alpha_deg_jl.*pi/180)
+
+            # Interpolate the BPM report data onto the uniform alpha spacing.
+            delta_bpm_interp = linear(alpha_deg, delta_bpm, alpha_deg_jl)
+
+            # Find the scaled error.
+            vmin, vmax = extrema(delta_bpm)
+            err = abs.(delta_jl .- delta_bpm_interp)./(vmax - vmin)
+            @test maximum(err) < 0.032
+        end
+
+        @testset "suction side" begin
+            # Get the digitized data from the BPM report plot.
+            fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure08-bl_thickness-suction_side.csv")
+            bpm_pressure_side = DelimitedFiles.readdlm(fname, ',')
+            alpha_deg = bpm_pressure_side[:, 1]
+            delta_bpm = bpm_pressure_side[:, 2]
+
+            # Get the AcousticAnalogies.jl implementation.
+            alpha_deg_jl = range(minimum(alpha_deg), maximum(alpha_deg); length=50)
+            delta_jl = AcousticAnalogies._bl_thickness_s.(Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()), alpha_deg_jl.*pi/180)
+
+            # Interpolate the BPM report data onto the uniform alpha spacing.
+            delta_bpm_interp = linear(alpha_deg, delta_bpm, alpha_deg_jl)
+
+            # Find the scaled error.
+            vmin, vmax = extrema(delta_bpm)
+            err = abs.(delta_jl .- delta_bpm_interp)./(vmax - vmin)
+            @test maximum(err) < 0.028
+        end
+    end
+
+    @testset "positive/negative angle of attack" begin
+        for bl in [AcousticAnalogies.TrippedN0012BoundaryLayer(), AcousticAnalogies.UntrippedN0012BoundaryLayer()]
+            for Re_c in (range(0.04, 3.0; length=30)) .* 10^6
+                for alphastar_deg in 0:30
+                    alphastar = alphastar_deg*pi/180
+                    # For a positive angle of attack, the pressure side should be the bottom side.
+                    delta_p = AcousticAnalogies.bl_thickness_p(bl, Re_c, alphastar)
+                    delta_bot = AcousticAnalogies.bl_thickness_bot(bl, Re_c, alphastar)
+                    @test delta_p ≈ delta_bot
+
+                    # For a positive angle of attack, the suction side should be the top side.
+                    delta_s = AcousticAnalogies.bl_thickness_s(bl, Re_c, alphastar)
+                    delta_top = AcousticAnalogies.bl_thickness_top(bl, Re_c, alphastar)
+                    @test delta_s ≈ delta_top
+
+                    # But if we switch the sign on alpha, the top and bottom switch too.
+                    delta_bot_neg = AcousticAnalogies.bl_thickness_bot(bl, Re_c, -alphastar)
+                    @test delta_bot_neg ≈ delta_s
+
+                    delta_top_neg = AcousticAnalogies.bl_thickness_top(bl, Re_c, -alphastar)
+                    @test delta_top_neg ≈ delta_p
+
+                    # But the value of the pressure and suction sides should never change.
+                    delta_p_neg = AcousticAnalogies.bl_thickness_p(bl, Re_c, -alphastar)
+                    @test delta_p_neg ≈ delta_p
+                    delta_s_neg = AcousticAnalogies.bl_thickness_s(bl, Re_c, -alphastar)
+                    @test delta_s_neg ≈ delta_s
+                end
+            end
         end
     end
 end
@@ -138,6 +271,7 @@ end
             err = abs.(delta_jl .- delta_bpm_interp)./(vmax - vmin)
             @test maximum(err) < 0.037
         end
+
         @testset "displacement thickness, pressure side" begin
             # Get the digitized data from the BPM report plot.
             fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure08-pressure_side.csv")
@@ -174,6 +308,38 @@ end
             err = abs.(deltastar_jl .- deltastar_bpm_interp)./(vmax - vmin)
             # This is dumb. Maybe I have a bug?
             @test maximum(err) < 0.081
+        end
+    end
+
+    @testset "positive/negative angle of attack" begin
+        for bl in [AcousticAnalogies.TrippedN0012BoundaryLayer(), AcousticAnalogies.UntrippedN0012BoundaryLayer()]
+            for Re_c in (range(0.04, 3.0; length=30)) .* 10^6
+                for alphastar_deg in 0:30
+                    alphastar = alphastar_deg*pi/180
+                    # For a positive angle of attack, the pressure side should be the bottom side.
+                    deltastar_p = AcousticAnalogies.disp_thickness_p(bl, Re_c, alphastar)
+                    deltastar_bot = AcousticAnalogies.disp_thickness_bot(bl, Re_c, alphastar)
+                    @test deltastar_p ≈ deltastar_bot
+
+                    # For a positive angle of attack, the suction side should be the top side.
+                    deltastar_s = AcousticAnalogies.disp_thickness_s(bl, Re_c, alphastar)
+                    deltastar_top = AcousticAnalogies.disp_thickness_top(bl, Re_c, alphastar)
+                    @test deltastar_s ≈ deltastar_top
+
+                    # But if we switch the sign on alpha, the top and bottom switch too.
+                    deltastar_bot_neg = AcousticAnalogies.disp_thickness_bot(bl, Re_c, -alphastar)
+                    @test deltastar_bot_neg ≈ deltastar_s
+
+                    deltastar_top_neg = AcousticAnalogies.disp_thickness_top(bl, Re_c, -alphastar)
+                    @test deltastar_top_neg ≈ deltastar_p
+
+                    # But the value of the pressure and suction sides should never change.
+                    deltastar_p_neg = AcousticAnalogies.disp_thickness_p(bl, Re_c, -alphastar)
+                    @test deltastar_p_neg ≈ deltastar_p
+                    deltastar_s_neg = AcousticAnalogies.disp_thickness_s(bl, Re_c, -alphastar)
+                    @test deltastar_s_neg ≈ deltastar_s
+                end
+            end
         end
     end
 end

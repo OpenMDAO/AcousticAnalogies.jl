@@ -69,11 +69,11 @@ function _bl_thickness_s(::TrippedN0012BoundaryLayer, alphastar)
     if alphastar_deg < 0
         return T(NaN)
     elseif alphastar_deg ≤ 5
-        return 10^(0.0311*alphastar)
+        return 10^(0.0311*alphastar_deg)
     elseif alphastar_deg ≤ 12.5
-        return 0.3468*10^(0.1231*alphastar)
+        return 0.3468*10^(0.1231*alphastar_deg)
     elseif alphastar_deg ≤ 25
-        return 5.718*10^(0.0258*alphastar)
+        return 5.718*10^(0.0258*alphastar_deg)
     else
         # What should I do for angles of attack greater than 25°?
         # Maybe just keep the same thickness?
@@ -109,11 +109,11 @@ function _bl_thickness_s(::UntrippedN0012BoundaryLayer, alphastar)
         # throw(DomainError(alphastar, "negative alphastar argument invalid"))
         return T(NaN)
     elseif alphastar_deg ≤ 7.5
-        return 10^(0.03114*alphastar)
+        return 10^(0.03114*alphastar_deg)
     elseif alphastar_deg ≤ 12.5
-        return 0.0303*10^(0.2336*alphastar)
+        return 0.0303*10^(0.2336*alphastar_deg)
     elseif alphastar_deg ≤ 25
-        return 12*10^(0.0258*alphastar)
+        return 12*10^(0.0258*alphastar_deg)
     else
         # What should I do for angles of attack greater than 25°?
         # Maybe just keep the same thickness?
@@ -185,7 +185,7 @@ function disp_thickness_p(bl::AbstractBoundaryLayer, Re_c, alphastar)
 end
 
 function bl_thickness_bot(bl::AbstractBoundaryLayer, Re_c, alphastar)
-    # (δ^*_p/δ^*_0)*(δ^*_0/c)
+    # (δ_p/δ_0)*(δ_0/c)
     return _bl_thickness_bot(bl, alphastar)*bl_thickness_0(bl, Re_c)
 end
 
