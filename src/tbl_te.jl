@@ -617,7 +617,7 @@ function speed_normal_to_span(se::AbstractBroadbandSourceElement{TDirect,false})
     return norm_cs_safe(Vtotal - Vspan)
 end
 
-function noise(se::AbstractBroadbandSourceElement, obs::AbstractAcousticObserver, freqs::AcousticMetrics.ExactThirdOctaveCenterBands)
+function noise(se::AbstractBroadbandSourceElement, obs::AbstractAcousticObserver, freqs::AcousticMetrics.AbstractProportionalBands{3, :center})
     t_obs = adv_time(se, obs)
     return noise(se, obs, t_obs, freqs)
 end
@@ -849,7 +849,7 @@ function mach_correction(se::AbstractBroadbandSourceElement{TDirect,TUInduction,
     return 1/(1 - M^2)
 end
 
-function noise(se::TBLTESourceElement, obs::AbstractAcousticObserver, t_obs, freqs)
+function noise(se::TBLTESourceElement, obs::AbstractAcousticObserver, t_obs, freqs::AcousticMetrics.AbstractProportionalBands{3, :center})
     # Position of the observer:
     x_obs = obs(t_obs)
 

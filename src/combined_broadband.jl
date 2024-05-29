@@ -151,7 +151,7 @@ end
 @inline AcousticMetrics.timestep(pbs::CombinedNoTipOutput) = pbs.dt
 @inline AcousticMetrics.time_scaler(pbs::CombinedNoTipOutput, period) = timestep(pbs)/period
 
-function noise(se::CombinedNoTipBroadbandSourceElement, obs::AbstractAcousticObserver, t_obs, freqs::AcousticMetrics.ExactThirdOctaveCenterBands)
+function noise(se::CombinedNoTipBroadbandSourceElement, obs::AbstractAcousticObserver, t_obs, freqs::AcousticMetrics.AbstractProportionalBands{3, :center})
     # Position of the observer:
     x_obs = obs(t_obs)
 
@@ -424,7 +424,7 @@ end
 @inline AcousticMetrics.timestep(pbs::CombinedWithTipOutput) = pbs.dt
 @inline AcousticMetrics.time_scaler(pbs::CombinedWithTipOutput, period) = timestep(pbs)/period
 
-function noise(se::CombinedWithTipBroadbandSourceElement, obs::AbstractAcousticObserver, t_obs, freqs::AcousticMetrics.ExactThirdOctaveCenterBands)
+function noise(se::CombinedWithTipBroadbandSourceElement, obs::AbstractAcousticObserver, t_obs, freqs::AcousticMetrics.AbstractProportionalBands{3, :center})
     # Position of the observer:
     x_obs = obs(t_obs)
 

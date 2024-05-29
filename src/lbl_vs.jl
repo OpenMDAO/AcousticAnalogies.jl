@@ -209,7 +209,7 @@ function _lbl_vs(freq, delta_p_U, St_p_p, g2, g3, scaler)
     return G_lbl_vs
 end
 
-function noise(se::LBLVSSourceElement, obs::AbstractAcousticObserver, t_obs, freqs::AcousticMetrics.ExactThirdOctaveCenterBands)
+function noise(se::LBLVSSourceElement, obs::AbstractAcousticObserver, t_obs, freqs::AcousticMetrics.AbstractProportionalBands{3, :center})
     # Position of the observer:
     x_obs = obs(t_obs)
 

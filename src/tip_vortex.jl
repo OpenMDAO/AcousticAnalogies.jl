@@ -188,7 +188,7 @@ function _tip(freq, l_U_max, scaler)
     return G_tip
 end
 
-function noise(se::TipVortexSourceElement, obs::AbstractAcousticObserver, t_obs, freqs::AcousticMetrics.ExactThirdOctaveCenterBands)
+function noise(se::TipVortexSourceElement, obs::AbstractAcousticObserver, t_obs, freqs::AcousticMetrics.AbstractProportionalBands{3, :center})
     # Position of the observer:
     x_obs = obs(t_obs)
 
