@@ -358,16 +358,17 @@ apth_monopole(ap::F1APressureTimeHistory) = AcousticMetrics.PressureTimeHistory(
 apth_dipole(ap::F1APressureTimeHistory) = AcousticMetrics.PressureTimeHistory(pressure_dipole(ap), AcousticMetrics.timestep(ap), AcousticMetrics.starttime(ap))
 
 """
-    combine!(apth_out::F1APressureTimeHistory, apth::AbstractArray{<:F1AOutput}, axis; f_interp=akima)
+    combine!(apth_out::F1APressureTimeHistory, apth::AbstractArray{<:F1AOutput}, time_axis; f_interp=akima)
 
 Combine the acoustic pressures of multiple sources (`apth`) into a single acoustic pressure time history `apth_out`.
 
-The input acoustic pressures `apth` are interpolated onto the time grid
-returned by `time(apth_out)`. The interpolation is performed by the function `f_intep(xpt, ypt,
-x)`, where `xpt` and `ytp` are the input grid and function values, respectively,
-and `x` is the output grid.
+The input acoustic pressures `apth` are interpolated onto the time grid returned by `time(apth_out)`.
+The interpolation is performed by the function `f_intep(xpt, ypt, x)`, where `xpt` and `ytp` are the input grid and function values, respectively, and `x` is the output grid.
+`time_axis` is an integer indicating the time_axis of the `apth` array along which time varies.
+For example, if `time_axis == 1` and `apth` is a three-dimensional array, then `apth[:, i, j]` would be the `F1AOutput` objects of the `i`, `j` source element for all time.
+But if `time_axis == 3`, then `apth[i, j, :]` would be the `F1AOutput` objects of the `i`, `j` source element for all time.
 """
-function combine!(apth_out, apth, axis; f_interp=akima)
+function combine!(apth_out, apth, time_axis; f_interp=akima)
     # This makes no difference compared to passing in a cache (an object with
     # working arrays that I'd copy stuff to) to this function (sometimes a
     # speedup of <1%, sometimes a slowdown of <1%). I'm sure it'd be worse if I
@@ -382,15 +383,18 @@ function combine!(apth_out, apth, axis; f_interp=akima)
     p_m_interp = pressure_monopole(apth_out)
     p_d_interp = pressure_dipole(apth_out)
 
-    dimsAPTH = [axes(t_obs)...]
+    # dimsAPTH = [axes(t_obs)...]
+    dimsAPTH = axes(t_obs)
     ndimsAPTH = ndims(t_obs)
-    alldims = [1:ndimsAPTH;]  # Is this any better than `collect(1:ndimsAPTH)`?
+    alldims = 1:ndimsAPTH
 
-    otherdims = setdiff(alldims, axis)
+    otherdims = setdiff(alldims, time_axis)
     itershape = tuple(dimsAPTH[otherdims]...)
 
-    idx = Any[first(ind) for ind in axes(t_obs)]
-    idx[axis] = Colon()
+    # idx = Any[first(ind) for ind in axes(t_obs)]
+    # idx[time_axis] = Colon()
+    # Create an array we'll use to index pbs_in, with a `Colon()` for the time_axis position and integers of the first value for all the others.
+    idx = [ifelse(d==time_axis, Colon(), first(ind)) for (d, ind) in enumerate(axes(t_obs))]
 
     nidx = length(otherdims)
     indices = CartesianIndices(itershape)
@@ -404,23 +408,30 @@ function combine!(apth_out, apth, axis; f_interp=akima)
         for i in 1:nidx
             idx[otherdims[i]] = I.I[i]
         end
-        # Now I have the current indices of the source that I want to
-        # interpolate.
-        p_m_interp .+= f_interp(t_obs[idx...], p_m[idx...], t_common)
-        p_d_interp .+= f_interp(t_obs[idx...], p_d[idx...], t_common)
+        # Now I have the current indices of the source that I want to interpolate.
+        # p_m_interp .+= f_interp(t_obs[idx...], p_m[idx...], t_common)
+        # p_d_interp .+= f_interp(t_obs[idx...], p_d[idx...], t_common)
+        # Let's be cool and use views.
+        t_obs_v = @view t_obs[idx...]
+        p_m_v = @view p_m[idx...]
+        p_d_v = @view p_d[idx...]
+        p_m_interp .+= f_interp(t_obs_v, p_m_v, t_common)
+        p_d_interp .+= f_interp(t_obs_v, p_d_v, t_common)
     end
 
     return apth_out
 end
 
 """
-    combine(apth::AbstractArray{<:F1AOutput}, period::AbstractFloat, n::Integer, axis=1; f_interp=akima)
+    combine(apth::AbstractArray{<:F1AOutput}, period::AbstractFloat, n::Integer, time_axis=1; f_interp=akima)
 
-Combine the acoustic pressures of multiple sources (`apth`) into a single
-acoustic pressure time history on a time grid of size `n` extending over time
-length `period`.
+Combine the acoustic pressures of multiple sources (`apth`) into a single acoustic pressure time history on a time grid of size `n` extending over time length `period`.
+
+`time_axis` is an integer indicating the time_axis of the `apth` array along which time varies.
+For example, if `time_axis == 1` and `apth` is a three-dimensional array, then `apth[:, i, j]` would be the `F1AOutput` objects of the `i`, `j` source element for all time.
+But if `time_axis == 3`, then `apth[i, j, :]` would be the `F1AOutput` objects of the `i`, `j` source element for all time.
 """
-function combine(apth, period, n::Integer, axis::Integer=1; f_interp=akima)
-    apth_out = F1APressureTimeHistory(apth, period, n, axis)
-    return combine!(apth_out, apth, axis; f_interp=f_interp)
+function combine(apth, period, n::Integer, time_axis::Integer=1; f_interp=akima)
+    apth_out = F1APressureTimeHistory(apth, period, n, time_axis)
+    return combine!(apth_out, apth, time_axis; f_interp=f_interp)
 end

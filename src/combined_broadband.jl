@@ -151,7 +151,7 @@ end
 @inline AcousticMetrics.timestep(pbs::CombinedNoTipOutput) = pbs.dt
 @inline AcousticMetrics.time_scaler(pbs::CombinedNoTipOutput, period) = timestep(pbs)/period
 
-function noise(se::CombinedNoTipBroadbandSourceElement, obs::AbstractAcousticObserver, t_obs, freqs)
+function noise(se::CombinedNoTipBroadbandSourceElement, obs::AbstractAcousticObserver, t_obs, freqs::AcousticMetrics.ExactThirdOctaveCenterBands)
     # Position of the observer:
     x_obs = obs(t_obs)
 
@@ -199,6 +199,11 @@ function noise(se::CombinedNoTipBroadbandSourceElement, obs::AbstractAcousticObs
     alphastar0 = alpha_stall(se.bl, Re_c)
     gamma0_deg = gamma0(M)
     deep_stall = (alphastar_positive*180/pi) > min(gamma0_deg, alphastar0*180/pi)
+    # if deep_stall
+    #     println("deep_stall! M = $(M), alphastar_positive*180/pi = $(alphastar_positive*180/pi), gamma0_deg = $(gamma0_deg), alphastar0*180/pi = $(alphastar0*180/pi)")
+    #     println("forcing deep_stall == false")
+    #     deep_stall = false
+    # end
 
     St_peak_p = St_1(M)
     St_peak_alpha = St_2(St_peak_p, alphastar_positive)
@@ -255,6 +260,7 @@ function noise(se::CombinedNoTipBroadbandSourceElement, obs::AbstractAcousticObs
     # Get the doppler-shifted time step and proportional bands.
     dt = se.Δτ/doppler
     freqs_obs = AcousticMetrics.center_bands(freqs, doppler)
+    @assert AcousticMetrics.freq_scaler(freqs_obs) ≈ doppler
 
     # All done.
     return CombinedNoTipOutput(G_s, G_p, G_alpha, G_lbl_vs, G_teb_vs, freqs_obs, dt, t_obs)
@@ -418,7 +424,7 @@ end
 @inline AcousticMetrics.timestep(pbs::CombinedWithTipOutput) = pbs.dt
 @inline AcousticMetrics.time_scaler(pbs::CombinedWithTipOutput, period) = timestep(pbs)/period
 
-function noise(se::CombinedWithTipBroadbandSourceElement, obs::AbstractAcousticObserver, t_obs, freqs)
+function noise(se::CombinedWithTipBroadbandSourceElement, obs::AbstractAcousticObserver, t_obs, freqs::AcousticMetrics.ExactThirdOctaveCenterBands)
     # Position of the observer:
     x_obs = obs(t_obs)
 
@@ -476,6 +482,11 @@ function noise(se::CombinedWithTipBroadbandSourceElement, obs::AbstractAcousticO
     alphastar0 = alpha_stall(se.bl, Re_c)
     gamma0_deg = gamma0(M)
     deep_stall = (alphastar_positive*180/pi) > min(gamma0_deg, alphastar0*180/pi)
+    # if deep_stall
+    #     println("deep_stall! M = $(M), alphastar_positive*180/pi = $(alphastar_positive*180/pi), gamma0_deg = $(gamma0_deg), alphastar0*180/pi = $(alphastar0*180/pi)")
+    #     println("forcing deep_stall == false")
+    #     deep_stall = false
+    # end
 
     St_peak_p = St_1(M)
     St_peak_alpha = St_2(St_peak_p, alphastar_positive)
@@ -545,6 +556,7 @@ function noise(se::CombinedWithTipBroadbandSourceElement, obs::AbstractAcousticO
     # Get the doppler-shifted time step and proportional bands.
     dt = se.Δτ/doppler
     freqs_obs = AcousticMetrics.center_bands(freqs, doppler)
+    @assert AcousticMetrics.freq_scaler(freqs_obs) ≈ doppler
 
     # All done.
     return CombinedWithTipOutput(G_s, G_p, G_alpha, G_lbl_vs, G_teb_vs, G_tip, freqs_obs, dt, t_obs)

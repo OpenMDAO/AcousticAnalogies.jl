@@ -1145,6 +1145,22 @@ SPL_s = bpm[:, 2]
 f_p = f_s
 SPL_p = SPL_s
 
+# nu = 1.4529e-5  # kinematic viscosity, m^2/s
+# L = 45.72e-2  # span in meters
+# chord = 30.48e-2  # chord in meters
+# U = 71.3  # freestream velocity in m/s
+# M = 0.209  # Mach number, corresponds to U = 71.3 m/s in BPM report
+# r_e = 1.22 # radiation distance in meters
+# θ_e = 90*pi/180 
+# Φ_e = 90*pi/180
+# M_c = 0.8*M
+# alphastar = 0.0
+# f_jl = ExactThirdOctaveCenterBands(0.2, 20e3)
+# SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+# SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+# SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
+# SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
+
 nu = 1.4529e-5  # kinematic viscosity, m^2/s
 L = 45.72e-2  # span in meters
 chord = 30.48e-2  # chord in meters
@@ -1155,11 +1171,9 @@ r_e = 1.22 # radiation distance in meters
 Φ_e = 90*pi/180
 M_c = 0.8*M
 alphastar = 0.0
-f_jl = ExactThirdOctaveCenterBands(0.2, 20e3)
-SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
-SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
-SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
-SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
+bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
+f_jl, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = AcousticAnalogies.calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl)
+
 
 fig = Figure()
 ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
@@ -2215,41 +2229,53 @@ bpm = DelimitedFiles.readdlm(fname, ',')
 f_lbl_vs = bpm[:, 1]
 SPL_lbl_vs = bpm[:, 2]
 
+# nu = 1.4529e-5  # kinematic viscosity, m^2/s
+# L = 45.72e-2  # span in meters
+# chord = 30.48e-2  # chord in meters
+# U = 71.3  # freestream velocity in m/s
+# # M = 0.209  # Mach number, corresponds to U = 71.3 m/s in BPM report
+# M = U/340.46
+# r_e = 1.22 # radiation distance in meters
+# θ_e = 90*pi/180 
+# Φ_e = 90*pi/180
+# M_c = 0.8*M
+# # D_h = AcousticAnalogies.Dbar_h(θ_e, Φ_e, M, M_c)
+# alphastar = 1.5*pi/180
+# # Re_c = U*chord/nu
+# # deltastar_s = AcousticAnalogies.disp_thickness_s(AcousticAnalogies.UntrippedN0012BoundaryLayer(), Re_c, alphastar)*chord
+# # deltastar_p = AcousticAnalogies.disp_thickness_p(AcousticAnalogies.UntrippedN0012BoundaryLayer(), Re_c, alphastar)*chord
+# f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
+# # St_s = @. f_jl*deltastar_s/U
+# # St_p = @. f_jl*deltastar_p/U
+# # A_s = AcousticAnalogies.A.(St_s./AcousticAnalogies.St_1(M), Re_c)
+# # A_p = AcousticAnalogies.A.(St_p./AcousticAnalogies.St_1(M), Re_c)
+# # Re_deltastar_p = U*deltastar_p/nu
+# # ΔK_1 = AcousticAnalogies.DeltaK_1(alphastar, Re_deltastar_p)
+# # K_1 = AcousticAnalogies.K_1(Re_c)
+# # SPL_s_jl = @. 10*log10((deltastar_s*M^5*L*D_h)/(r_e^2)) + A_s + K_1 - 3
+# # SPL_p_jl = @. 10*log10((deltastar_p*M^5*L*D_h)/(r_e^2)) + A_p + K_1 - 3 + ΔK_1
+# # B = AcousticAnalogies.B.(St_s./AcousticAnalogies.St_2(AcousticAnalogies.St_1(M), alphastar), Re_c)
+# # K_2 = AcousticAnalogies.K_2(Re_c, M, alphastar)
+# # SPL_alpha_jl = @. 10*log10((deltastar_s*M^5*L*D_h)/(r_e^2)) + B + K_2
+# SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
+# 
+# SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
+# SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
+# SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
+# 
+# SPL_lbl_vs_jl = AcousticAnalogies.LBL_VS.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
+
 nu = 1.4529e-5  # kinematic viscosity, m^2/s
 L = 45.72e-2  # span in meters
 chord = 30.48e-2  # chord in meters
 U = 71.3  # freestream velocity in m/s
-# M = 0.209  # Mach number, corresponds to U = 71.3 m/s in BPM report
-M = U/340.46
+M = 0.209  # Mach number, corresponds to U = 71.3 m/s in BPM report
 r_e = 1.22 # radiation distance in meters
 θ_e = 90*pi/180 
 Φ_e = 90*pi/180
-M_c = 0.8*M
-# D_h = AcousticAnalogies.Dbar_h(θ_e, Φ_e, M, M_c)
 alphastar = 1.5*pi/180
-# Re_c = U*chord/nu
-# deltastar_s = AcousticAnalogies.disp_thickness_s(AcousticAnalogies.UntrippedN0012BoundaryLayer(), Re_c, alphastar)*chord
-# deltastar_p = AcousticAnalogies.disp_thickness_p(AcousticAnalogies.UntrippedN0012BoundaryLayer(), Re_c, alphastar)*chord
-f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
-# St_s = @. f_jl*deltastar_s/U
-# St_p = @. f_jl*deltastar_p/U
-# A_s = AcousticAnalogies.A.(St_s./AcousticAnalogies.St_1(M), Re_c)
-# A_p = AcousticAnalogies.A.(St_p./AcousticAnalogies.St_1(M), Re_c)
-# Re_deltastar_p = U*deltastar_p/nu
-# ΔK_1 = AcousticAnalogies.DeltaK_1(alphastar, Re_deltastar_p)
-# K_1 = AcousticAnalogies.K_1(Re_c)
-# SPL_s_jl = @. 10*log10((deltastar_s*M^5*L*D_h)/(r_e^2)) + A_s + K_1 - 3
-# SPL_p_jl = @. 10*log10((deltastar_p*M^5*L*D_h)/(r_e^2)) + A_p + K_1 - 3 + ΔK_1
-# B = AcousticAnalogies.B.(St_s./AcousticAnalogies.St_2(AcousticAnalogies.St_1(M), alphastar), Re_c)
-# K_2 = AcousticAnalogies.K_2(Re_c, M, alphastar)
-# SPL_alpha_jl = @. 10*log10((deltastar_s*M^5*L*D_h)/(r_e^2)) + B + K_2
-SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
-
-SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
-SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
-SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
-
-SPL_lbl_vs_jl = AcousticAnalogies.LBL_VS.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
+bl = AcousticAnalogies.UntrippedN0012BoundaryLayer()
+f_jl, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_lbl_vs_jl = AcousticAnalogies.calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl; do_lblvs=true)
 
 fig = Figure()
 ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
@@ -2315,10 +2341,13 @@ M = 0.116  # Mach number, corresponds to U = 39.6 m/s in BPM report
 r_e = 1.22 # radiation distance in meters
 θ_e = 90*pi/180 
 Φ_e = 90*pi/180
-M_c = 0.8*M
+# M_c = 0.8*M
 alphastar = 0.0*pi/180
-f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
-SPL_lbl_vs_jl = AcousticAnalogies.LBL_VS.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
+bl = AcousticAnalogies.UntrippedN0012BoundaryLayer()
+# f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
+# SPL_lbl_vs_jl = AcousticAnalogies.LBL_VS.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
+
+f_jl, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_lbl_vs_jl = AcousticAnalogies.calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl; do_lblvs=true)
 
 fig = Figure()
 ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
@@ -2384,10 +2413,12 @@ M = 0.209  # Mach number, corresponds to U = 71.3 m/s in BPM report
 r_e = 1.22 # radiation distance in meters
 θ_e = 90*pi/180 
 Φ_e = 90*pi/180
-M_c = 0.8*M
+# M_c = 0.8*M
 alphastar = 2.7*pi/180
-f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
-SPL_lbl_vs_jl = AcousticAnalogies.LBL_VS.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
+# f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
+# SPL_lbl_vs_jl = AcousticAnalogies.LBL_VS.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
+bl = AcousticAnalogies.UntrippedN0012BoundaryLayer()
+f_jl, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_lbl_vs_jl = AcousticAnalogies.calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl; do_lblvs=true)
 
 fig = Figure()
 ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
@@ -2453,10 +2484,12 @@ M = 0.116  # Mach number, corresponds to U = 39.6 m/s in BPM report
 r_e = 1.22 # radiation distance in meters
 θ_e = 90*pi/180 
 Φ_e = 90*pi/180
-M_c = 0.8*M
+# M_c = 0.8*M
 alphastar = 0.0*pi/180
-f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
-SPL_lbl_vs_jl = AcousticAnalogies.LBL_VS.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
+# f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
+# SPL_lbl_vs_jl = AcousticAnalogies.LBL_VS.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
+bl = AcousticAnalogies.UntrippedN0012BoundaryLayer()
+f_jl, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_lbl_vs_jl = AcousticAnalogies.calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl; do_lblvs=true)
 
 fig = Figure()
 ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
@@ -2522,10 +2555,12 @@ M = 0.116  # Mach number, corresponds to U = 39.6 m/s in BPM report
 r_e = 1.22 # radiation distance in meters
 θ_e = 90*pi/180 
 Φ_e = 90*pi/180
-M_c = 0.8*M
+# M_c = 0.8*M
 alphastar = 3.3*pi/180
-f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
-SPL_lbl_vs_jl = AcousticAnalogies.LBL_VS.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
+# f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
+# SPL_lbl_vs_jl = AcousticAnalogies.LBL_VS.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
+bl = AcousticAnalogies.UntrippedN0012BoundaryLayer()
+f_jl, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_lbl_vs_jl = AcousticAnalogies.calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl; do_lblvs=true)
 
 fig = Figure()
 ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
@@ -2591,10 +2626,12 @@ M = 0.093  # mach number, corresponds to u = 31.7 m/s in bpm report
 r_e = 1.22 # radiation distance in meters
 θ_e = 90*pi/180 
 Φ_e = 90*pi/180
-M_c = 0.8*M
+# M_c = 0.8*M
 alphastar = 3.3*pi/180
-f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
-SPL_lbl_vs_jl = AcousticAnalogies.LBL_VS.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
+# f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
+# SPL_lbl_vs_jl = AcousticAnalogies.LBL_VS.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
+bl = AcousticAnalogies.UntrippedN0012BoundaryLayer()
+f_jl, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_lbl_vs_jl = AcousticAnalogies.calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl; do_lblvs=true)
 
 fig = Figure()
 ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
@@ -2660,10 +2697,12 @@ M = 0.093  # mach number, corresponds to u = 31.7 m/s in bpm report
 r_e = 1.22 # radiation distance in meters
 θ_e = 90*pi/180 
 Φ_e = 90*pi/180
-M_c = 0.8*M
+# M_c = 0.8*M
 alphastar = 0.0*pi/180
-f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
-SPL_lbl_vs_jl = AcousticAnalogies.LBL_VS.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
+# f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
+# SPL_lbl_vs_jl = AcousticAnalogies.LBL_VS.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
+bl = AcousticAnalogies.UntrippedN0012BoundaryLayer()
+f_jl, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_lbl_vs_jl = AcousticAnalogies.calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl; do_lblvs=true)
 
 fig = Figure()
 ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
@@ -2729,10 +2768,12 @@ M = 0.116  # Mach number, corresponds to U = 39.6 m/s in BPM report
 r_e = 1.22 # radiation distance in meters
 θ_e = 90*pi/180 
 Φ_e = 90*pi/180
-M_c = 0.8*M
+# M_c = 0.8*M
 alphastar = 4.2*pi/180
-f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
-SPL_lbl_vs_jl = AcousticAnalogies.LBL_VS.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
+# f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
+# SPL_lbl_vs_jl = AcousticAnalogies.LBL_VS.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
+bl = AcousticAnalogies.UntrippedN0012BoundaryLayer()
+f_jl, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_lbl_vs_jl = AcousticAnalogies.calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl; do_lblvs=true)
 
 fig = Figure()
 ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",

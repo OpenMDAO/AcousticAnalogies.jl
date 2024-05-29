@@ -44,6 +44,8 @@ export pbs_suction, pbs_pressure, pbs_alpha, pbs_teb, pbs_tip
 include("ccblade_helpers.jl")
 export source_elements_ccblade, tblte_source_elements_ccblade, lblvs_source_elements_ccblade, tebvs_source_elements_ccblade, tip_vortex_source_elements_ccblade, combined_broadband_source_elements_ccblade
 
+include("bpm_test_utils.jl")
+
 include("writevtk.jl")
 
 end # module

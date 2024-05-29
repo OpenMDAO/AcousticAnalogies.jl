@@ -697,13 +697,17 @@ where `y0dot` is the position of the source element.
 - `positive_x_rotation`: rotate blade around the positive-x axis if `true`, negative-x axis otherwise.
 """
 function LBLVSSourceElement(rotor::CCBlade.Rotor, section::CCBlade.Section, op::CCBlade.OperatingPoint, out::CCBlade.Outputs, θ, Δr, τ, Δτ, bl::AbstractBoundaryLayer, positive_x_rotation)
+    return LBLVSSourceElement{BrooksBurleyDirectivity,true}(rotor, section, op, out, θ, Δr, τ, Δτ, bl, positive_x_rotation)
+end
+
+function LBLVSSourceElement{TDirect,TUInduction}(rotor::CCBlade.Rotor, section::CCBlade.Section, op::CCBlade.OperatingPoint, out::CCBlade.Outputs, θ, Δr, τ, Δτ, bl::AbstractBoundaryLayer, positive_x_rotation) where {TDirect,TUInduction}
 
     y0dot, y1dot, y1dot_fluid, span_uvec, chord_uvec, chord_cross_span_to_get_top_uvec = _get_position_velocity_span_uvec_chord_uvec(
         section.theta, rotor.precone, op.pitch, section.r, θ, out.W, out.phi, positive_x_rotation)
 
     nu = op.mu/op.rho
 
-    return LBLVSSourceElement(op.asound, nu, Δr, section.chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
+    return LBLVSSourceElement{TDirect,TUInduction}(op.asound, nu, Δr, section.chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
 end
 
 """
@@ -722,6 +726,9 @@ Construct and return an array of LBLVSSourceElement objects from CCBlade structs
 - `positive_x_rotation`: rotate blade around the positive-x axis if `true`, negative-x axis otherwise.
 """
 function lblvs_source_elements_ccblade(rotor, sections, ops, outputs, bls, period, num_src_times, positive_x_rotation)
+    return lblvs_source_elements_ccblade(BrooksBurleyDirectivity, true, rotor, sections, ops, outputs, bls, period, num_src_times, positive_x_rotation)
+end
+function lblvs_source_elements_ccblade(TDirect::Type{<:AbstractDirectivity}, TUInduction::Bool, rotor, sections, ops, outputs, bls, period, num_src_times, positive_x_rotation)
     # Need to know the radial spacing. (CCBlade doesn't use this—when
     # integrating stuff [loading to get torque and thrust] it uses the
     # trapezoidal rule and passes in the radial locations, and assumes that
@@ -750,7 +757,7 @@ function lblvs_source_elements_ccblade(rotor, sections, ops, outputs, bls, perio
     # src_times = reshape(src_times, :, 1, 1)  # This one isn't necessary.
 
     # Construct and transform the source elements.
-    ses = LBLVSSourceElement.(Ref(rotor), sections_rs, ops_rs, outputs_rs, θs_rs, dradii_rs, src_times, Ref(dt), bls_rs, positive_x_rotation) .|> trans
+    ses = LBLVSSourceElement{TDirect,TUInduction}.(Ref(rotor), sections_rs, ops_rs, outputs_rs, θs_rs, dradii_rs, src_times, Ref(dt), bls_rs, positive_x_rotation) .|> trans
 
     return ses
 end

@@ -266,7 +266,7 @@ function _teb_vs(freq, h_U, h_over_deltastar_avg, St_3pp, Psi, g4, G_teb_vs_scal
     return G_bte
 end
 
-function noise(se::TEBVSSourceElement, obs::AbstractAcousticObserver, t_obs, freqs)
+function noise(se::TEBVSSourceElement, obs::AbstractAcousticObserver, t_obs, freqs::AcousticMetrics.ExactThirdOctaveCenterBands)
     # Position of the observer:
     x_obs = obs(t_obs)
 

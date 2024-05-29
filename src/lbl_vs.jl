@@ -200,10 +200,16 @@ function _lbl_vs(freq, delta_p_U, St_p_p, g2, g3, scaler)
     H_l = 10^(0.1*(G1(St_prime_over_St_peak_prime) + g2 + g3))
     # G_lbl_vs = (deltastar_p*M^5*Δr*Dh)/(r_er^2)*H_l
     G_lbl_vs = scaler*H_l
+
+    # LBLVS = 10.0*log10((dpr*M^5*L*Dh)/rc^2)+G1+G2+G3
+    # 10*log10((deltastar_p*M^5*Δr*Dh)/(r_er^2)*(10^(0.1*(G1(St_prime_over_St_peak_prime) + g2 + g3)))
+    # 10*log10((deltastar_p*M^5*Δr*Dh)/(r_er^2)) + 10*log10((10^(0.1*(G1(St_prime_over_St_peak_prime) + g2 + g3))))
+    # 10*log10((deltastar_p*M^5*Δr*Dh)/(r_er^2)) + 10*(0.1*(G1(St_prime_over_St_peak_prime) + g2 + g3))
+    # 10*log10((deltastar_p*M^5*Δr*Dh)/(r_er^2)) + G1(St_prime_over_St_peak_prime) + g2 + g3
     return G_lbl_vs
 end
 
-function noise(se::LBLVSSourceElement, obs::AbstractAcousticObserver, t_obs, freqs)
+function noise(se::LBLVSSourceElement, obs::AbstractAcousticObserver, t_obs, freqs::AcousticMetrics.ExactThirdOctaveCenterBands)
     # Position of the observer:
     x_obs = obs(t_obs)
 

@@ -165,6 +165,61 @@ using Test
             end
         end
     end
+
+    @testset "ITrip1N0012BoundaryLayer" begin
+
+        bl = AcousticAnalogies.ITrip1N0012BoundaryLayer()
+        bl_untripped = AcousticAnalogies.UntrippedN0012BoundaryLayer()
+        bl_tripped = AcousticAnalogies.TrippedN0012BoundaryLayer()
+        for Re_c in (range(0.04, 3.0; length=30)) .* 10^6
+            for alphastar in (-30:30) .* (pi/180)
+                # Should use the untripped pressure-side and suction-side boundary layer thickness.
+                @test AcousticAnalogies.bl_thickness_p(bl, Re_c, alphastar) ≈ AcousticAnalogies.bl_thickness_p(bl_untripped, Re_c, alphastar)
+                @test AcousticAnalogies.bl_thickness_s(bl, Re_c, alphastar) ≈ AcousticAnalogies.bl_thickness_s(bl_untripped, Re_c, alphastar)
+
+                # Should use the tripped displacement thickness.
+                @test AcousticAnalogies.disp_thickness_p(bl, Re_c, alphastar) ≈ AcousticAnalogies.disp_thickness_p(bl_tripped, Re_c, alphastar)
+                @test AcousticAnalogies.disp_thickness_s(bl, Re_c, alphastar) ≈ AcousticAnalogies.disp_thickness_s(bl_tripped, Re_c, alphastar)
+
+            end
+        end
+    end
+
+    @testset "ITrip2N0012BoundaryLayer" begin
+        bl = AcousticAnalogies.ITrip2N0012BoundaryLayer()
+        bl_untripped = AcousticAnalogies.UntrippedN0012BoundaryLayer()
+        bl_tripped = AcousticAnalogies.TrippedN0012BoundaryLayer()
+        for Re_c in (range(0.04, 3.0; length=30)) .* 10^6
+            for alphastar in (-30:30) .* (pi/180)
+                # boundary layer thickness should be untripped multiplied by 0.6.
+                @test AcousticAnalogies.bl_thickness_p(bl, Re_c, alphastar) ≈ 0.6*AcousticAnalogies.bl_thickness_p(bl_untripped, Re_c, alphastar)
+                @test AcousticAnalogies.bl_thickness_s(bl, Re_c, alphastar) ≈ 0.6*AcousticAnalogies.bl_thickness_s(bl_untripped, Re_c, alphastar)
+
+                # The pressure-side displacement thickness should be tripped multiplied by 0.6.
+                @test AcousticAnalogies.disp_thickness_p(bl, Re_c, alphastar) ≈ 0.6*AcousticAnalogies.disp_thickness_p(bl_tripped, Re_c, alphastar)
+                # The suction-side displacement thickness should be the tripped zero-alpha displacement thickness multipled by 0.6 multiplied by the untripped suction-side to zero-alpha displacement thickness ratio.
+                @test AcousticAnalogies.disp_thickness_s(bl, Re_c, alphastar) ≈ AcousticAnalogies.disp_thickness_s(bl_tripped, Re_c, 0) * 0.6 * AcousticAnalogies.disp_thickness_s(bl_untripped, Re_c, alphastar) / AcousticAnalogies.disp_thickness_s(bl_untripped, Re_c, 0)
+            end
+        end
+    end
+
+    @testset "ITrip3N0012BoundaryLayer" begin
+        bl = AcousticAnalogies.ITrip3N0012BoundaryLayer()
+        bl_untripped = AcousticAnalogies.UntrippedN0012BoundaryLayer()
+        bl_tripped = AcousticAnalogies.TrippedN0012BoundaryLayer()
+        for Re_c in (range(0.04, 3.0; length=30)) .* 10^6
+            for alphastar in (-30:30) .* (pi/180)
+                # boundary layer thickness should be untripped.
+                @test AcousticAnalogies.bl_thickness_p(bl, Re_c, alphastar) ≈ AcousticAnalogies.bl_thickness_p(bl_untripped, Re_c, alphastar)
+                @test AcousticAnalogies.bl_thickness_s(bl, Re_c, alphastar) ≈ AcousticAnalogies.bl_thickness_s(bl_untripped, Re_c, alphastar)
+
+                # The pressure-side displacement thickness should be untripped multiplied by 1.48.
+                @test AcousticAnalogies.disp_thickness_p(bl, Re_c, alphastar) ≈ 1.48*AcousticAnalogies.disp_thickness_p(bl_untripped, Re_c, alphastar)
+                # The suction-side displacement thickness should be the untripped.
+                @test AcousticAnalogies.disp_thickness_s(bl, Re_c, alphastar) ≈ AcousticAnalogies.disp_thickness_s(bl_untripped, Re_c, alphastar)
+            end
+        end
+    end
 end
 
 @testset "displacement thickness" begin

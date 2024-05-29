@@ -49,7 +49,7 @@ end
 
 function A(St_over_St_peak, Re_c)
     # Equation (37) from the BPM report.
-    a = abs(log10(St_over_St_peak))
+    a = abs_cs_safe(log10(St_over_St_peak))
     
     # Equation (38) from the BPM report.
     if Re_c < 9.52e4
@@ -95,7 +95,7 @@ end
 
 function B(St_over_St_peak, Re_c)
     # Equation (43) from the BPM report.
-    b = abs(log10(St_over_St_peak))
+    b = abs_cs_safe(log10(St_over_St_peak))
 
     # Equation (44) from the BPM report.
     if Re_c < 9.52e4
@@ -617,7 +617,7 @@ function speed_normal_to_span(se::AbstractBroadbandSourceElement{TDirect,false})
     return norm_cs_safe(Vtotal - Vspan)
 end
 
-function noise(se::AbstractBroadbandSourceElement, obs::AbstractAcousticObserver, freqs)
+function noise(se::AbstractBroadbandSourceElement, obs::AbstractAcousticObserver, freqs::AcousticMetrics.ExactThirdOctaveCenterBands)
     t_obs = adv_time(se, obs)
     return noise(se, obs, t_obs, freqs)
 end
