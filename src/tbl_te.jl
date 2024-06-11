@@ -622,9 +622,9 @@ function noise(se::AbstractBroadbandSourceElement, obs::AbstractAcousticObserver
     return noise(se, obs, t_obs, freqs)
 end
 
-abstract type MachCorrection end
-struct NoMachCorrection <: MachCorrection end
-struct PrandtlGlauertMachCorrection <: MachCorrection end
+abstract type AbstractMachCorrection end
+struct NoMachCorrection <: AbstractMachCorrection end
+struct PrandtlGlauertMachCorrection <: AbstractMachCorrection end
 
 @concrete struct TBLTESourceElement{TDirect<:AbstractDirectivity,TUInduction,TMachCorrection} <: AbstractBroadbandSourceElement{TDirect,TUInduction,TMachCorrection}
     # Speed of sound, m/s.

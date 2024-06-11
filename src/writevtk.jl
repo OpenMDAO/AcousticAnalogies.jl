@@ -1,5 +1,5 @@
 """
-    endpoints(se::CompactSourceElement)
+    endpoints(se::AbstractCompactSourceElement)
 
 Return the Tuple containing the endpoint locations of the compact source element `se`.
 """
@@ -71,11 +71,25 @@ function _write_data_to_vtk!(vtkfile, ses::AbstractArray{<:CompactSourceElement}
     vtkfile["LoadingDot", VTKCellData()] = hcat(SingleFieldStructArray(ses, Val{:f1dot})...)
 end
 
-function _write_data_to_vtk!(vtkfile, ses::AbstractArray{<:TBLTESourceElement})
+function _write_data_to_vtk!(vtkfile, ses::AbstractArray{<:Union{TBLTESourceElement,LBLVSSourceElement,TipVortexSourceElement}})
     # Now need to add the cell data. I would have expected to have to flatten
     # these arrays, but apparently that's not necessary.
     vtkfile["Length", VTKCellData()] = SingleFieldStructArray(ses, Val{:Δr})
     vtkfile["Chord", VTKCellData()] = SingleFieldStructArray(ses, Val{:chord})
+    vtkfile["Position", VTKCellData()] = hcat(SingleFieldStructArray(ses, Val{:y0dot})...)
+    vtkfile["Velocity", VTKCellData()] = hcat(SingleFieldStructArray(ses, Val{:y1dot})...)
+    vtkfile["FluidVelocity", VTKCellData()] = hcat(SingleFieldStructArray(ses, Val{:y1dot_fluid})...)
+    vtkfile["SpanUnitVector", VTKCellData()] = hcat(SingleFieldStructArray(ses, Val{:span_uvec})...)
+    vtkfile["ChordUnitVector", VTKCellData()] = hcat(SingleFieldStructArray(ses, Val{:chord_uvec})...)
+end
+
+function _write_data_to_vtk!(vtkfile, ses::AbstractArray{<:Union{TEBVSSourceElement,CombinedNoTipBroadbandSourceElement,CombinedWithTipBroadbandSourceElement}})
+    # Now need to add the cell data. I would have expected to have to flatten
+    # these arrays, but apparently that's not necessary.
+    vtkfile["Length", VTKCellData()] = SingleFieldStructArray(ses, Val{:Δr})
+    vtkfile["Chord", VTKCellData()] = SingleFieldStructArray(ses, Val{:chord})
+    vtkfile["TrailingEdgeThickness", VTKCellData()] = SingleFieldStructArray(ses, Val{:h})
+    vtkfile["TrailingEdgeAngle", VTKCellData()] = SingleFieldStructArray(ses, Val{:Psi})
     vtkfile["Position", VTKCellData()] = hcat(SingleFieldStructArray(ses, Val{:y0dot})...)
     vtkfile["Velocity", VTKCellData()] = hcat(SingleFieldStructArray(ses, Val{:y1dot})...)
     vtkfile["FluidVelocity", VTKCellData()] = hcat(SingleFieldStructArray(ses, Val{:y1dot_fluid})...)

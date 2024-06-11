@@ -1108,11 +1108,13 @@ end
 
         # Finally get all the source elements.
         # bls = [AcousticAnalogies.TrippedN0012BoundaryLayer()]
-        bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
+        # bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
+        # bls = Fill(AcousticAnalogies.TrippedN0012BoundaryLayer(), num_radial)
+        bls = fill(AcousticAnalogies.TrippedN0012BoundaryLayer(), length(sections))
         hs = range(0.1, 0.2; length=length(sections))
         Psis = range(0.2, 0.3; length=length(sections))
         blade_tip = AcousticAnalogies.RoundedTip()
-        ses_no_tip_helper, ses_with_tip_helper = combined_broadband_source_elements_ccblade(rotor, sections, ops, outs, hs, Psis, bl, blade_tip, src_time_range, num_src_times, positive_x_rotation)
+        ses_no_tip_helper, ses_with_tip_helper = combined_broadband_source_elements_ccblade(rotor, sections, ops, outs, hs, Psis, bls, blade_tip, src_time_range, num_src_times, positive_x_rotation)
 
         # Now need to get the source elements the "normal" way.
         # First get the transformation objects.
@@ -1167,6 +1169,7 @@ end
         vn_rs = reshape(vn, 1, :, 1)
         vr_rs = reshape(vr, 1, :, 1)
         vc_rs = reshape(vc, 1, :, 1)
+        bls_rs = reshape(bls, 1, :, 1)
 
         # Get all the transformations.
         trans = compose.(src_times, Ref(const_vel_trans), Ref(rot_trans))
@@ -1184,6 +1187,7 @@ end
         vn_rs_no_tip = @view vn_rs[:, begin:end-1, :]
         vr_rs_no_tip = @view vr_rs[:, begin:end-1, :]
         vc_rs_no_tip = @view vc_rs[:, begin:end-1, :]
+        bls_rs_no_tip = @view bls_rs[:, begin:end-1, :]
 
         radii_rs_with_tip = @view radii_rs[:, end:end, :]
         dradii_rs_with_tip = @view dradii_rs[:, end:end, :]
@@ -1197,11 +1201,12 @@ end
         vn_rs_with_tip = @view vn_rs[:, end:end, :]
         vr_rs_with_tip = @view vr_rs[:, end:end, :]
         vc_rs_with_tip = @view vc_rs[:, end:end, :]
+        bls_rs_with_tip = @view bls_rs[:, end:end, :]
 
         # Transform the source elements.
-        ses_no_tip = CombinedNoTipBroadbandSourceElement.(ccbc.c0, nus_rs_no_tip, radii_rs_no_tip, θs_rs, dradii_rs_no_tip, chord_rs_no_tip, twist_rs_no_tip, hs_rs_no_tip, Psis_rs_no_tip, vn_rs_no_tip, vr_rs_no_tip, vc_rs_no_tip, src_times, dt, Ref(bl), positive_x_rotation) .|> trans
+        ses_no_tip = CombinedNoTipBroadbandSourceElement.(ccbc.c0, nus_rs_no_tip, radii_rs_no_tip, θs_rs, dradii_rs_no_tip, chord_rs_no_tip, twist_rs_no_tip, hs_rs_no_tip, Psis_rs_no_tip, vn_rs_no_tip, vr_rs_no_tip, vc_rs_no_tip, src_times, dt, bls_rs_no_tip, positive_x_rotation) .|> trans
 
-        ses_with_tip = CombinedWithTipBroadbandSourceElement.(ccbc.c0, nus_rs_with_tip, radii_rs_with_tip, θs_rs, dradii_rs_with_tip, chord_rs_with_tip, twist_rs_with_tip, hs_rs_with_tip, Psis_rs_with_tip, vn_rs_with_tip, vr_rs_with_tip, vc_rs_with_tip, src_times, dt, Ref(bl), Ref(blade_tip), positive_x_rotation) .|> trans
+        ses_with_tip = CombinedWithTipBroadbandSourceElement.(ccbc.c0, nus_rs_with_tip, radii_rs_with_tip, θs_rs, dradii_rs_with_tip, chord_rs_with_tip, twist_rs_with_tip, hs_rs_with_tip, Psis_rs_with_tip, vn_rs_with_tip, vr_rs_with_tip, vc_rs_with_tip, src_times, dt, bls_rs_with_tip, Ref(blade_tip), positive_x_rotation) .|> trans
 
         # Now check that we got the same thing.
         for field in fieldnames(CombinedNoTipBroadbandSourceElement)
@@ -2235,7 +2240,8 @@ end
         # alphatip = 0.71*10.8*pi/180
         alphastar = 10.8*pi/180
         bl = AcousticAnalogies.UntrippedN0012BoundaryLayer()
-        blade_tip = AcousticAnalogies.RoundedTip{AcousticAnalogies.BPMTipAlphaCorrection}()
+        # blade_tip = AcousticAnalogies.RoundedTip{AcousticAnalogies.BPMTipAlphaCorrection}()
+        blade_tip = AcousticAnalogies.RoundedTip(AcousticAnalogies.BPMTipAlphaCorrection(), 0.0)
 
         fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure91-tip.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')

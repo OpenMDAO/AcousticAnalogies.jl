@@ -142,7 +142,7 @@ end
     chord
     # Trailing edge thickness, m.
     h
-    # Solid angle between blade surfaces immediately upstream of the trailing edge, deg.
+    # Solid angle between blade surfaces immediately upstream of the trailing edge, rad.
     Psi
     # Source position, m.
     y0dot

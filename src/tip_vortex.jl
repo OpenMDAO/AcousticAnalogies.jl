@@ -3,22 +3,33 @@ abstract type AbstractTipAlphaCorrection end
 struct NoTipAlphaCorrection <: AbstractTipAlphaCorrection end
 struct BPMTipAlphaCorrection <: AbstractTipAlphaCorrection end
 
-abstract type AbstractBladeTip{TipAlphaCorrection} end
+abstract type AbstractBladeTip{TTipAlphaCorrection} end
 
 alpha_zerolift(blade_tip::AbstractBladeTip) = blade_tip.alpha0lift
+tip_alpha_correction(blade_tip::AbstractBladeTip) = blade_tip.tip_alpha_correction
 
-@concrete struct RoundedTip{TipAlphaCorrection} <: AbstractBladeTip{TipAlphaCorrection} 
-    alpha0lift
+struct RoundedTip{TTipAlphaCorrection,TAlpha0Lift} <: AbstractBladeTip{TTipAlphaCorrection}
+    tip_alpha_correction::TTipAlphaCorrection
+    alpha0lift::TAlpha0Lift
+
+    function RoundedTip(tip_alpha_correction::TTipAlphaCorrection, alpha0lift::TAlpha0Lift) where {TTipAlphaCorrection<:AbstractTipAlphaCorrection,TAlpha0Lift}
+        return new{TTipAlphaCorrection, TAlpha0Lift}(tip_alpha_correction, alpha0lift)
+    end
 end
-RoundedTip(alpha0lift=0.0) = RoundedTip{NoTipAlphaCorrection}(alpha0lift)
-RoundedTip{TipAlphaCorrection}() where {TipAlphaCorrection} = RoundedTip{TipAlphaCorrection}(0.0)
+RoundedTip(alpha0lift=0.0) = RoundedTip(NoTipAlphaCorrection(), alpha0lift)
+# RoundedTip{TipAlphaCorrection}() where {TipAlphaCorrection} = RoundedTip{TipAlphaCorrection}(0.0)
 # RoundedTip() = RoundedTip{NoTipAlphaCorrection}(0.0)
 
-@concrete struct FlatTip{TipAlphaCorrection} <: AbstractBladeTip{TipAlphaCorrection}
-    alpha0lift
+struct FlatTip{TTipAlphaCorrection,TAlpha0Lift} <: AbstractBladeTip{TTipAlphaCorrection}
+    tip_alpha_correction::TTipAlphaCorrection
+    alpha0lift::TAlpha0Lift
+
+    function FlatTip(tip_alpha_correction::TTipAlphaCorrection, alpha0lift::TAlpha0Lift) where {TTipAlphaCorrection<:AbstractTipAlphaCorrection,TAlpha0Lift}
+        return new{TTipAlphaCorrection, TAlpha0Lift}(tip_alpha_correction, alpha0lift)
+    end
 end
-FlatTip(alpha0lift=0.0) = FlatTip{NoTipAlphaCorrection}(alpha0lift)
-FlatTip{TipAlphaCorrection}() where {TipAlphaCorrection} = FlatTip{TipAlphaCorrection}(0.0)
+FlatTip(alpha0lift=0.0) = FlatTip(NoTipAlphaCorrection(), alpha0lift)
+# FlatTip{TipAlphaCorrection}() where {TipAlphaCorrection} = FlatTip{TipAlphaCorrection}(0.0)
 # FlatTip() = FlatTip{NoTipAlphaCorrection}(0.0)
 
 function tip_vortex_alpha_correction(blade_tip::AbstractBladeTip{NoTipAlphaCorrection}, alphatip)

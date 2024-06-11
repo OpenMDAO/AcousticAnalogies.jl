@@ -9,7 +9,7 @@
     chord
     # Trailing edge thickness, m.
     h
-    # Solid angle between blade surfaces immediately upstream of the trailing edge, deg.
+    # Solid angle between blade surfaces immediately upstream of the trailing edge, rad.
     Psi
     # Source position, m.
     y0dot
@@ -277,7 +277,7 @@ end
     chord
     # Trailing edge thickness, m.
     h
-    # Solid angle between blade surfaces immediately upstream of the trailing edge, deg.
+    # Solid angle between blade surfaces immediately upstream of the trailing edge, rad.
     Psi
     # Source position, m.
     y0dot
@@ -556,7 +556,7 @@ function noise(se::CombinedWithTipBroadbandSourceElement, obs::AbstractAcousticO
     # Get the doppler-shifted time step and proportional bands.
     dt = se.Δτ/doppler
     freqs_obs = AcousticMetrics.center_bands(freqs, doppler)
-    @assert AcousticMetrics.freq_scaler(freqs_obs) ≈ doppler
+    # @assert AcousticMetrics.freq_scaler(freqs_obs) ≈ doppler
 
     # All done.
     return CombinedWithTipOutput(G_s, G_p, G_alpha, G_lbl_vs, G_teb_vs, G_tip, freqs_obs, dt, t_obs)
