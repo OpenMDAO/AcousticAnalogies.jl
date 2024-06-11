@@ -17,8 +17,6 @@ struct RoundedTip{TTipAlphaCorrection,TAlpha0Lift} <: AbstractBladeTip{TTipAlpha
     end
 end
 RoundedTip(alpha0lift=0.0) = RoundedTip(NoTipAlphaCorrection(), alpha0lift)
-# RoundedTip{TipAlphaCorrection}() where {TipAlphaCorrection} = RoundedTip{TipAlphaCorrection}(0.0)
-# RoundedTip() = RoundedTip{NoTipAlphaCorrection}(0.0)
 
 struct FlatTip{TTipAlphaCorrection,TAlpha0Lift} <: AbstractBladeTip{TTipAlphaCorrection}
     tip_alpha_correction::TTipAlphaCorrection
@@ -29,8 +27,6 @@ struct FlatTip{TTipAlphaCorrection,TAlpha0Lift} <: AbstractBladeTip{TTipAlphaCor
     end
 end
 FlatTip(alpha0lift=0.0) = FlatTip(NoTipAlphaCorrection(), alpha0lift)
-# FlatTip{TipAlphaCorrection}() where {TipAlphaCorrection} = FlatTip{TipAlphaCorrection}(0.0)
-# FlatTip() = FlatTip{NoTipAlphaCorrection}(0.0)
 
 function tip_vortex_alpha_correction(blade_tip::AbstractBladeTip{NoTipAlphaCorrection}, alphatip)
     return alphatip
