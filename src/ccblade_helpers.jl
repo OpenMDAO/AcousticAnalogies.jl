@@ -159,7 +159,7 @@ function source_elements_ccblade(rotor, sections, ops, outputs, area_per_chord2,
     # This is just an array of the angular offsets of each blade. First blade is
     # aligned with the y axis, next one is offset 2*pi/B radians, etc..
     num_blades = rotor.B
-    θs = 2*pi/num_blades.*(0:(num_blades-1))
+    θs = 2*pi/num_blades.*(0:(num_blades-1)) .* ifelse(positive_x_rotation, 1, -1)
 
     # Reshape for broadcasting. Goal is to make everything work for a size of (num_times,
     # num_radial, num_blades).
@@ -660,7 +660,7 @@ function tblte_source_elements_ccblade(TDirect::Type{<:AbstractDirectivity}, TUI
     # This is just an array of the angular offsets of each blade. First blade is
     # aligned with the y axis, next one is offset 2*pi/B radians, etc..
     num_blades = rotor.B
-    θs = 2*pi/num_blades.*(0:(num_blades-1))
+    θs = 2*pi/num_blades.*(0:(num_blades-1)) .* ifelse(positive_x_rotation, 1, -1)
 
     # Reshape for broadcasting. Goal is to make everything work for a size of (num_times,
     # num_radial, num_blades).
@@ -752,7 +752,7 @@ function lblvs_source_elements_ccblade(TDirect::Type{<:AbstractDirectivity}, TUI
     # This is just an array of the angular offsets of each blade. First blade is
     # aligned with the y axis, next one is offset 2*pi/B radians, etc..
     num_blades = rotor.B
-    θs = 2*pi/num_blades.*(0:(num_blades-1))
+    θs = 2*pi/num_blades.*(0:(num_blades-1)) .* ifelse(positive_x_rotation, 1, -1)
 
     # Reshape for broadcasting. Goal is to make everything work for a size of (num_times,
     # num_radial, num_blades).
@@ -849,7 +849,7 @@ function tip_vortex_source_elements_ccblade(TDirect::Type{<:AbstractDirectivity}
     # This is just an array of the angular offsets of each blade. First blade is
     # aligned with the y axis, next one is offset 2*pi/B radians, etc..
     num_blades = rotor.B
-    θs = 2*pi/num_blades.*(0:(num_blades-1))
+    θs = 2*pi/num_blades.*(0:(num_blades-1)) .* ifelse(positive_x_rotation, 1, -1)
 
     # Reshape for broadcasting. Goal is to make everything work for a size of (num_times, num_radial, num_blades).
     # But this will really be (num_times, 1, num_blades).
@@ -948,7 +948,7 @@ function tebvs_source_elements_ccblade(TDirect::Type{<:AbstractDirectivity}, TUI
     # This is just an array of the angular offsets of each blade. First blade is
     # aligned with the y axis, next one is offset 2*pi/B radians, etc..
     num_blades = rotor.B
-    θs = 2*pi/num_blades.*(0:(num_blades-1))
+    θs = 2*pi/num_blades.*(0:(num_blades-1)) .* ifelse(positive_x_rotation, 1, -1)
 
     # Reshape for broadcasting. Goal is to make everything work for a size of (num_times,
     # num_radial, num_blades).
@@ -1090,7 +1090,7 @@ function combined_broadband_source_elements_ccblade(TDirect::Type{<:AbstractDire
     # This is just an array of the angular offsets of each blade. First blade is
     # aligned with the y axis, next one is offset 2*pi/B radians, etc..
     num_blades = rotor.B
-    θs = 2*pi/num_blades.*(0:(num_blades-1))
+    θs = 2*pi/num_blades.*(0:(num_blades-1)) .* ifelse(positive_x_rotation, 1, -1)
 
     # Reshape for broadcasting. Goal is to make everything work for a size of (num_times, num_radial, num_blades).
     θs_rs = reshape(θs, 1, 1, :)
