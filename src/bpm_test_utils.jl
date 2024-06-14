@@ -45,22 +45,22 @@ function calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl; 
     # We're starting at τ = 0, and the time step doesn't matter yet.
     τ = 0.0
     Δτ = 1.0
-    se_tblte = AcousticAnalogies.TBLTESourceElement{AcousticAnalogies.BPMDirectivity,false,AcousticAnalogies.NoMachCorrection}(c0, nu, r, θ, L, chord, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
+    se_tblte = AcousticAnalogies.TBLTESourceElement{AcousticAnalogies.BPMDirectivity,false,AcousticAnalogies.NoMachCorrection,true}(c0, nu, r, θ, L, chord, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
     if do_lblvs
-        se_lblvs = AcousticAnalogies.LBLVSSourceElement{AcousticAnalogies.BPMDirectivity,false}(c0, nu, r, θ, L, chord, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
+        se_lblvs = AcousticAnalogies.LBLVSSourceElement{AcousticAnalogies.BPMDirectivity,false,true}(c0, nu, r, θ, L, chord, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
     end
     if do_tip_vortex
-        se_tip = AcousticAnalogies.TipVortexSourceElement{AcousticAnalogies.BPMDirectivity,false}(c0, r, θ, L, chord, ϕ, vn, vr, vc, τ, Δτ, bl, blade_tip, twist_about_positive_y)
+        se_tip = AcousticAnalogies.TipVortexSourceElement{AcousticAnalogies.BPMDirectivity,false,true}(c0, r, θ, L, chord, ϕ, vn, vr, vc, τ, Δτ, bl, blade_tip, twist_about_positive_y)
     end
     if do_tebvs
-        se_tebvs = AcousticAnalogies.TEBVSSourceElement{AcousticAnalogies.BPMDirectivity,false}(c0, nu, r, θ, L, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
+        se_tebvs = AcousticAnalogies.TEBVSSourceElement{AcousticAnalogies.BPMDirectivity,false,true}(c0, nu, r, θ, L, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
     end
 
 
     if combined_calc == :no_tip
-        se_combined = AcousticAnalogies.CombinedNoTipBroadbandSourceElement{AcousticAnalogies.BPMDirectivity,false,AcousticAnalogies.NoMachCorrection}(c0, nu, r, θ, L, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
+        se_combined = AcousticAnalogies.CombinedNoTipBroadbandSourceElement{AcousticAnalogies.BPMDirectivity,false,AcousticAnalogies.NoMachCorrection,true}(c0, nu, r, θ, L, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
     elseif combined_calc == :with_tip
-        se_combined = AcousticAnalogies.CombinedWithTipBroadbandSourceElement{AcousticAnalogies.BPMDirectivity,false,AcousticAnalogies.NoMachCorrection}(c0, nu, r, θ, L, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, blade_tip, twist_about_positive_y)
+        se_combined = AcousticAnalogies.CombinedWithTipBroadbandSourceElement{AcousticAnalogies.BPMDirectivity,false,AcousticAnalogies.NoMachCorrection,true}(c0, nu, r, θ, L, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, blade_tip, twist_about_positive_y)
     end
 
     # Let's check that things are what we expect.

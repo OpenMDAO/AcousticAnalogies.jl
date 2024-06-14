@@ -77,7 +77,7 @@ function TIP(freq, chord, M, M_c, U_max, M_max, r_e, theta_e, phi_e, alphatip, b
     return SPL_tip
 end
 
-@concrete struct TipVortexSourceElement{TDirect<:AbstractDirectivity,TUInduction} <: AbstractBroadbandSourceElement{TDirect,TUInduction,NoMachCorrection}
+@concrete struct TipVortexSourceElement{TDirect<:AbstractDirectivity,TUInduction,TDoppler} <: AbstractBroadbandSourceElement{TDirect,TUInduction,NoMachCorrection,TDoppler}
     # Speed of sound, m/s.
     c0
     # Radial/spanwise length of element, m.
@@ -106,9 +106,9 @@ end
     chord_cross_span_to_get_top_uvec
 end
 
-# Default to using the `BrooksBurleyDirectivity` directivity function, and include induction in the flow speed normal to span (TUInduction == true).
+# Default to using the `BrooksBurleyDirectivity` directivity function, include induction in the flow speed normal to span (TUInduction == true), and Doppler-shift.
 function TipVortexSourceElement(c0, Δr, chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, blade_tip, chord_cross_span_to_get_top_uvec)
-    return TipVortexSourceElement{BrooksBurleyDirectivity,true}(c0, Δr, chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, blade_tip, chord_cross_span_to_get_top_uvec)
+    return TipVortexSourceElement{BrooksBurleyDirectivity,true,true}(c0, Δr, chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, blade_tip, chord_cross_span_to_get_top_uvec)
 end
 
 """
@@ -148,7 +148,7 @@ This can be done easily with the transformations provided by the `KinematicCoord
 - blade_tip: Blade tip struct, i.e. an AbstractBladeTip.
 - twist_about_positive_y: if `true`, apply twist ϕ about positive y axis, negative y axis otherwise
 """
-function TipVortexSourceElement{TDirect,TUInduction}(c0, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, blade_tip, twist_about_positive_y) where {TDirect,TUInduction}
+function TipVortexSourceElement{TDirect,TUInduction,TDoppler}(c0, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, blade_tip, twist_about_positive_y) where {TDirect,TUInduction,TDoppler}
     sθ, cθ = sincos(θ)
     sϕ, cϕ = sincos(ϕ)
     y0dot = @SVector [0, r*cθ, r*sθ]
@@ -163,12 +163,12 @@ function TipVortexSourceElement{TDirect,TUInduction}(c0, r, θ, Δr, chord, ϕ, 
     end
 
     chord_cross_span_to_get_top_uvec = twist_about_positive_y
-    return TipVortexSourceElement{TDirect,TUInduction}(c0, Δr, chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, blade_tip, chord_cross_span_to_get_top_uvec)
+    return TipVortexSourceElement{TDirect,TUInduction,TDoppler}(c0, Δr, chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, blade_tip, chord_cross_span_to_get_top_uvec)
 end
 
-# Default to using the `BrooksBurleyDirectivity` directivity function, and include induction in the flow speed normal to span (TUInduction == true).
+# Default to using the `BrooksBurleyDirectivity` directivity function, include induction in the flow speed normal to span (TUInduction == true), and Doppler-shift.
 function TipVortexSourceElement(c0, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, blade_tip, twist_about_positive_y)
-    return TipVortexSourceElement{BrooksBurleyDirectivity,true}(c0, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, blade_tip, twist_about_positive_y)
+    return TipVortexSourceElement{BrooksBurleyDirectivity,true,true}(c0, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, blade_tip, twist_about_positive_y)
 end
 
 """
@@ -176,7 +176,7 @@ end
 
 Transform the position and orientation of a source element according to the coordinate system transformation `trans`.
 """
-function (trans::KinematicTransformation)(se::TipVortexSourceElement{TDirect,TUInduction}) where {TDirect,TUInduction}
+function (trans::KinematicTransformation)(se::TipVortexSourceElement{TDirect,TUInduction,TDoppler}) where {TDirect,TUInduction,TDoppler}
     linear_only = false
     y0dot, y1dot = trans(se.τ, se.y0dot, se.y1dot, linear_only)
     y0dot, y1dot_fluid = trans(se.τ, se.y0dot, se.y1dot_fluid, linear_only)
@@ -184,7 +184,7 @@ function (trans::KinematicTransformation)(se::TipVortexSourceElement{TDirect,TUI
     span_uvec = trans(se.τ, se.span_uvec, linear_only)
     chord_uvec = trans(se.τ, se.chord_uvec, linear_only)
 
-    return TipVortexSourceElement{TDirect,TUInduction}(se.c0, se.Δr, se.chord, y0dot, y1dot, y1dot_fluid, se.τ, se.Δτ, span_uvec, chord_uvec, se.bl, se.blade_tip, se.chord_cross_span_to_get_top_uvec)
+    return TipVortexSourceElement{TDirect,TUInduction,TDoppler}(se.c0, se.Δr, se.chord, y0dot, y1dot, y1dot_fluid, se.τ, se.Δτ, span_uvec, chord_uvec, se.bl, se.blade_tip, se.chord_cross_span_to_get_top_uvec)
 end
 
 function _tip(freq, l_U_max, scaler)

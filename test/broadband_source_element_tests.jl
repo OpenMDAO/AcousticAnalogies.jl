@@ -1336,7 +1336,7 @@ end
                                 for vc_sign in [1, -1]
                                     vn = -(Vx + u)*vn_sign
                                     vc = (-Vy + v)*vc_sign
-                                    se = AcousticAnalogies.TBLTESourceElement{AcousticAnalogies.BrooksBurleyDirectivity,use_induction,AcousticAnalogies.NoMachCorrection}(c0, nu, r, θ, dr, chord, twist, vn, vr, vc, τ, dτ, bl, twist_about_positive_y)
+                                    se = AcousticAnalogies.TBLTESourceElement{AcousticAnalogies.BrooksBurleyDirectivity,use_induction,AcousticAnalogies.NoMachCorrection,true}(c0, nu, r, θ, dr, chord, twist, vn, vr, vc, τ, dτ, bl, twist_about_positive_y)
                                     # And then the angle of attack will be `twist - atan(-vn, -vc)`, where `twist` is the twist of the blade, `vn` is the velocity in the axial direction, and `vc` is the velocity in the circumferential/tangential direction.
                                     # But we need to switch the direction of the velocity vector, since I'm thinking of them in opposite directions (eg the angle of attack is zero when the velocity and chordwise vector from trailing edge to leading edge are exactly opposite).
                                     # The rem2pi will give us back an equivalent angle in the interval [-π, π].

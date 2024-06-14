@@ -407,10 +407,10 @@ where `y0dot` is the position of the source element.
 - `positive_x_rotation`: rotate blade around the positive-x axis if `true`, negative-x axis otherwise.
 """
 function TBLTESourceElement(rotor::CCBlade.Rotor, section::CCBlade.Section, op::CCBlade.OperatingPoint, out::CCBlade.Outputs, θ, Δr, τ, Δτ, bl::AbstractBoundaryLayer, positive_x_rotation)
-    return TBLTESourceElement{BrooksBurleyDirectivity,true,PrandtlGlauertMachCorrection}(rotor, section, op, out, θ, Δr, τ, Δτ, bl, positive_x_rotation)
+    return TBLTESourceElement{BrooksBurleyDirectivity,true,PrandtlGlauertMachCorrection,true}(rotor, section, op, out, θ, Δr, τ, Δτ, bl, positive_x_rotation)
 end
 
-function TBLTESourceElement{TDirect,TUInduction,TMachCorrection}(rotor::CCBlade.Rotor, section::CCBlade.Section, op::CCBlade.OperatingPoint, out::CCBlade.Outputs, θ, Δr, τ, Δτ, bl::AbstractBoundaryLayer, positive_x_rotation) where {TDirect,TUInduction,TMachCorrection}
+function TBLTESourceElement{TDirect,TUInduction,TMachCorrection,TDoppler}(rotor::CCBlade.Rotor, section::CCBlade.Section, op::CCBlade.OperatingPoint, out::CCBlade.Outputs, θ, Δr, τ, Δτ, bl::AbstractBoundaryLayer, positive_x_rotation) where {TDirect,TUInduction,TMachCorrection,TDoppler}
     # ρ0 = op.rho
     # c0 = op.asound
     # r = section.r
@@ -623,7 +623,7 @@ function TBLTESourceElement{TDirect,TUInduction,TMachCorrection}(rotor::CCBlade.
     # chord = section.chord
 
     # chord_cross_span_to_get_top_uvec = positive_x_rotation
-    return TBLTESourceElement{TDirect,TUInduction,TMachCorrection}(op.asound, nu, Δr, section.chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
+    return TBLTESourceElement{TDirect,TUInduction,TMachCorrection,TDoppler}(op.asound, nu, Δr, section.chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
 end
 
 """
@@ -642,10 +642,10 @@ Construct and return an array of TBLTESourceElement objects from CCBlade structs
 - `positive_x_rotation`: rotate blade around the positive-x axis if `true`, negative-x axis otherwise.
 """
 function tblte_source_elements_ccblade(rotor, sections, ops, outputs, bls, period, num_src_times, positive_x_rotation)
-    return tblte_source_elements_ccblade(BrooksBurleyDirectivity, true, PrandtlGlauertMachCorrection, rotor, sections, ops, outputs, bls, period, num_src_times, positive_x_rotation)
+    return tblte_source_elements_ccblade(BrooksBurleyDirectivity, true, PrandtlGlauertMachCorrection, true, rotor, sections, ops, outputs, bls, period, num_src_times, positive_x_rotation)
 end
 
-function tblte_source_elements_ccblade(TDirect::Type{<:AbstractDirectivity}, TUInduction::Bool, TMachCorrection::Type{<:AbstractMachCorrection}, rotor, sections, ops, outputs, bls, period, num_src_times, positive_x_rotation)
+function tblte_source_elements_ccblade(TDirect::Type{<:AbstractDirectivity}, TUInduction::Bool, TMachCorrection::Type{<:AbstractMachCorrection}, TDoppler::Bool, rotor, sections, ops, outputs, bls, period, num_src_times, positive_x_rotation)
     # Need to know the radial spacing. (CCBlade doesn't use this—when
     # integrating stuff [loading to get torque and thrust] it uses the
     # trapezoidal rule and passes in the radial locations, and assumes that
@@ -674,7 +674,7 @@ function tblte_source_elements_ccblade(TDirect::Type{<:AbstractDirectivity}, TUI
     # src_times = reshape(src_times, :, 1, 1)  # This one isn't necessary.
 
     # Construct and transform the source elements.
-    ses = TBLTESourceElement{TDirect,TUInduction,TMachCorrection}.(Ref(rotor), sections_rs, ops_rs, outputs_rs, θs_rs, dradii_rs, src_times, Ref(dt), bls_rs, positive_x_rotation) .|> trans
+    ses = TBLTESourceElement{TDirect,TUInduction,TMachCorrection,TDoppler}.(Ref(rotor), sections_rs, ops_rs, outputs_rs, θs_rs, dradii_rs, src_times, Ref(dt), bls_rs, positive_x_rotation) .|> trans
 
     return ses
 end
@@ -705,17 +705,17 @@ where `y0dot` is the position of the source element.
 - `positive_x_rotation`: rotate blade around the positive-x axis if `true`, negative-x axis otherwise.
 """
 function LBLVSSourceElement(rotor::CCBlade.Rotor, section::CCBlade.Section, op::CCBlade.OperatingPoint, out::CCBlade.Outputs, θ, Δr, τ, Δτ, bl::AbstractBoundaryLayer, positive_x_rotation)
-    return LBLVSSourceElement{BrooksBurleyDirectivity,true}(rotor, section, op, out, θ, Δr, τ, Δτ, bl, positive_x_rotation)
+    return LBLVSSourceElement{BrooksBurleyDirectivity,true,true}(rotor, section, op, out, θ, Δr, τ, Δτ, bl, positive_x_rotation)
 end
 
-function LBLVSSourceElement{TDirect,TUInduction}(rotor::CCBlade.Rotor, section::CCBlade.Section, op::CCBlade.OperatingPoint, out::CCBlade.Outputs, θ, Δr, τ, Δτ, bl::AbstractBoundaryLayer, positive_x_rotation) where {TDirect,TUInduction}
+function LBLVSSourceElement{TDirect,TUInduction,TDoppler}(rotor::CCBlade.Rotor, section::CCBlade.Section, op::CCBlade.OperatingPoint, out::CCBlade.Outputs, θ, Δr, τ, Δτ, bl::AbstractBoundaryLayer, positive_x_rotation) where {TDirect,TUInduction,TDoppler}
 
     y0dot, y1dot, y1dot_fluid, span_uvec, chord_uvec, chord_cross_span_to_get_top_uvec = _get_position_velocity_span_uvec_chord_uvec(
         section.theta, rotor.precone, op.pitch, section.r, θ, out.W, out.phi, positive_x_rotation)
 
     nu = op.mu/op.rho
 
-    return LBLVSSourceElement{TDirect,TUInduction}(op.asound, nu, Δr, section.chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
+    return LBLVSSourceElement{TDirect,TUInduction,TDoppler}(op.asound, nu, Δr, section.chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
 end
 
 """
@@ -734,10 +734,10 @@ Construct and return an array of LBLVSSourceElement objects from CCBlade structs
 - `positive_x_rotation`: rotate blade around the positive-x axis if `true`, negative-x axis otherwise.
 """
 function lblvs_source_elements_ccblade(rotor, sections, ops, outputs, bls, period, num_src_times, positive_x_rotation)
-    return lblvs_source_elements_ccblade(BrooksBurleyDirectivity, true, rotor, sections, ops, outputs, bls, period, num_src_times, positive_x_rotation)
+    return lblvs_source_elements_ccblade(BrooksBurleyDirectivity, true, true, rotor, sections, ops, outputs, bls, period, num_src_times, positive_x_rotation)
 end
 
-function lblvs_source_elements_ccblade(TDirect::Type{<:AbstractDirectivity}, TUInduction::Bool, rotor, sections, ops, outputs, bls, period, num_src_times, positive_x_rotation)
+function lblvs_source_elements_ccblade(TDirect::Type{<:AbstractDirectivity}, TUInduction::Bool, TDoppler::Bool, rotor, sections, ops, outputs, bls, period, num_src_times, positive_x_rotation)
     # Need to know the radial spacing. (CCBlade doesn't use this—when
     # integrating stuff [loading to get torque and thrust] it uses the
     # trapezoidal rule and passes in the radial locations, and assumes that
@@ -766,7 +766,7 @@ function lblvs_source_elements_ccblade(TDirect::Type{<:AbstractDirectivity}, TUI
     # src_times = reshape(src_times, :, 1, 1)  # This one isn't necessary.
 
     # Construct and transform the source elements.
-    ses = LBLVSSourceElement{TDirect,TUInduction}.(Ref(rotor), sections_rs, ops_rs, outputs_rs, θs_rs, dradii_rs, src_times, Ref(dt), bls_rs, positive_x_rotation) .|> trans
+    ses = LBLVSSourceElement{TDirect,TUInduction,TDoppler}.(Ref(rotor), sections_rs, ops_rs, outputs_rs, θs_rs, dradii_rs, src_times, Ref(dt), bls_rs, positive_x_rotation) .|> trans
 
     return ses
 end
@@ -798,15 +798,15 @@ where `y0dot` is the position of the source element.
 - `positive_x_rotation`: rotate blade around the positive-x axis if `true`, negative-x axis otherwise.
 """
 function TipVortexSourceElement(rotor::CCBlade.Rotor, section::CCBlade.Section, op::CCBlade.OperatingPoint, out::CCBlade.Outputs, θ, Δr, τ, Δτ, bl::AbstractBoundaryLayer, blade_tip::AbstractBladeTip, positive_x_rotation)
-    return TipVortexSourceElement{BrooksBurleyDirectivity,true}(rotor, section, op, out, θ, Δr, τ, Δτ, bl, blade_tip, positive_x_rotation)
+    return TipVortexSourceElement{BrooksBurleyDirectivity,true,true}(rotor, section, op, out, θ, Δr, τ, Δτ, bl, blade_tip, positive_x_rotation)
 end
 
-function TipVortexSourceElement{TDirect,TUInduction}(rotor::CCBlade.Rotor, section::CCBlade.Section, op::CCBlade.OperatingPoint, out::CCBlade.Outputs, θ, Δr, τ, Δτ, bl::AbstractBoundaryLayer, blade_tip::AbstractBladeTip, positive_x_rotation) where {TDirect,TUInduction}
+function TipVortexSourceElement{TDirect,TUInduction,TDoppler}(rotor::CCBlade.Rotor, section::CCBlade.Section, op::CCBlade.OperatingPoint, out::CCBlade.Outputs, θ, Δr, τ, Δτ, bl::AbstractBoundaryLayer, blade_tip::AbstractBladeTip, positive_x_rotation) where {TDirect,TUInduction,TDoppler}
 
     y0dot, y1dot, y1dot_fluid, span_uvec, chord_uvec, chord_cross_span_to_get_top_uvec = _get_position_velocity_span_uvec_chord_uvec(
         section.theta, rotor.precone, op.pitch, section.r, θ, out.W, out.phi, positive_x_rotation)
 
-    return TipVortexSourceElement{TDirect,TUInduction}(op.asound, Δr, section.chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, blade_tip, chord_cross_span_to_get_top_uvec)
+    return TipVortexSourceElement{TDirect,TUInduction,TDoppler}(op.asound, Δr, section.chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, blade_tip, chord_cross_span_to_get_top_uvec)
 end
 
 """
@@ -829,10 +829,10 @@ Note that unlike the other `*_source_elements_ccblade` functions, `tip_vortex_so
 - `positive_x_rotation`: rotate blade around the positive-x axis if `true`, negative-x axis otherwise.
 """
 function tip_vortex_source_elements_ccblade(rotor, section, op, output, Δr, bl, blade_tip, period, num_src_times, positive_x_rotation)
-    return tip_vortex_source_elements_ccblade(BrooksBurleyDirectivity, true, rotor, section, op, output, Δr, bl, blade_tip, period, num_src_times, positive_x_rotation)
+    return tip_vortex_source_elements_ccblade(BrooksBurleyDirectivity, true, true, rotor, section, op, output, Δr, bl, blade_tip, period, num_src_times, positive_x_rotation)
 end
 
-function tip_vortex_source_elements_ccblade(TDirect::Type{<:AbstractDirectivity}, TUInduction::Bool, rotor, section, op, output, Δr, bl, blade_tip, period, num_src_times, positive_x_rotation)
+function tip_vortex_source_elements_ccblade(TDirect::Type{<:AbstractDirectivity}, TUInduction::Bool, TDoppler::Bool, rotor, section, op, output, Δr, bl, blade_tip, period, num_src_times, positive_x_rotation)
     # Ugh, hate doing this.
     # Wish there was a way to make a allocation-free array-like thingy from a scaler.
     # But I doubt it makes any difference.
@@ -866,7 +866,7 @@ function tip_vortex_source_elements_ccblade(TDirect::Type{<:AbstractDirectivity}
     # ses = TipVortexSourceElement.(Ref(rotor), sections_rs, ops_rs, Ref(output), θs_rs, Ref(Δr), src_times, Ref(dt), Ref(bl), positive_x_rotation) .|> trans_rs
     # So Θs_rs has size (1, 1, num_blades), src_times has size (num_src_times,), trans has size (num_src_times, 1).
     # So that should all work out.
-    ses = TipVortexSourceElement{TDirect,TUInduction}.(Ref(rotor), Ref(section), Ref(op), Ref(output), θs_rs, Ref(Δr), src_times, Ref(dt), Ref(bl), Ref(blade_tip), positive_x_rotation) .|> trans
+    ses = TipVortexSourceElement{TDirect,TUInduction,TDoppler}.(Ref(rotor), Ref(section), Ref(op), Ref(output), θs_rs, Ref(Δr), src_times, Ref(dt), Ref(bl), Ref(blade_tip), positive_x_rotation) .|> trans
 
     return ses
 end
@@ -899,17 +899,17 @@ where `y0dot` is the position of the source element.
 - `positive_x_rotation`: rotate blade around the positive-x axis if `true`, negative-x axis otherwise.
 """
 function TEBVSSourceElement(rotor::CCBlade.Rotor, section::CCBlade.Section, op::CCBlade.OperatingPoint, out::CCBlade.Outputs, θ, Δr, h, Psi, τ, Δτ, bl::AbstractBoundaryLayer, positive_x_rotation)
-    return TEBVSSourceElement{BrooksBurleyDirectivity,true}(rotor, section, op, out, θ, Δr, h, Psi, τ, Δτ, bl, positive_x_rotation)
+    return TEBVSSourceElement{BrooksBurleyDirectivity,true,true}(rotor, section, op, out, θ, Δr, h, Psi, τ, Δτ, bl, positive_x_rotation)
 end
 
-function TEBVSSourceElement{TDirect,TUInduction}(rotor::CCBlade.Rotor, section::CCBlade.Section, op::CCBlade.OperatingPoint, out::CCBlade.Outputs, θ, Δr, h, Psi, τ, Δτ, bl::AbstractBoundaryLayer, positive_x_rotation) where {TDirect, TUInduction}
+function TEBVSSourceElement{TDirect,TUInduction,TDoppler}(rotor::CCBlade.Rotor, section::CCBlade.Section, op::CCBlade.OperatingPoint, out::CCBlade.Outputs, θ, Δr, h, Psi, τ, Δτ, bl::AbstractBoundaryLayer, positive_x_rotation) where {TDirect,TUInduction,TDoppler}
 
     y0dot, y1dot, y1dot_fluid, span_uvec, chord_uvec, chord_cross_span_to_get_top_uvec = _get_position_velocity_span_uvec_chord_uvec(
         section.theta, rotor.precone, op.pitch, section.r, θ, out.W, out.phi, positive_x_rotation)
 
     nu = op.mu/op.rho
 
-    return TEBVSSourceElement{TDirect,TUInduction}(op.asound, nu, Δr, section.chord, h, Psi, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
+    return TEBVSSourceElement{TDirect,TUInduction,TDoppler}(op.asound, nu, Δr, section.chord, h, Psi, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
 end
 
 """
@@ -930,10 +930,10 @@ Construct and return an array of TEBVSSourceElement objects from CCBlade structs
 - `positive_x_rotation`: rotate blade around the positive-x axis if `true`, negative-x axis otherwise.
 """
 function tebvs_source_elements_ccblade(rotor, sections, ops, outputs, hs, Psis, bls, period, num_src_times, positive_x_rotation)
-    return tebvs_source_elements_ccblade(BrooksBurleyDirectivity, true, rotor, sections, ops, outputs, hs, Psis, bls, period, num_src_times, positive_x_rotation)
+    return tebvs_source_elements_ccblade(BrooksBurleyDirectivity, true, true, rotor, sections, ops, outputs, hs, Psis, bls, period, num_src_times, positive_x_rotation)
 end
 
-function tebvs_source_elements_ccblade(TDirect::Type{<:AbstractDirectivity}, TUInduction::Bool, rotor, sections, ops, outputs, hs, Psis, bls, period, num_src_times, positive_x_rotation)
+function tebvs_source_elements_ccblade(TDirect::Type{<:AbstractDirectivity}, TUInduction::Bool, TDoppler::Bool, rotor, sections, ops, outputs, hs, Psis, bls, period, num_src_times, positive_x_rotation)
     # Need to know the radial spacing. (CCBlade doesn't use this—when
     # integrating stuff [loading to get torque and thrust] it uses the
     # trapezoidal rule and passes in the radial locations, and assumes that
@@ -964,7 +964,7 @@ function tebvs_source_elements_ccblade(TDirect::Type{<:AbstractDirectivity}, TUI
     # src_times = reshape(src_times, :, 1, 1)  # This one isn't necessary.
 
     # Construct and transform the source elements.
-    ses = TEBVSSourceElement{TDirect,TUInduction}.(Ref(rotor), sections_rs, ops_rs, outputs_rs, θs_rs, dradii_rs, hs_rs, Psis_rs, src_times, Ref(dt), bls_rs, positive_x_rotation) .|> trans
+    ses = TEBVSSourceElement{TDirect,TUInduction,TDoppler}.(Ref(rotor), sections_rs, ops_rs, outputs_rs, θs_rs, dradii_rs, hs_rs, Psis_rs, src_times, Ref(dt), bls_rs, positive_x_rotation) .|> trans
 
     return ses
 end
@@ -997,17 +997,17 @@ where `y0dot` is the position of the source element.
 - `positive_x_rotation`: rotate blade around the positive-x axis if `true`, negative-x axis otherwise.
 """
 function CombinedNoTipBroadbandSourceElement(rotor::CCBlade.Rotor, section::CCBlade.Section, op::CCBlade.OperatingPoint, out::CCBlade.Outputs, θ, Δr, h, Psi, τ, Δτ, bl::AbstractBoundaryLayer, positive_x_rotation)
-    return CombinedNoTipBroadbandSourceElement{BrooksBurleyDirectivity,true,PrandtlGlauertMachCorrection}(rotor, section, op, out, θ, Δr, h, Psi, τ, Δτ, bl, positive_x_rotation)
+    return CombinedNoTipBroadbandSourceElement{BrooksBurleyDirectivity,true,PrandtlGlauertMachCorrection,true}(rotor, section, op, out, θ, Δr, h, Psi, τ, Δτ, bl, positive_x_rotation)
 end
 
-function CombinedNoTipBroadbandSourceElement{TDirect,TUInduction,TMachCorrection}(rotor::CCBlade.Rotor, section::CCBlade.Section, op::CCBlade.OperatingPoint, out::CCBlade.Outputs, θ, Δr, h, Psi, τ, Δτ, bl::AbstractBoundaryLayer, positive_x_rotation) where {TDirect,TUInduction,TMachCorrection}
+function CombinedNoTipBroadbandSourceElement{TDirect,TUInduction,TMachCorrection,TDoppler}(rotor::CCBlade.Rotor, section::CCBlade.Section, op::CCBlade.OperatingPoint, out::CCBlade.Outputs, θ, Δr, h, Psi, τ, Δτ, bl::AbstractBoundaryLayer, positive_x_rotation) where {TDirect,TUInduction,TMachCorrection,TDoppler}
 
     y0dot, y1dot, y1dot_fluid, span_uvec, chord_uvec, chord_cross_span_to_get_top_uvec = _get_position_velocity_span_uvec_chord_uvec(
         section.theta, rotor.precone, op.pitch, section.r, θ, out.W, out.phi, positive_x_rotation)
 
     nu = op.mu/op.rho
 
-    return CombinedNoTipBroadbandSourceElement{TDirect,TUInduction,TMachCorrection}(op.asound, nu, Δr, section.chord, h, Psi, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
+    return CombinedNoTipBroadbandSourceElement{TDirect,TUInduction,TMachCorrection,TDoppler}(op.asound, nu, Δr, section.chord, h, Psi, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
 end
 
 """
@@ -1039,17 +1039,17 @@ where `y0dot` is the position of the source element.
 - `positive_x_rotation`: rotate blade around the positive-x axis if `true`, negative-x axis otherwise.
 """
 function CombinedWithTipBroadbandSourceElement(rotor::CCBlade.Rotor, section::CCBlade.Section, op::CCBlade.OperatingPoint, out::CCBlade.Outputs, θ, Δr, h, Psi, τ, Δτ, bl::AbstractBoundaryLayer, blade_tip::AbstractBladeTip, positive_x_rotation)
-    return CombinedWithTipBroadbandSourceElement{BrooksBurleyDirectivity,true,PrandtlGlauertMachCorrection}(rotor, section, op, out, θ, Δr, h, Psi, τ, Δτ, bl, blade_tip, positive_x_rotation)
+    return CombinedWithTipBroadbandSourceElement{BrooksBurleyDirectivity,true,PrandtlGlauertMachCorrection,true}(rotor, section, op, out, θ, Δr, h, Psi, τ, Δτ, bl, blade_tip, positive_x_rotation)
 end
 
-function CombinedWithTipBroadbandSourceElement{TDirect,TUInduction,TMachCorrection}(rotor::CCBlade.Rotor, section::CCBlade.Section, op::CCBlade.OperatingPoint, out::CCBlade.Outputs, θ, Δr, h, Psi, τ, Δτ, bl::AbstractBoundaryLayer, blade_tip::AbstractBladeTip, positive_x_rotation) where {TDirect,TUInduction,TMachCorrection}
+function CombinedWithTipBroadbandSourceElement{TDirect,TUInduction,TMachCorrection,TDoppler}(rotor::CCBlade.Rotor, section::CCBlade.Section, op::CCBlade.OperatingPoint, out::CCBlade.Outputs, θ, Δr, h, Psi, τ, Δτ, bl::AbstractBoundaryLayer, blade_tip::AbstractBladeTip, positive_x_rotation) where {TDirect,TUInduction,TMachCorrection,TDoppler}
 
     y0dot, y1dot, y1dot_fluid, span_uvec, chord_uvec, chord_cross_span_to_get_top_uvec = _get_position_velocity_span_uvec_chord_uvec(
         section.theta, rotor.precone, op.pitch, section.r, θ, out.W, out.phi, positive_x_rotation)
 
     nu = op.mu/op.rho
 
-    return CombinedWithTipBroadbandSourceElement{TDirect,TUInduction,TMachCorrection}(op.asound, nu, Δr, section.chord, h, Psi, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, blade_tip, chord_cross_span_to_get_top_uvec)
+    return CombinedWithTipBroadbandSourceElement{TDirect,TUInduction,TMachCorrection,TDoppler}(op.asound, nu, Δr, section.chord, h, Psi, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, blade_tip, chord_cross_span_to_get_top_uvec)
 end
 
 """
@@ -1071,10 +1071,10 @@ Construct and return an array of broadband prediction source element objects fro
 - `positive_x_rotation`: rotate blade around the positive-x axis if `true`, negative-x axis otherwise.
 """
 function combined_broadband_source_elements_ccblade(rotor, sections, ops, outputs, hs, Psis, bls, blade_tip, period, num_src_times, positive_x_rotation)
-    return combined_broadband_source_elements_ccblade(BrooksBurleyDirectivity, true, PrandtlGlauertMachCorrection, rotor, sections, ops, outputs, hs, Psis, bls, blade_tip, period, num_src_times, positive_x_rotation)
+    return combined_broadband_source_elements_ccblade(BrooksBurleyDirectivity, true, PrandtlGlauertMachCorrection, true, rotor, sections, ops, outputs, hs, Psis, bls, blade_tip, period, num_src_times, positive_x_rotation)
 end
 
-function combined_broadband_source_elements_ccblade(TDirect::Type{<:AbstractDirectivity}, TUInduction::Bool, TMachCorrection::Type{<:AbstractMachCorrection}, rotor, sections, ops, outputs, hs, Psis, bls::AbstractVector{<:AbstractBoundaryLayer}, blade_tip, period, num_src_times, positive_x_rotation)
+function combined_broadband_source_elements_ccblade(TDirect::Type{<:AbstractDirectivity}, TUInduction::Bool, TMachCorrection::Type{<:AbstractMachCorrection}, TDoppler::Bool, rotor, sections, ops, outputs, hs, Psis, bls::AbstractVector{<:AbstractBoundaryLayer}, blade_tip, period, num_src_times, positive_x_rotation)
     # Need to know the radial spacing. (CCBlade doesn't use this—when
     # integrating stuff [loading to get torque and thrust] it uses the
     # trapezoidal rule and passes in the radial locations, and assumes that
@@ -1124,9 +1124,9 @@ function combined_broadband_source_elements_ccblade(TDirect::Type{<:AbstractDire
     trans_with_tip = @view trans[:, end:end]
 
     # Construct and transform the source elements.
-    ses_no_tip = CombinedNoTipBroadbandSourceElement{TDirect,TUInduction,TMachCorrection}.(Ref(rotor), sections_rs_no_tip, ops_rs_no_tip, outputs_rs_no_tip, θs_rs, dradii_rs_no_tip, hs_rs_no_tip, Psis_rs_no_tip, src_times, Ref(dt), bls_rs_no_tip, positive_x_rotation) .|> trans_no_tip
+    ses_no_tip = CombinedNoTipBroadbandSourceElement{TDirect,TUInduction,TMachCorrection,TDoppler}.(Ref(rotor), sections_rs_no_tip, ops_rs_no_tip, outputs_rs_no_tip, θs_rs, dradii_rs_no_tip, hs_rs_no_tip, Psis_rs_no_tip, src_times, Ref(dt), bls_rs_no_tip, positive_x_rotation) .|> trans_no_tip
 
-    ses_with_tip = CombinedWithTipBroadbandSourceElement{TDirect,TUInduction,TMachCorrection}.(Ref(rotor), sections_rs_with_tip, ops_rs_with_tip, outputs_rs_with_tip, θs_rs, dradii_rs_with_tip, hs_rs_with_tip, Psis_rs_with_tip, src_times, Ref(dt), bls_rs_with_tip, Ref(blade_tip), positive_x_rotation) .|> trans_with_tip
+    ses_with_tip = CombinedWithTipBroadbandSourceElement{TDirect,TUInduction,TMachCorrection,TDoppler}.(Ref(rotor), sections_rs_with_tip, ops_rs_with_tip, outputs_rs_with_tip, θs_rs, dradii_rs_with_tip, hs_rs_with_tip, Psis_rs_with_tip, src_times, Ref(dt), bls_rs_with_tip, Ref(blade_tip), positive_x_rotation) .|> trans_with_tip
 
     return ses_no_tip, ses_with_tip
 end

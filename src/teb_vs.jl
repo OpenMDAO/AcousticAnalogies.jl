@@ -131,7 +131,7 @@ function BLUNT(freq, nu, L, chord, h, Psi, U, M, M_c, r_e, theta_e, phi_e, alpha
     return SPL_blunt
 end
 
-@concrete struct TEBVSSourceElement{TDirect<:AbstractDirectivity,TUInduction} <: AbstractBroadbandSourceElement{TDirect,TUInduction,NoMachCorrection}
+@concrete struct TEBVSSourceElement{TDirect<:AbstractDirectivity,TUInduction,TDoppler} <: AbstractBroadbandSourceElement{TDirect,TUInduction,NoMachCorrection,TDoppler}
     # Speed of sound, m/s.
     c0
     # Kinematic viscosity, m^2/s
@@ -164,9 +164,9 @@ end
     chord_cross_span_to_get_top_uvec
 end
 
-# Default to using the `BrooksBurleyDirectivity` directivity function, and include induction in the flow speed normal to span (TUInduction == true).
+# Default to using the `BrooksBurleyDirectivity` directivity function, include induction in the flow speed normal to span (TUInduction == true), and Doppler-shift.
 function TEBVSSourceElement(c0, nu, Δr, chord, h, Psi, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
-    return TEBVSSourceElement{BrooksBurleyDirectivity,true}(c0, nu, Δr, chord, h, Psi, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
+    return TEBVSSourceElement{BrooksBurleyDirectivity,true,true}(c0, nu, Δr, chord, h, Psi, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
 end
 
 """
@@ -208,7 +208,7 @@ This can be done easily with the transformations provided by the `KinematicCoord
 - bl: Boundary layer struct, i.e. an AbstractBoundaryLayer.
 - twist_about_positive_y: if `true`, apply twist ϕ about positive y axis, negative y axis otherwise
 """
-function TEBVSSourceElement{TDirect,TUInduction}(c0, nu, r, θ, Δr, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y) where {TDirect,TUInduction}
+function TEBVSSourceElement{TDirect,TUInduction,TDoppler}(c0, nu, r, θ, Δr, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y) where {TDirect,TUInduction,TDoppler}
     sθ, cθ = sincos(θ)
     sϕ, cϕ = sincos(ϕ)
     y0dot = @SVector [0, r*cθ, r*sθ]
@@ -223,12 +223,12 @@ function TEBVSSourceElement{TDirect,TUInduction}(c0, nu, r, θ, Δr, chord, ϕ, 
     end
 
     chord_cross_span_to_get_top_uvec = twist_about_positive_y
-    return TEBVSSourceElement{TDirect,TUInduction}(c0, nu, Δr, chord, h, Psi, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
+    return TEBVSSourceElement{TDirect,TUInduction,TDoppler}(c0, nu, Δr, chord, h, Psi, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
 end
 
-# Default to using the `BrooksBurleyDirectivity` directivity function, and include induction in the flow speed normal to span (TUInduction == true).
+# Default to using the `BrooksBurleyDirectivity` directivity function, include induction in the flow speed normal to span (TUInduction == true), and Doppler-shift.
 function TEBVSSourceElement(c0, nu, r, θ, Δr, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
-    return TEBVSSourceElement{BrooksBurleyDirectivity,true}(c0, nu, r, θ, Δr, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
+    return TEBVSSourceElement{BrooksBurleyDirectivity,true,true}(c0, nu, r, θ, Δr, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
 end
 
 """
@@ -236,7 +236,7 @@ end
 
 Transform the position and orientation of a source element according to the coordinate system transformation `trans`.
 """
-function (trans::KinematicTransformation)(se::TEBVSSourceElement{TDirect,TUInduction}) where {TDirect,TUInduction}
+function (trans::KinematicTransformation)(se::TEBVSSourceElement{TDirect,TUInduction,TDoppler}) where {TDirect,TUInduction,TDoppler}
     linear_only = false
     y0dot, y1dot = trans(se.τ, se.y0dot, se.y1dot, linear_only)
     y0dot, y1dot_fluid = trans(se.τ, se.y0dot, se.y1dot_fluid, linear_only)
@@ -244,7 +244,7 @@ function (trans::KinematicTransformation)(se::TEBVSSourceElement{TDirect,TUInduc
     span_uvec = trans(se.τ, se.span_uvec, linear_only)
     chord_uvec = trans(se.τ, se.chord_uvec, linear_only)
 
-    return TEBVSSourceElement{TDirect,TUInduction}(se.c0, se.nu, se.Δr, se.chord, se.h, se.Psi, y0dot, y1dot, y1dot_fluid, se.τ, se.Δτ, span_uvec, chord_uvec, se.bl, se.chord_cross_span_to_get_top_uvec)
+    return TEBVSSourceElement{TDirect,TUInduction,TDoppler}(se.c0, se.nu, se.Δr, se.chord, se.h, se.Psi, y0dot, y1dot, y1dot_fluid, se.τ, se.Δτ, span_uvec, chord_uvec, se.bl, se.chord_cross_span_to_get_top_uvec)
 end
 
 function _teb_vs(freq, h_U, h_over_deltastar_avg, St_3pp, Psi, g4, G_teb_vs_scaler)

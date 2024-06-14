@@ -80,7 +80,7 @@ function LBL_VS(freq, nu, L, chord, U, M, M_c, r_e, theta_e, phi_e, alphastar, b
     return SPL
 end
 
-@concrete struct LBLVSSourceElement{TDirect<:AbstractDirectivity,TUInduction} <: AbstractBroadbandSourceElement{TDirect,TUInduction,NoMachCorrection}
+@concrete struct LBLVSSourceElement{TDirect<:AbstractDirectivity,TUInduction,TDoppler} <: AbstractBroadbandSourceElement{TDirect,TUInduction,NoMachCorrection,TDoppler}
     # Speed of sound, m/s.
     c0
     # Kinematic viscosity, m^2/s
@@ -109,9 +109,9 @@ end
     chord_cross_span_to_get_top_uvec
 end
 
-# Default to using the `BrooksBurleyDirectivity` directivity function, and include induction in the flow speed normal to span (TUInduction == true).
+# Default to using the `BrooksBurleyDirectivity` directivity function, include induction in the flow speed normal to span (TUInduction == true), and Doppler-shift.
 function LBLVSSourceElement(c0, nu, Δr, chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
-    return LBLVSSourceElement{BrooksBurleyDirectivity,true}(c0, nu, Δr, chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
+    return LBLVSSourceElement{BrooksBurleyDirectivity,true,true}(c0, nu, Δr, chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
 end
 
 """
@@ -151,7 +151,7 @@ This can be done easily with the transformations provided by the `KinematicCoord
 - bl: Boundary layer struct, i.e. an AbstractBoundaryLayer.
 - twist_about_positive_y: if `true`, apply twist ϕ about positive y axis, negative y axis otherwise
 """
-function LBLVSSourceElement{TDirect,TUInduction}(c0, nu, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y) where {TDirect,TUInduction}
+function LBLVSSourceElement{TDirect,TUInduction,TDoppler}(c0, nu, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y) where {TDirect,TUInduction,TDoppler}
     sθ, cθ = sincos(θ)
     sϕ, cϕ = sincos(ϕ)
     y0dot = @SVector [0, r*cθ, r*sθ]
@@ -166,12 +166,12 @@ function LBLVSSourceElement{TDirect,TUInduction}(c0, nu, r, θ, Δr, chord, ϕ, 
     end
 
     chord_cross_span_to_get_top_uvec = twist_about_positive_y
-    return LBLVSSourceElement{TDirect,TUInduction}(c0, nu, Δr, chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
+    return LBLVSSourceElement{TDirect,TUInduction,TDoppler}(c0, nu, Δr, chord, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
 end
 
-# Default to using the `BrooksBurleyDirectivity` directivity function, and include induction in the flow speed normal to span (TUInduction == true).
+# Default to using the `BrooksBurleyDirectivity` directivity function, include induction in the flow speed normal to span (TUInduction == true), and Doppler-shift.
 function LBLVSSourceElement(c0, nu, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
-    return LBLVSSourceElement{BrooksBurleyDirectivity,true}(c0, nu, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
+    return LBLVSSourceElement{BrooksBurleyDirectivity,true,true}(c0, nu, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
 end
 
 """
@@ -179,7 +179,7 @@ end
 
 Transform the position and orientation of a source element according to the coordinate system transformation `trans`.
 """
-function (trans::KinematicTransformation)(se::LBLVSSourceElement{TDirect,TUInduction}) where {TDirect,TUInduction}
+function (trans::KinematicTransformation)(se::LBLVSSourceElement{TDirect,TUInduction,TDoppler}) where {TDirect,TUInduction,TDoppler}
     linear_only = false
     y0dot, y1dot = trans(se.τ, se.y0dot, se.y1dot, linear_only)
     y0dot, y1dot_fluid = trans(se.τ, se.y0dot, se.y1dot_fluid, linear_only)
@@ -187,7 +187,7 @@ function (trans::KinematicTransformation)(se::LBLVSSourceElement{TDirect,TUInduc
     span_uvec = trans(se.τ, se.span_uvec, linear_only)
     chord_uvec = trans(se.τ, se.chord_uvec, linear_only)
 
-    return LBLVSSourceElement{TDirect,TUInduction}(se.c0, se.nu, se.Δr, se.chord, y0dot, y1dot, y1dot_fluid, se.τ, se.Δτ, span_uvec, chord_uvec, se.bl, se.chord_cross_span_to_get_top_uvec)
+    return LBLVSSourceElement{TDirect,TUInduction,TDoppler}(se.c0, se.nu, se.Δr, se.chord, y0dot, y1dot, y1dot_fluid, se.τ, se.Δτ, span_uvec, chord_uvec, se.bl, se.chord_cross_span_to_get_top_uvec)
 end
 
 function _lbl_vs(freq, delta_p_U, St_p_p, g2, g3, scaler)
