@@ -56,7 +56,6 @@ function calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl; 
         se_tebvs = AcousticAnalogies.TEBVSSourceElement{AcousticAnalogies.BPMDirectivity,false,true}(c0, nu, r, θ, L, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
     end
 
-
     if combined_calc == :no_tip
         se_combined = AcousticAnalogies.CombinedNoTipBroadbandSourceElement{AcousticAnalogies.BPMDirectivity,false,AcousticAnalogies.NoMachCorrection,true}(c0, nu, r, θ, L, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
     elseif combined_calc == :with_tip

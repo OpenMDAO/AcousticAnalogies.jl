@@ -16,7 +16,7 @@ include("gen_test_data/gen_ccblade_data/constants.jl")
 using .CCBladeTestCaseConstants
 ccbc = CCBladeTestCaseConstants
 
-@testset "TBLTESourceElement twist and rotation tests" begin
+@testset "Twist and rotation tests" begin
     # So, the way this should work: first do the twist, then do the theta rotation.
     # The twist could be either about the positive y axis or negative y axis.
     # Then the theta rotation is always about the x axis.
@@ -25,48 +25,99 @@ ccbc = CCBladeTestCaseConstants
     r = 2.0
     Δr = 0.1
     chord = 1.3
+    h = 1.4
+    Psi = 1.5
     vn = 2.0
     vr = 3.0
     vc = 4.0
     τ = 0.1
     Δτ = 0.02
     bl = 2.0 # should be a boundary layer struct, but doesn't matter for these tests.
-    for twist_about_positive_y in [true, false]
-        se_0twist0theta = TBLTESourceElement(c0, nu, r, 0.0, Δr, chord, 0.0, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
-        for θ in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
-            trans_theta = SteadyRotXTransformation(τ, 0.0, -θ)
+    blade_tip = 3.0 # should be a blade tip struct, but doesn't matter for these tests.
+    for setype in [TBLTESourceElement, LBLVSSourceElement, TEBVSSourceElement, TipVortexSourceElement, CombinedNoTipBroadbandSourceElement, CombinedWithTipBroadbandSourceElement]
+        for twist_about_positive_y in [true, false]
+            if setype == CombinedWithTipBroadbandSourceElement
+                se_0twist0theta = setype(c0, nu, r, 0.0, Δr, chord, 0.0, h, Psi, vn, vr, vc, τ, Δτ, bl, blade_tip, twist_about_positive_y)
+            elseif setype == TipVortexSourceElement
+                se_0twist0theta = setype(c0, r, 0.0, Δr, chord, 0.0, vn, vr, vc, τ, Δτ, bl, blade_tip, twist_about_positive_y)
+            elseif setype in (TEBVSSourceElement, CombinedNoTipBroadbandSourceElement)
+                se_0twist0theta = setype(c0, nu, r, 0.0, Δr, chord, 0.0, h, Psi, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
+            else
+                se_0twist0theta = setype(c0, nu, r, 0.0, Δr, chord, 0.0, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
+            end
+            for θ in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
+                trans_theta = SteadyRotXTransformation(τ, 0.0, -θ)
 
-            for ϕ in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
-                # The angle of attack depends on the twist and the fluid velocity
-                if twist_about_positive_y
-                    alpha_check = ϕ - atan(-vn, -vc)
-                else
-                    alpha_check = ϕ - atan(-vn, vc)
-                end
-                se = TBLTESourceElement(c0, nu, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y) |> trans_theta
-                # Adjust the angles of attack to always be between -pi and pi.
-                alpha_check = rem2pi(alpha_check+pi, RoundNearest) - pi
-                alpha = rem2pi(AcousticAnalogies.angle_of_attack(se)+pi, RoundNearest) - pi
-                @test alpha ≈ alpha_check
-
-                for field in fieldnames(TBLTESourceElement)
-                    # The twist changes the unit vector in the chord direction, but nothing else, so ignore that for now.
-                    if field != :chord_uvec
-                        @test getproperty(se, field) ≈ getproperty(se_0twist0theta, field)
+                for ϕ in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
+                    # The angle of attack depends on the twist and the fluid velocity
+                    if twist_about_positive_y
+                        alpha_check = ϕ - atan(-vn, -vc)
+                    else
+                        alpha_check = ϕ - atan(-vn, vc)
                     end
-                end
+                    if setype == CombinedWithTipBroadbandSourceElement
+                        se = setype(c0, nu, r, θ, Δr, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, blade_tip, twist_about_positive_y) |> trans_theta
+                    elseif setype == TipVortexSourceElement
+                        se = setype(c0, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, blade_tip, twist_about_positive_y) |> trans_theta
+                    elseif setype in (TEBVSSourceElement, CombinedNoTipBroadbandSourceElement)
+                        se = setype(c0, nu, r, θ, Δr, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y) |> trans_theta
+                    else
+                        se = setype(c0, nu, r, θ, Δr, chord, ϕ, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y) |> trans_theta
+                    end
+                    # Adjust the angles of attack to always be between -pi and pi.
+                    alpha_check = rem2pi(alpha_check+pi, RoundNearest) - pi
+                    alpha = rem2pi(AcousticAnalogies.angle_of_attack(se)+pi, RoundNearest) - pi
+                    @test alpha ≈ alpha_check
 
-                if twist_about_positive_y
-                    # If we're applying the twist about the positive y axis, then we need to do a negative rotation about the y axis to undo it.
-                    trans_phi = SteadyRotYTransformation(τ, 0.0, -ϕ)
-                    chord_uvec_check = @SVector [0.0, 0.0, -1.0]
-                else
-                    # If we're applying the twist about the negative y axis, then we need to do a positive rotation about the y axis to undo it.
-                    trans_phi = SteadyRotYTransformation(τ, 0.0, ϕ)
-                    chord_uvec_check = @SVector [0.0, 0.0, 1.0]
+                    for field in fieldnames(setype)
+                        # The twist changes the unit vector in the chord direction, but nothing else, so ignore that for now.
+                        if field != :chord_uvec
+                            @test getproperty(se, field) ≈ getproperty(se_0twist0theta, field)
+                        end
+                    end
+
+                    if twist_about_positive_y
+                        # If we're applying the twist about the positive y axis, then we need to do a negative rotation about the y axis to undo it.
+                        trans_phi = SteadyRotYTransformation(τ, 0.0, -ϕ)
+                        chord_uvec_check = @SVector [0.0, 0.0, -1.0]
+                    else
+                        # If we're applying the twist about the negative y axis, then we need to do a positive rotation about the y axis to undo it.
+                        trans_phi = SteadyRotYTransformation(τ, 0.0, ϕ)
+                        chord_uvec_check = @SVector [0.0, 0.0, 1.0]
+                    end
+                    se_no_twist = se |> trans_phi
+                    @test se_no_twist.chord_uvec ≈ chord_uvec_check
+
+                    # Make sure we get the same thing if we specify the velocity via a velocity magnitude and angle of attack.
+                    # But need to make sure we use vr == 0.
+                    if setype == CombinedWithTipBroadbandSourceElement
+                        se_no_vr = setype(c0, nu, r, θ, Δr, chord, ϕ, h, Psi, vn, 0.0, vc, τ, Δτ, bl, blade_tip, twist_about_positive_y)
+                    elseif setype == TipVortexSourceElement
+                        se_no_vr = setype(c0, r, θ, Δr, chord, ϕ, vn, 0.0, vc, τ, Δτ, bl, blade_tip, twist_about_positive_y)
+                    elseif setype in (TEBVSSourceElement, CombinedNoTipBroadbandSourceElement)
+                        se_no_vr = setype(c0, nu, r, θ, Δr, chord, ϕ, h, Psi, vn, 0.0, vc, τ, Δτ, bl, twist_about_positive_y)
+                    else
+                        se_no_vr = setype(c0, nu, r, θ, Δr, chord, ϕ, vn, 0.0, vc, τ, Δτ, bl, twist_about_positive_y)
+                    end
+                    # Removing vr, the radial velocity component, shouldn't change the angle of attack.
+                    alpha_no_vr = rem2pi(AcousticAnalogies.angle_of_attack(se_no_vr)+pi, RoundNearest) - pi
+                    @test alpha_no_vr ≈ alpha_check
+                    # Now create a source element using the velocity magnitude and angle of attack, check that we get the same thing.
+                    U = sqrt(vn^2 + vc^2)
+                    if setype == CombinedWithTipBroadbandSourceElement
+                        se_from_U_α = setype(c0, nu, r, θ, Δr, chord, ϕ, h, Psi, U, alpha_no_vr, τ, Δτ, bl, blade_tip, twist_about_positive_y)
+                    elseif setype == TipVortexSourceElement
+                        se_from_U_α = setype(c0, r, θ, Δr, chord, ϕ, U, alpha_no_vr, τ, Δτ, bl, blade_tip, twist_about_positive_y)
+                    elseif setype in (TEBVSSourceElement, CombinedNoTipBroadbandSourceElement)
+                        se_from_U_α = setype(c0, nu, r, θ, Δr, chord, ϕ, h, Psi, U, alpha_no_vr, τ, Δτ, bl, twist_about_positive_y)
+                    else
+                        se_from_U_α = setype(c0, nu, r, θ, Δr, chord, ϕ, U, alpha_no_vr, τ, Δτ, bl, twist_about_positive_y)
+                    end
+                    for field in fieldnames(setype)
+                        @test getproperty(se_from_U_α, field) ≈ getproperty(se_no_vr, field)
+                    end
+
                 end
-                se_no_twist = se |> trans_phi
-                @test se_no_twist.chord_uvec ≈ chord_uvec_check
             end
         end
     end

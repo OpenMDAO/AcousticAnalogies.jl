@@ -1,38 +1,48 @@
-@concrete struct CombinedNoTipBroadbandSourceElement{TDirect<:AbstractDirectivity,TUInduction,TMachCorrection,TDoppler} <: AbstractBroadbandSourceElement{TDirect,TUInduction,TMachCorrection,TDoppler}
+struct CombinedNoTipBroadbandSourceElement{
+        TDirect<:AbstractDirectivity,TUInduction,TMachCorrection,TDoppler,
+        Tc0,Tnu,TΔr,Tchord,Th,TPsi,Ty0dot,Ty1dot,Ty1dot_fluid,Tτ,TΔτ,Tspan_uvec,Tchord_uvec,Tbl
+    } <: AbstractBroadbandSourceElement{TDirect,TUInduction,TMachCorrection,TDoppler}
     # Speed of sound, m/s.
-    c0
+    c0::Tc0
     # Kinematic viscosity, m^2/s
-    nu
+    nu::Tnu
     # Radial/spanwise length of element, m.
-    Δr
+    Δr::TΔr
     # chord length of element, m.
-    chord
+    chord::Tchord
     # Trailing edge thickness, m.
-    h
+    h::Th
     # Solid angle between blade surfaces immediately upstream of the trailing edge, rad.
-    Psi
+    Psi::TPsi
     # Source position, m.
-    y0dot
+    y0dot::Ty0dot
     # Source velocity, m/s.
-    y1dot
+    y1dot::Ty1dot
     # Fluid velocity, m/s.
-    y1dot_fluid
+    y1dot_fluid::Ty1dot_fluid
     # Source time, s.
-    τ
+    τ::Tτ
     # Time step size, i.e. the amount of time this source element "exists" at with these properties, s.
-    Δτ
+    Δτ::TΔτ
     # Radial/spanwise unit vector, aka unit vector aligned with the element's span direction.
-    span_uvec
+    span_uvec::Tspan_uvec
     # Chordwise unit vector, aka unit vector aligned with the element's chord line, pointing from leading edge to trailing edge.
-    chord_uvec
+    chord_uvec::Tchord_uvec
     # Boundary layer struct, i.e. an AbstractBoundaryLayer.
-    bl
+    bl::Tbl
     # `Bool` indicating chord_uvec×span_uvec will give a vector pointing from bottom side (usually pressure side) to top side (usually suction side) if `true`, or the opposite if `false`.
-    chord_cross_span_to_get_top_uvec
+    chord_cross_span_to_get_top_uvec::Bool
+
+    function CombinedNoTipBroadbandSourceElement{TDirect,TUInduction,TMachCorrection,TDoppler}(c0, nu, Δr, chord, h, Psi, y0dot::AbstractVector, y1dot::AbstractVector, y1dot_fluid::AbstractVector, τ, Δτ, span_uvec::AbstractVector, chord_uvec::AbstractVector, bl, chord_cross_span_to_get_top_uvec::Bool) where {TDirect<:AbstractDirectivity,TUInduction,TMachCorrection,TDoppler}
+        return new{
+            TDirect,TUInduction,TMachCorrection,TDoppler,
+            typeof(c0), typeof(nu), typeof(Δr), typeof(chord), typeof(h), typeof(Psi), typeof(y0dot), typeof(y1dot), typeof(y1dot_fluid), typeof(τ), typeof(Δτ), typeof(span_uvec), typeof(chord_uvec), typeof(bl)
+        }(c0, nu, Δr, chord, h, Psi, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
+    end
 end
 
 # Default to using the `BrooksBurleyDirectivity` directivity function, include induction in the flow speed normal to span (TUInduction == true), use the Prandtl-Glauert mach number correction, and Doppler-shift.
-function CombinedNoTipBroadbandSourceElement(c0, nu, Δr, chord, h, Psi, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
+function CombinedNoTipBroadbandSourceElement(c0, nu, Δr, chord, h, Psi, y0dot::AbstractVector, y1dot::AbstractVector, y1dot_fluid::AbstractVector, τ, Δτ, span_uvec::AbstractVector, chord_uvec::AbstractVector, bl, chord_cross_span_to_get_top_uvec)
     return CombinedNoTipBroadbandSourceElement{BrooksBurleyDirectivity,true,PrandtlGlauertMachCorrection,true}(c0, nu, Δr, chord, h, Psi, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
 end
 
@@ -96,6 +106,57 @@ end
 # Default to using the `BrooksBurleyDirectivity` directivity function, include induction in the flow speed normal to span (TUInduction == true), use the Prandtl-Glauert mach number correction, and Doppler-shift.
 function CombinedNoTipBroadbandSourceElement(c0, nu, r, θ, Δr, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
     return CombinedNoTipBroadbandSourceElement{BrooksBurleyDirectivity,true,PrandtlGlauertMachCorrection,true}(c0, nu, r, θ, Δr, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
+end
+
+"""
+    CombinedNoTipBroadbandSourceElement(c0, nu, r, θ, Δr, chord, ϕ, h, Psi, U, α, τ, Δτ, bl, twist_about_positive_y)
+
+Construct a source element for predicting turbulent boundary layer-trailing edge (TBLTE), laminar boundary layer-vortex shedding (LBLVS) noise, and trailing edge bluntness-vortex shedding (TEBVS) noise using the BPM/Brooks and Burley method, using the velocity magnitude `U` and angle of attack `α`.
+
+The `r` and `θ` arguments are used to define the radial and circumferential position of the source element in a cylindrical coordinate system.
+The `U` and `α` arguments are the velocity magnitude normal to the source element length and the angle of attack, respectively.
+The cylindrical coordinate system is defined as follows:
+
+  * The normal/axial direction is in the positive x axis
+  * The circumferential/azimuth angle `θ` is defined such that `θ = 0` means the radial direction is aligned with the positive y axis, and a positive `θ` indicates a right-handed rotation around the positive x axis.
+
+The `twist_about_positive_y` is a `Bool` controling how the `ϕ` argument is handled, which in turn controls the orientation of a unit vector defining `chord_uvec` indicating the orientation of the chord line, from leading edge to trailing edge.
+If `twist_about_positive_y` is `true`, `chord_uvec` will initially be pointed in the negative-z direction, and then rotated around the positive y axis by an amount `ϕ` before being rotated by the azimuth angle `θ`.
+(This would typcially be appropriate for a source element rotating around the positive x axis.)
+If `twist_about_positive_y` is `false`, `chord_uvec` will initially be pointed in the positive-z direction, and then rotated around the negative y axis by an amount `ϕ` before being rotated by the azimuth angle `θ`.
+(This would typcially be appropriate for a source element rotating around the negative x axis.)
+
+Note that, for a proper noise prediction, the source element needs to be transformed into the "global" frame, aka, the reference frame of the fluid.
+This can be done easily with the transformations provided by the `KinematicCoordinateTransformations` package, or manually by modifying the components of the source element struct.
+
+# Arguments
+- c0: Ambient speed of sound (m/s)
+- nu: Kinematic viscosity (m^2/s)
+- r: radial coordinate of the element in the blade-fixed coordinate system (m)
+- θ: angular offest of the element in the blade-fixed coordinate system (rad)
+- Δr: length of the element (m)
+- chord: chord length of blade element (m)
+- ϕ: twist of blade element (rad)
+- h: trailing edge thickness (m)
+- Psi: solid angle between the blade surfaces immediately upstream of the trailing edge (rad)
+- U: velocity magnitude (m/s)
+- α: angle of attack (rad)
+- τ: source time (s)
+- Δτ: source time duration (s)
+- bl: Boundary layer struct, i.e. an AbstractBoundaryLayer.
+- twist_about_positive_y: if `true`, apply twist ϕ about positive y axis, negative y axis otherwise
+"""
+function CombinedNoTipBroadbandSourceElement{TDirect,TUInduction,TMachCorrection,TDoppler}(c0, nu, r, θ, Δr, chord, ϕ, h, Psi, U, α, τ, Δτ, bl, twist_about_positive_y) where {TDirect,TUInduction,TMachCorrection,TDoppler}
+    precone = 0
+    pitch = 0
+    phi = ϕ - α
+    y0dot, y1dot, y1dot_fluid, span_uvec, chord_uvec, chord_cross_span_to_get_top_uvec = _get_position_velocity_span_uvec_chord_uvec(ϕ, precone, pitch, r, θ, U, phi, twist_about_positive_y)
+    return CombinedNoTipBroadbandSourceElement{TDirect,TUInduction,TMachCorrection,TDoppler}(c0, nu, Δr, chord, h, Psi, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, chord_cross_span_to_get_top_uvec)
+end
+
+# Default to using the `BrooksBurleyDirectivity` directivity function, include induction in the flow speed normal to span (TUInduction == true), use the PrandtlGlauertMachCorrection, and Doppler-shift.
+function CombinedNoTipBroadbandSourceElement(c0, nu, r, θ, Δr, chord, ϕ, h, Psi, U, α, τ, Δτ, bl, twist_about_positive_y::Bool)
+    return CombinedNoTipBroadbandSourceElement{BrooksBurleyDirectivity,true,PrandtlGlauertMachCorrection,true}(c0, nu, r, θ, Δr, chord, ϕ, h, Psi, U, α, τ, Δτ, bl, twist_about_positive_y)
 end
 
 """
@@ -266,43 +327,53 @@ function noise(se::CombinedNoTipBroadbandSourceElement, obs::AbstractAcousticObs
     return CombinedNoTipOutput(G_s, G_p, G_alpha, G_lbl_vs, G_teb_vs, freqs_obs, dt, t_obs)
 end
 
-@concrete struct CombinedWithTipBroadbandSourceElement{TDirect<:AbstractDirectivity,TUInduction,TMachCorrection,TDoppler} <: AbstractBroadbandSourceElement{TDirect,TUInduction,TMachCorrection,TDoppler}
+struct CombinedWithTipBroadbandSourceElement{
+        TDirect<:AbstractDirectivity,TUInduction,TMachCorrection,TDoppler,
+        Tc0,Tnu,TΔr,Tchord,Th,TPsi,Ty0dot,Ty1dot,Ty1dot_fluid,Tτ,TΔτ,Tspan_uvec,Tchord_uvec,Tbl,Tblade_tip
+    } <: AbstractBroadbandSourceElement{TDirect,TUInduction,TMachCorrection,TDoppler}
     # Speed of sound, m/s.
-    c0
+    c0::Tc0
     # Kinematic viscosity, m^2/s
-    nu
+    nu::Tnu
     # Radial/spanwise length of element, m.
-    Δr
+    Δr::TΔr
     # chord length of element, m.
-    chord
+    chord::Tchord
     # Trailing edge thickness, m.
-    h
+    h::Th
     # Solid angle between blade surfaces immediately upstream of the trailing edge, rad.
-    Psi
+    Psi::TPsi
     # Source position, m.
-    y0dot
+    y0dot::Ty0dot
     # Source velocity, m/s.
-    y1dot
+    y1dot::Ty1dot
     # Fluid velocity, m/s.
-    y1dot_fluid
+    y1dot_fluid::Ty1dot_fluid
     # Source time, s.
-    τ
+    τ::Tτ
     # Time step size, i.e. the amount of time this source element "exists" at with these properties, s.
-    Δτ
+    Δτ::TΔτ
     # Radial/spanwise unit vector, aka unit vector aligned with the element's span direction.
-    span_uvec
+    span_uvec::Tspan_uvec
     # Chordwise unit vector, aka unit vector aligned with the element's chord line, pointing from leading edge to trailing edge.
-    chord_uvec
+    chord_uvec::Tchord_uvec
     # Boundary layer struct, i.e. an AbstractBoundaryLayer.
-    bl
-    # Blade tip struct, i.e. an AbstractBladeTip.
-    blade_tip
+    bl::Tbl
+    # Blade tip struct, i.e. and AbstractBladeTip
+    blade_tip::Tblade_tip
     # `Bool` indicating chord_uvec×span_uvec will give a vector pointing from bottom side (usually pressure side) to top side (usually suction side) if `true`, or the opposite if `false`.
-    chord_cross_span_to_get_top_uvec
+    chord_cross_span_to_get_top_uvec::Bool
+
+    function CombinedWithTipBroadbandSourceElement{TDirect,TUInduction,TMachCorrection,TDoppler}(c0, nu, Δr, chord, h, Psi, y0dot::AbstractVector, y1dot::AbstractVector, y1dot_fluid::AbstractVector, τ, Δτ, span_uvec::AbstractVector, chord_uvec::AbstractVector, bl, blade_tip, chord_cross_span_to_get_top_uvec::Bool) where {TDirect<:AbstractDirectivity,TUInduction,TMachCorrection,TDoppler}
+        return new{
+            TDirect,TUInduction,TMachCorrection,TDoppler,
+            typeof(c0), typeof(nu), typeof(Δr), typeof(chord), typeof(h), typeof(Psi), typeof(y0dot), typeof(y1dot), typeof(y1dot_fluid), typeof(τ), typeof(Δτ), typeof(span_uvec), typeof(chord_uvec), typeof(bl), typeof(blade_tip)
+        }(c0, nu, Δr, chord, h, Psi, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, blade_tip, chord_cross_span_to_get_top_uvec)
+    end
 end
 
 # Default to using the `BrooksBurleyDirectivity` directivity function, include induction in the flow speed normal to span (TUInduction == true), use the Prandtl-Glauert mach number correction, and Doppler-shift.
-function CombinedWithTipBroadbandSourceElement(c0, nu, Δr, chord, h, Psi, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, blade_tip, chord_cross_span_to_get_top_uvec)
+function CombinedWithTipBroadbandSourceElement(c0, nu, Δr, chord, h, Psi, y0dot::AbstractVector, y1dot::AbstractVector, y1dot_fluid::AbstractVector, τ, Δτ, span_uvec::AbstractVector, chord_uvec::AbstractVector, bl, blade_tip, chord_cross_span_to_get_top_uvec)
     return CombinedWithTipBroadbandSourceElement{BrooksBurleyDirectivity,true,PrandtlGlauertMachCorrection,true}(c0, nu, Δr, chord, h, Psi, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, blade_tip, chord_cross_span_to_get_top_uvec)
 end
 
@@ -367,6 +438,58 @@ end
 # Default to using the `BrooksBurleyDirectivity` directivity function, include induction in the flow speed normal to span (TUInduction == true), use the Prandtl-Glauert mach number correction, and Doppler-shift.
 function CombinedWithTipBroadbandSourceElement(c0, nu, r, θ, Δr, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, blade_tip, twist_about_positive_y)
     return CombinedWithTipBroadbandSourceElement{BrooksBurleyDirectivity,true,PrandtlGlauertMachCorrection,true}(c0, nu, r, θ, Δr, chord, ϕ, h, Psi, vn, vr, vc, τ, Δτ, bl, blade_tip, twist_about_positive_y)
+end
+
+"""
+    CombinedWithTipBroadbandSourceElement(c0, nu, r, θ, Δr, chord, ϕ, h, Psi, U, α, τ, Δτ, bl, blade_tip, twist_about_positive_y)
+
+Construct a source element for predicting turbulent boundary layer-trailing edge (TBLTE), laminar boundary layer-vortex shedding (LBLVS) noise, trailing edge bluntness-vortex shedding (TEBVS), and tip vortex noise using the BPM/Brooks and Burley method, using the velocity magnitude `U` and angle of attack `α`.
+
+The `r` and `θ` arguments are used to define the radial and circumferential position of the source element in a cylindrical coordinate system.
+The `U` and `α` arguments are the velocity magnitude normal to the source element length and the angle of attack, respectively.
+The cylindrical coordinate system is defined as follows:
+
+  * The normal/axial direction is in the positive x axis
+  * The circumferential/azimuth angle `θ` is defined such that `θ = 0` means the radial direction is aligned with the positive y axis, and a positive `θ` indicates a right-handed rotation around the positive x axis.
+
+The `twist_about_positive_y` is a `Bool` controling how the `ϕ` argument is handled, which in turn controls the orientation of a unit vector defining `chord_uvec` indicating the orientation of the chord line, from leading edge to trailing edge.
+If `twist_about_positive_y` is `true`, `chord_uvec` will initially be pointed in the negative-z direction, and then rotated around the positive y axis by an amount `ϕ` before being rotated by the azimuth angle `θ`.
+(This would typcially be appropriate for a source element rotating around the positive x axis.)
+If `twist_about_positive_y` is `false`, `chord_uvec` will initially be pointed in the positive-z direction, and then rotated around the negative y axis by an amount `ϕ` before being rotated by the azimuth angle `θ`.
+(This would typcially be appropriate for a source element rotating around the negative x axis.)
+
+Note that, for a proper noise prediction, the source element needs to be transformed into the "global" frame, aka, the reference frame of the fluid.
+This can be done easily with the transformations provided by the `KinematicCoordinateTransformations` package, or manually by modifying the components of the source element struct.
+
+# Arguments
+- c0: Ambient speed of sound (m/s)
+- nu: Kinematic viscosity (m^2/s)
+- r: radial coordinate of the element in the blade-fixed coordinate system (m)
+- θ: angular offest of the element in the blade-fixed coordinate system (rad)
+- Δr: length of the element (m)
+- chord: chord length of blade element (m)
+- ϕ: twist of blade element (rad)
+- h: trailing edge thickness (m)
+- Psi: solid angle between the blade surfaces immediately upstream of the trailing edge (rad)
+- U: velocity magnitude (m/s)
+- α: angle of attack (rad)
+- τ: source time (s)
+- Δτ: source time duration (s)
+- bl: Boundary layer struct, i.e. an AbstractBoundaryLayer.
+- blade_tip: Blade tip struct, i.e. an AbstractBladeTip
+- twist_about_positive_y: if `true`, apply twist ϕ about positive y axis, negative y axis otherwise
+"""
+function CombinedWithTipBroadbandSourceElement{TDirect,TUInduction,TMachCorrection,TDoppler}(c0, nu, r, θ, Δr, chord, ϕ, h, Psi, U, α, τ, Δτ, bl, blade_tip, twist_about_positive_y) where {TDirect,TUInduction,TMachCorrection,TDoppler}
+    precone = 0
+    pitch = 0
+    phi = ϕ - α
+    y0dot, y1dot, y1dot_fluid, span_uvec, chord_uvec, chord_cross_span_to_get_top_uvec = _get_position_velocity_span_uvec_chord_uvec(ϕ, precone, pitch, r, θ, U, phi, twist_about_positive_y)
+    return CombinedWithTipBroadbandSourceElement{TDirect,TUInduction,TMachCorrection,TDoppler}(c0, nu, Δr, chord, h, Psi, y0dot, y1dot, y1dot_fluid, τ, Δτ, span_uvec, chord_uvec, bl, blade_tip, chord_cross_span_to_get_top_uvec)
+end
+
+# Default to using the `BrooksBurleyDirectivity` directivity function, include induction in the flow speed normal to span (TUInduction == true), use the PrandtlGlauertMachCorrection, and Doppler-shift.
+function CombinedWithTipBroadbandSourceElement(c0, nu, r, θ, Δr, chord, ϕ, h, Psi, U, α, τ, Δτ, bl, blade_tip, twist_about_positive_y::Bool)
+    return CombinedWithTipBroadbandSourceElement{BrooksBurleyDirectivity,true,PrandtlGlauertMachCorrection,true}(c0, nu, r, θ, Δr, chord, ϕ, h, Psi, U, α, τ, Δτ, bl, blade_tip, twist_about_positive_y)
 end
 
 """
