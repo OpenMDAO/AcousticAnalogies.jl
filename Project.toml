@@ -6,7 +6,6 @@ version = "0.7.0"
 [deps]
 AcousticMetrics = "046f749b-9c1e-43ca-86bc-6902340f753e"
 CCBlade = "e1828068-15df-11e9-03e4-ef195ea46fa4"
-ConcreteStructs = "2569d6c7-a4a2-43d3-a901-331e8e4be471"
 FLOWMath = "6cb5d3fb-0fe8-4cc2-bd89-9fe0b19a99d3"
 FillArrays = "1a297f60-69ca-5386-bcde-b61e274b549b"
 Formatting = "59287772-0a20-5a39-b81b-1366585eb4c0"

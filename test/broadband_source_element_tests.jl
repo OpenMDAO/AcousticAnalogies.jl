@@ -1585,21 +1585,23 @@ end
         SPL_p = SPL_s
 
         for angle_of_attack_sign in [1, -1]
-            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl)
+            for use_Ualpha in [false, true]
+                freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; use_Ualpha=use_Ualpha)
 
-            # Now compare...
-            SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
-            vmin, vmax = extrema(SPL_s)
-            err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
-            @test maximum(err) < 0.029
+                # Now compare...
+                SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
+                vmin, vmax = extrema(SPL_s)
+                err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
+                @test maximum(err) < 0.029
 
-            SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
-            vmin, vmax = extrema(SPL_p)
-            err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
-            @test maximum(err) < 0.029
+                SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
+                vmin, vmax = extrema(SPL_p)
+                err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
+                @test maximum(err) < 0.029
 
-            # These should all be very negative, since alphastar is zero:
-            @test all(SPL_alpha_jl .< -100)
+                # These should all be very negative, since alphastar is zero:
+                @test all(SPL_alpha_jl .< -100)
+            end
         end
     end
 
@@ -1626,21 +1628,23 @@ end
         SPL_p = SPL_s
 
         for angle_of_attack_sign in [1, -1]
-            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl)
+            for use_Ualpha in [false, true]
+                freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; use_Ualpha=use_Ualpha)
 
-            # Now compare...
-            SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
-            vmin, vmax = extrema(SPL_s)
-            err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
-            @test maximum(err) < 0.015
+                # Now compare...
+                SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
+                vmin, vmax = extrema(SPL_s)
+                err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
+                @test maximum(err) < 0.015
 
-            SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
-            vmin, vmax = extrema(SPL_p)
-            err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
-            @test maximum(err) < 0.015
+                SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
+                vmin, vmax = extrema(SPL_p)
+                err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
+                @test maximum(err) < 0.015
 
-            # These should all be very negative, since alphastar is zero:
-            @test all(SPL_alpha_jl .< -100)
+                # These should all be very negative, since alphastar is zero:
+                @test all(SPL_alpha_jl .< -100)
+            end
         end
     end
 
@@ -1673,23 +1677,25 @@ end
         SPL_alpha = bpm[:, 2]
 
         for angle_of_attack_sign in [1, -1]
-            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl)
+            for use_Ualpha in [false, true]
+                freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; use_Ualpha=use_Ualpha)
 
-            # Now compare...
-            SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
-            vmin, vmax = extrema(SPL_s)
-            err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
-            @test maximum(err) < 0.022
+                # Now compare...
+                SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
+                vmin, vmax = extrema(SPL_s)
+                err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
+                @test maximum(err) < 0.022
 
-            SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
-            vmin, vmax = extrema(SPL_p)
-            err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
-            @test maximum(err) < 0.017
+                SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
+                vmin, vmax = extrema(SPL_p)
+                err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
+                @test maximum(err) < 0.017
 
-            SPL_alpha_jl_interp = linear(freqs, SPL_alpha_jl, f_alpha.*1e3)
-            vmin, vmax = extrema(SPL_alpha)
-            err = abs.(SPL_alpha_jl_interp .- SPL_alpha)./(vmax - vmin)
-            @test maximum(err) < 0.037
+                SPL_alpha_jl_interp = linear(freqs, SPL_alpha_jl, f_alpha.*1e3)
+                vmin, vmax = extrema(SPL_alpha)
+                err = abs.(SPL_alpha_jl_interp .- SPL_alpha)./(vmax - vmin)
+                @test maximum(err) < 0.037
+            end
         end
     end
 
@@ -1716,21 +1722,23 @@ end
         SPL_p = SPL_s
 
         for angle_of_attack_sign in [1, -1]
-            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl)
+            for use_Ualpha in [false, true]
+                freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; use_Ualpha=use_Ualpha)
 
-            # Now compare...
-            SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
-            vmin, vmax = extrema(SPL_s)
-            err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
-            @test maximum(err) < 0.015
+                # Now compare...
+                SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
+                vmin, vmax = extrema(SPL_s)
+                err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
+                @test maximum(err) < 0.015
 
-            SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
-            vmin, vmax = extrema(SPL_p)
-            err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
-            @test maximum(err) < 0.015
+                SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
+                vmin, vmax = extrema(SPL_p)
+                err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
+                @test maximum(err) < 0.015
 
-            # These should all be very negative, since alphastar is zero:
-            @test all(SPL_alpha_jl .< -100)
+                # These should all be very negative, since alphastar is zero:
+                @test all(SPL_alpha_jl .< -100)
+            end
         end
     end
 
@@ -1757,21 +1765,23 @@ end
         SPL_p = SPL_s
 
         for angle_of_attack_sign in [1, -1]
-            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl)
+            for use_Ualpha in [false, true]
+                freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl, use_Ualpha=use_Ualpha)
 
-            # Now compare...
-            SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
-            vmin, vmax = extrema(SPL_s)
-            err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
-            @test maximum(err) < 0.032
+                # Now compare...
+                SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
+                vmin, vmax = extrema(SPL_s)
+                err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
+                @test maximum(err) < 0.032
 
-            SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
-            vmin, vmax = extrema(SPL_p)
-            err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
-            @test maximum(err) < 0.032
+                SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
+                vmin, vmax = extrema(SPL_p)
+                err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
+                @test maximum(err) < 0.032
 
-            # These should all be very negative, since alphastar is zero:
-            @test all(SPL_alpha_jl .< -100)
+                # These should all be very negative, since alphastar is zero:
+                @test all(SPL_alpha_jl .< -100)
+            end
         end
     end
 
@@ -1805,23 +1815,25 @@ end
         SPL_alpha = bpm[:, 2]
 
         for angle_of_attack_sign in [1, -1]
-            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl)
+            for use_Ualpha in [false, true]
+                freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; use_Ualpha=use_Ualpha)
 
-            # Now compare...
-            SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
-            vmin, vmax = extrema(SPL_s)
-            err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
-            @test maximum(err) < 0.036
+                # Now compare...
+                SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
+                vmin, vmax = extrema(SPL_s)
+                err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
+                @test maximum(err) < 0.036
 
-            SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
-            vmin, vmax = extrema(SPL_p)
-            err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
-            @test maximum(err) < 0.075
+                SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
+                vmin, vmax = extrema(SPL_p)
+                err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
+                @test maximum(err) < 0.075
 
-            SPL_alpha_jl_interp = linear(freqs, SPL_alpha_jl, f_alpha.*1e3)
-            vmin, vmax = extrema(SPL_alpha)
-            err = abs.(SPL_alpha_jl_interp .- SPL_alpha)./(vmax - vmin)
-            @test maximum(err) < 0.039
+                SPL_alpha_jl_interp = linear(freqs, SPL_alpha_jl, f_alpha.*1e3)
+                vmin, vmax = extrema(SPL_alpha)
+                err = abs.(SPL_alpha_jl_interp .- SPL_alpha)./(vmax - vmin)
+                @test maximum(err) < 0.039
+            end
         end
     end
 
@@ -1855,23 +1867,25 @@ end
         SPL_alpha = bpm[:, 2]
 
         for angle_of_attack_sign in [1, -1]
-            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl)
+            for use_Ualpha in [false, true]
+                freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; use_Ualpha=use_Ualpha)
 
-            # Now compare...
-            SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
-            vmin, vmax = extrema(SPL_s)
-            err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
-            @test maximum(err) < 0.021
+                # Now compare...
+                SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
+                vmin, vmax = extrema(SPL_s)
+                err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
+                @test maximum(err) < 0.021
 
-            SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
-            vmin, vmax = extrema(SPL_p)
-            err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
-            @test maximum(err) < 0.042
+                SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
+                vmin, vmax = extrema(SPL_p)
+                err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
+                @test maximum(err) < 0.042
 
-            SPL_alpha_jl_interp = linear(freqs, SPL_alpha_jl, f_alpha.*1e3)
-            vmin, vmax = extrema(SPL_alpha)
-            err = abs.(SPL_alpha_jl_interp .- SPL_alpha)./(vmax - vmin)
-            @test maximum(err) < 0.040
+                SPL_alpha_jl_interp = linear(freqs, SPL_alpha_jl, f_alpha.*1e3)
+                vmin, vmax = extrema(SPL_alpha)
+                err = abs.(SPL_alpha_jl_interp .- SPL_alpha)./(vmax - vmin)
+                @test maximum(err) < 0.040
+            end
         end
     end
 
@@ -1899,21 +1913,23 @@ end
         SPL_p = SPL_s
 
         for angle_of_attack_sign in [1, -1]
-            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl)
+            for use_Ualpha in [false, true]
+                freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; use_Ualpha=use_Ualpha)
 
-            # Now compare...
-            SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
-            vmin, vmax = extrema(SPL_s)
-            err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
-            @test maximum(err) < 0.026
+                # Now compare...
+                SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
+                vmin, vmax = extrema(SPL_s)
+                err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
+                @test maximum(err) < 0.026
 
-            SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
-            vmin, vmax = extrema(SPL_p)
-            err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
-            @test maximum(err) < 0.026
+                SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
+                vmin, vmax = extrema(SPL_p)
+                err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
+                @test maximum(err) < 0.026
 
-            # These should all be very negative, since alphastar is zero:
-            @test all(SPL_alpha_jl .< -100)
+                # These should all be very negative, since alphastar is zero:
+                @test all(SPL_alpha_jl .< -100)
+            end
         end
     end
 
@@ -1948,23 +1964,25 @@ end
         SPL_alpha = bpm[:, 2]
 
         for angle_of_attack_sign in [1, -1]
-            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl)
+            for use_Ualpha in [false, true]
+                freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; use_Ualpha=use_Ualpha)
 
-            # Now compare...
-            SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
-            vmin, vmax = extrema(SPL_s)
-            err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
-            @test maximum(err) < 0.036
+                # Now compare...
+                SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
+                vmin, vmax = extrema(SPL_s)
+                err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
+                @test maximum(err) < 0.036
 
-            SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
-            vmin, vmax = extrema(SPL_p)
-            err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
-            @test maximum(err) < 0.043
+                SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
+                vmin, vmax = extrema(SPL_p)
+                err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
+                @test maximum(err) < 0.043
 
-            SPL_alpha_jl_interp = linear(freqs, SPL_alpha_jl, f_alpha.*1e3)
-            vmin, vmax = extrema(SPL_alpha)
-            err = abs.(SPL_alpha_jl_interp .- SPL_alpha)./(vmax - vmin)
-            @test maximum(err) < 0.039
+                SPL_alpha_jl_interp = linear(freqs, SPL_alpha_jl, f_alpha.*1e3)
+                vmin, vmax = extrema(SPL_alpha)
+                err = abs.(SPL_alpha_jl_interp .- SPL_alpha)./(vmax - vmin)
+                @test maximum(err) < 0.039
+            end
         end
     end
 
@@ -2002,45 +2020,48 @@ end
         SPL_lbl_vs = bpm[:, 2]
 
         for angle_of_attack_sign in [1, -1]
-            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_lbl_vs_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; do_lblvs=true)
+            for use_Ualpha in [false, true]
+                freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_lbl_vs_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; do_lblvs=true, use_Ualpha=use_Ualpha)
 
-            # # Now compare...
-            # SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
-            # vmin, vmax = extrema(SPL_s)
-            # err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
-            # @test maximum(err) < 0.036
+                # # Now compare...
+                # SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
+                # vmin, vmax = extrema(SPL_s)
+                # err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
+                # @test maximum(err) < 0.036
 
-            # SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
-            # vmin, vmax = extrema(SPL_p)
-            # err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
-            # @test maximum(err) < 0.043
+                # SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
+                # vmin, vmax = extrema(SPL_p)
+                # err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
+                # @test maximum(err) < 0.043
 
-            # SPL_alpha_jl_interp = linear(freqs, SPL_alpha_jl, f_alpha.*1e3)
-            # vmin, vmax = extrema(SPL_alpha)
-            # err = abs.(SPL_alpha_jl_interp .- SPL_alpha)./(vmax - vmin)
-            # @test maximum(err) < 0.039
+                # SPL_alpha_jl_interp = linear(freqs, SPL_alpha_jl, f_alpha.*1e3)
+                # vmin, vmax = extrema(SPL_alpha)
+                # err = abs.(SPL_alpha_jl_interp .- SPL_alpha)./(vmax - vmin)
+                # @test maximum(err) < 0.039
 
-            # The agreement with these ones aren't so great.
-            # Might be better if I grabbed the listing in the BPM appendix?
-            SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
-            vmin, vmax = extrema(SPL_s)
-            err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
-            @test maximum(err) < 0.037
+                # The agreement with these ones aren't so great.
+                    # Might be better if I grabbed the listing in the BPM appendix?
+                # Might be better if I grabbed the listing in the BPM appendix?
+                SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
+                vmin, vmax = extrema(SPL_s)
+                err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
+                @test maximum(err) < 0.037
 
-            SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
-            vmin, vmax = extrema(SPL_p)
-            err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
-            @test maximum(err) < 0.058
+                SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
+                vmin, vmax = extrema(SPL_p)
+                err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
+                @test maximum(err) < 0.058
 
-            SPL_alpha_jl_interp = linear(freqs, SPL_alpha_jl, f_alpha.*1e3)
-            vmin, vmax = extrema(SPL_alpha)
-            err = abs.(SPL_alpha_jl_interp .- SPL_alpha)./(vmax - vmin)
-            @test maximum(err) < 0.091
+                SPL_alpha_jl_interp = linear(freqs, SPL_alpha_jl, f_alpha.*1e3)
+                vmin, vmax = extrema(SPL_alpha)
+                err = abs.(SPL_alpha_jl_interp .- SPL_alpha)./(vmax - vmin)
+                @test maximum(err) < 0.091
 
-            SPL_lbl_vs_jl_interp = linear(freqs, SPL_lbl_vs_jl, f_lbl_vs.*1e3)
-            vmin, vmax = extrema(SPL_lbl_vs)
-            err = abs.(SPL_lbl_vs_jl_interp .- SPL_lbl_vs)./(vmax - vmin)
-            @test maximum(err) < 0.053
+                SPL_lbl_vs_jl_interp = linear(freqs, SPL_lbl_vs_jl, f_lbl_vs.*1e3)
+                vmin, vmax = extrema(SPL_lbl_vs)
+                err = abs.(SPL_lbl_vs_jl_interp .- SPL_lbl_vs)./(vmax - vmin)
+                @test maximum(err) < 0.053
+            end
         end
     end
 
@@ -2056,21 +2077,21 @@ end
         alphastar = 0.0*pi/180
         bl = AcousticAnalogies.UntrippedN0012BoundaryLayer()
 
-        f_jl, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_lbl_vs_jl = AcousticAnalogies.calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl; do_lblvs=true)
-
         fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure48-c-LBL-VS.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_lbl_vs = bpm[:, 1]
         SPL_lbl_vs = bpm[:, 2]
 
         for angle_of_attack_sign in [1, -1]
-            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_lbl_vs_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; do_lblvs=true)
+            for use_Ualpha in [false, true]
+                freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_lbl_vs_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; do_lblvs=true, use_Ualpha=use_Ualpha)
 
-            # Now compare...
-            SPL_lbl_vs_jl_interp = linear(freqs, SPL_lbl_vs_jl, f_lbl_vs.*1e3)
-            vmin, vmax = extrema(SPL_lbl_vs)
-            err = abs.(SPL_lbl_vs_jl_interp .- SPL_lbl_vs)./(vmax - vmin)
-            @test maximum(err) < 0.083
+                # Now compare...
+                SPL_lbl_vs_jl_interp = linear(freqs, SPL_lbl_vs_jl, f_lbl_vs.*1e3)
+                vmin, vmax = extrema(SPL_lbl_vs)
+                err = abs.(SPL_lbl_vs_jl_interp .- SPL_lbl_vs)./(vmax - vmin)
+                @test maximum(err) < 0.083
+            end
         end
     end
 
@@ -2093,12 +2114,14 @@ end
         SPL_lbl_vs = bpm[:, 2]
 
         for angle_of_attack_sign in [1, -1]
-            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_lbl_vs_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; do_lblvs=true)
+            for use_Ualpha in [false, true]
+                freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_lbl_vs_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; do_lblvs=true, use_Ualpha=use_Ualpha)
 
-            SPL_lbl_vs_jl_interp = linear(freqs, SPL_lbl_vs_jl, f_lbl_vs.*1e3)
-            vmin, vmax = extrema(SPL_lbl_vs)
-            err = abs.(SPL_lbl_vs_jl_interp .- SPL_lbl_vs)./(vmax - vmin)
-            @test maximum(err) < 0.026
+                SPL_lbl_vs_jl_interp = linear(freqs, SPL_lbl_vs_jl, f_lbl_vs.*1e3)
+                vmin, vmax = extrema(SPL_lbl_vs)
+                err = abs.(SPL_lbl_vs_jl_interp .- SPL_lbl_vs)./(vmax - vmin)
+                @test maximum(err) < 0.026
+            end
         end
     end
 
@@ -2113,7 +2136,6 @@ end
         Φ_e = 90*pi/180
         alphastar = 0.0*pi/180
         bl = AcousticAnalogies.UntrippedN0012BoundaryLayer()
-        f_jl, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_lbl_vs_jl = AcousticAnalogies.calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl; do_lblvs=true)
 
         fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure59-c-LBL-VS.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
@@ -2121,13 +2143,15 @@ end
         SPL_lbl_vs = bpm[:, 2]
 
         for angle_of_attack_sign in [1, -1]
-            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_lbl_vs_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; do_lblvs=true)
+            for use_Ualpha in [false, true]
+                freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_lbl_vs_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; do_lblvs=true, use_Ualpha=use_Ualpha)
 
-            # Now compare...
-            SPL_lbl_vs_jl_interp = linear(freqs, SPL_lbl_vs_jl, f_lbl_vs.*1e3)
-            vmin, vmax = extrema(SPL_lbl_vs)
-            err = abs.(SPL_lbl_vs_jl_interp .- SPL_lbl_vs)./(vmax - vmin)
-            @test maximum(err) < 0.11
+                # Now compare...
+                SPL_lbl_vs_jl_interp = linear(freqs, SPL_lbl_vs_jl, f_lbl_vs.*1e3)
+                vmin, vmax = extrema(SPL_lbl_vs)
+                err = abs.(SPL_lbl_vs_jl_interp .- SPL_lbl_vs)./(vmax - vmin)
+                @test maximum(err) < 0.11
+            end
         end
     end
 
@@ -2142,7 +2166,6 @@ end
         Φ_e = 90*pi/180
         alphastar = 3.3*pi/180
         bl = AcousticAnalogies.UntrippedN0012BoundaryLayer()
-        f_jl, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_lbl_vs_jl = AcousticAnalogies.calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl; do_lblvs=true)
 
         fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure60-c-LBL-VS.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
@@ -2150,13 +2173,15 @@ end
         SPL_lbl_vs = bpm[:, 2]
 
         for angle_of_attack_sign in [1, -1]
-            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_lbl_vs_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; do_lblvs=true)
+            for use_Ualpha in [false, true]
+                freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_lbl_vs_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; do_lblvs=true, use_Ualpha=use_Ualpha)
 
-            # Now compare...
-            SPL_lbl_vs_jl_interp = linear(freqs, SPL_lbl_vs_jl, f_lbl_vs.*1e3)
-            vmin, vmax = extrema(SPL_lbl_vs)
-            err = abs.(SPL_lbl_vs_jl_interp .- SPL_lbl_vs)./(vmax - vmin)
-            @test maximum(err) < 0.12
+                # Now compare...
+                SPL_lbl_vs_jl_interp = linear(freqs, SPL_lbl_vs_jl, f_lbl_vs.*1e3)
+                vmin, vmax = extrema(SPL_lbl_vs)
+                err = abs.(SPL_lbl_vs_jl_interp .- SPL_lbl_vs)./(vmax - vmin)
+                @test maximum(err) < 0.12
+            end
         end
     end
 
@@ -2178,12 +2203,14 @@ end
         SPL_lbl_vs = bpm[:, 2]
 
         for angle_of_attack_sign in [1, -1]
-            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_lbl_vs_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; do_lblvs=true)
+            for use_Ualpha in [false, true]
+                freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_lbl_vs_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; do_lblvs=true, use_Ualpha=use_Ualpha)
 
-            SPL_lbl_vs_jl_interp = linear(freqs, SPL_lbl_vs_jl, f_lbl_vs.*1e3)
-            vmin, vmax = extrema(SPL_lbl_vs)
-            err = abs.(SPL_lbl_vs_jl_interp .- SPL_lbl_vs)./(vmax - vmin)
-            @test maximum(err) < 0.026
+                SPL_lbl_vs_jl_interp = linear(freqs, SPL_lbl_vs_jl, f_lbl_vs.*1e3)
+                vmin, vmax = extrema(SPL_lbl_vs)
+                err = abs.(SPL_lbl_vs_jl_interp .- SPL_lbl_vs)./(vmax - vmin)
+                @test maximum(err) < 0.026
+            end
         end
     end
 
@@ -2205,12 +2232,14 @@ end
         SPL_lbl_vs = bpm[:, 2]
 
         for angle_of_attack_sign in [1, -1]
-            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_lbl_vs_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; do_lblvs=true)
+            for use_Ualpha in [false, true]
+                freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_lbl_vs_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; do_lblvs=true, use_Ualpha=use_Ualpha)
 
-            SPL_lbl_vs_jl_interp = linear(freqs, SPL_lbl_vs_jl, f_lbl_vs.*1e3)
-            vmin, vmax = extrema(SPL_lbl_vs)
-            err = abs.(SPL_lbl_vs_jl_interp .- SPL_lbl_vs)./(vmax - vmin)
-            @test maximum(err) < 0.021
+                SPL_lbl_vs_jl_interp = linear(freqs, SPL_lbl_vs_jl, f_lbl_vs.*1e3)
+                vmin, vmax = extrema(SPL_lbl_vs)
+                err = abs.(SPL_lbl_vs_jl_interp .- SPL_lbl_vs)./(vmax - vmin)
+                @test maximum(err) < 0.021
+            end
         end
     end
 
@@ -2225,7 +2254,6 @@ end
         Φ_e = 90*pi/180
         alphastar = 4.2*pi/180
         bl = AcousticAnalogies.UntrippedN0012BoundaryLayer()
-        f_jl, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_lbl_vs_jl = AcousticAnalogies.calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl; do_lblvs=true)
 
         fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure66-b-LBL-VS.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
@@ -2233,15 +2261,17 @@ end
         SPL_lbl_vs = bpm[:, 2]
 
         for angle_of_attack_sign in [1, -1]
-            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_lbl_vs_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; do_lblvs=true)
+            for use_Ualpha in [false, true]
+                freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_lbl_vs_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; do_lblvs=true, use_Ualpha=use_Ualpha)
 
-            SPL_lbl_vs_jl_interp = linear(freqs, SPL_lbl_vs_jl, f_lbl_vs.*1e3)
-            vmin, vmax = extrema(SPL_lbl_vs)
-            err = abs.(SPL_lbl_vs_jl_interp .- SPL_lbl_vs)./(vmax - vmin)
-            @test length(err) == 3
-            @test err[1] < 0.089
-            @test err[2] < 0.373
-            @test err[3] < 0.746
+                SPL_lbl_vs_jl_interp = linear(freqs, SPL_lbl_vs_jl, f_lbl_vs.*1e3)
+                vmin, vmax = extrema(SPL_lbl_vs)
+                err = abs.(SPL_lbl_vs_jl_interp .- SPL_lbl_vs)./(vmax - vmin)
+                @test length(err) == 3
+                @test err[1] < 0.089
+                @test err[2] < 0.373
+                @test err[3] < 0.746
+            end
         end
     end
 
@@ -2300,12 +2330,14 @@ end
         SPL_tip = bpm[:, 2]
 
         for angle_of_attack_sign in [1, -1]
-            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_tip_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; do_tip_vortex=true, blade_tip=blade_tip)
+            for use_Ualpha in [false, true]
+                freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_tip_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; do_tip_vortex=true, blade_tip=blade_tip, use_Ualpha=use_Ualpha)
 
-            SPL_tip_jl_interp = linear(freqs, SPL_tip_jl, f_tip.*1e3)
-            vmin, vmax = extrema(SPL_tip)
-            err = abs.(SPL_tip_jl_interp .- SPL_tip)./(vmax - vmin)
-            @test maximum(err) < 0.047
+                SPL_tip_jl_interp = linear(freqs, SPL_tip_jl, f_tip.*1e3)
+                vmin, vmax = extrema(SPL_tip)
+                err = abs.(SPL_tip_jl_interp .- SPL_tip)./(vmax - vmin)
+                @test maximum(err) < 0.047
+            end
         end
     end
 
@@ -2343,27 +2375,30 @@ end
         SPL_teb_vs = bpm[:, 2]
 
         for angle_of_attack_sign in [1, -1]
-            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_teb_vs_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; do_tebvs=true, h=h, Psi=Psi)
+            for use_Ualpha in [false, true]
+                freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_teb_vs_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; do_tebvs=true, h=h, Psi=Psi, use_Ualpha=use_Ualpha)
 
-            # Now compare...
-            SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
-            vmin, vmax = extrema(SPL_s)
-            err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
-            @test maximum(err) < 0.053
+                # Now compare...
+                SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
+                vmin, vmax = extrema(SPL_s)
+                err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
+                @test maximum(err) < 0.053
 
-            SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
-            vmin, vmax = extrema(SPL_p)
-            err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
-            @test maximum(err) < 0.053
+                SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
+                vmin, vmax = extrema(SPL_p)
+                err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
+                @test maximum(err) < 0.053
 
-            SPL_teb_vs_jl_interp = linear(freqs, SPL_teb_vs_jl, f_teb_vs.*1e3)
-            vmin, vmax = extrema(SPL_teb_vs)
-            err = abs.(SPL_teb_vs_jl_interp .- SPL_teb_vs)./(vmax - vmin)
-            # Last two points are off.
-            # Not sure why.
-            @test maximum(err[1:end-2]) < 0.052
-            @test maximum(err[1:end-1]) < 0.060
-            @test maximum(err) < 0.171
+                SPL_teb_vs_jl_interp = linear(freqs, SPL_teb_vs_jl, f_teb_vs.*1e3)
+                vmin, vmax = extrema(SPL_teb_vs)
+                err = abs.(SPL_teb_vs_jl_interp .- SPL_teb_vs)./(vmax - vmin)
+                # Last two points are off.
+                # Not sure why.
+                @test maximum(err[1:end-2]) < 0.052
+                @test maximum(err[1:end-2]) < 0.052
+                @test maximum(err[1:end-1]) < 0.060
+                @test maximum(err) < 0.171
+            end
         end
     end
 
@@ -2402,27 +2437,29 @@ end
         SPL_teb_vs = bpm[:, 2]
 
         for angle_of_attack_sign in [1, -1]
-            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_teb_vs_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; do_tebvs=true, h=h, Psi=Psi)
+            for use_Ualpha in [false, true]
+                freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_teb_vs_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; do_tebvs=true, h=h, Psi=Psi, use_Ualpha=use_Ualpha)
 
-            # Now compare...
-            SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
-            vmin, vmax = extrema(SPL_s)
-            err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
-            @test maximum(err) < 0.053
+                # Now compare...
+                SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
+                vmin, vmax = extrema(SPL_s)
+                err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
+                @test maximum(err) < 0.053
 
-            SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
-            vmin, vmax = extrema(SPL_p)
-            err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
-            @test maximum(err) < 0.053
+                SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
+                vmin, vmax = extrema(SPL_p)
+                err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
+                @test maximum(err) < 0.053
 
-            SPL_teb_vs_jl_interp = linear(freqs, SPL_teb_vs_jl, f_teb_vs.*1e3)
-            vmin, vmax = extrema(SPL_teb_vs)
-            err = abs.(SPL_teb_vs_jl_interp .- SPL_teb_vs)./(vmax - vmin)
-            # Last two points are off.
-            # Not sure why.
-            @test maximum(err[1:end-2]) < 0.040
-            @test maximum(err[1:end-1]) < 0.189
-            @test err[end] < 0.111
+                SPL_teb_vs_jl_interp = linear(freqs, SPL_teb_vs_jl, f_teb_vs.*1e3)
+                vmin, vmax = extrema(SPL_teb_vs)
+                err = abs.(SPL_teb_vs_jl_interp .- SPL_teb_vs)./(vmax - vmin)
+                # Last two points are off.
+                # Not sure why.
+                @test maximum(err[1:end-2]) < 0.040
+                @test maximum(err[1:end-1]) < 0.189
+                @test err[end] < 0.111
+            end
         end
     end
 
@@ -2460,27 +2497,29 @@ end
         SPL_teb_vs = bpm[:, 2]
 
         for angle_of_attack_sign in [1, -1]
-            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_teb_vs_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; do_tebvs=true, h=h, Psi=Psi)
+            for use_Ualpha in [false, true]
+                freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_teb_vs_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; do_tebvs=true, h=h, Psi=Psi, use_Ualpha=use_Ualpha)
 
-            # Now compare...
-            SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
-            vmin, vmax = extrema(SPL_s)
-            err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
-            @test maximum(err) < 0.053
+                # Now compare...
+                SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
+                vmin, vmax = extrema(SPL_s)
+                err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
+                @test maximum(err) < 0.053
 
-            SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
-            vmin, vmax = extrema(SPL_p)
-            err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
-            @test maximum(err) < 0.053
+                SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
+                vmin, vmax = extrema(SPL_p)
+                err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
+                @test maximum(err) < 0.053
 
-            SPL_teb_vs_jl_interp = linear(freqs, SPL_teb_vs_jl, f_teb_vs.*1e3)
-            vmin, vmax = extrema(SPL_teb_vs)
-            err = abs.(SPL_teb_vs_jl_interp .- SPL_teb_vs)./(vmax - vmin)
-            # Last two points are off.
-            # Not sure why.
-            @test maximum(err[1:end-2]) < 0.044
-            @test err[end-1] < 0.089
-            @test err[end] < 0.089
+                SPL_teb_vs_jl_interp = linear(freqs, SPL_teb_vs_jl, f_teb_vs.*1e3)
+                vmin, vmax = extrema(SPL_teb_vs)
+                err = abs.(SPL_teb_vs_jl_interp .- SPL_teb_vs)./(vmax - vmin)
+                # Last two points are off.
+                # Not sure why.
+                @test maximum(err[1:end-2]) < 0.044
+                @test err[end-1] < 0.089
+                @test err[end] < 0.089
+            end
         end
     end
 
@@ -2516,27 +2555,29 @@ end
         SPL_teb_vs = bpm[:, 2]
 
         for angle_of_attack_sign in [1, -1]
-            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_teb_vs_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; do_tebvs=true, h=h, Psi=Psi)
+            for use_Ualpha in [false, true]
+                freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_teb_vs_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; do_tebvs=true, h=h, Psi=Psi, use_Ualpha=use_Ualpha)
 
-            # Now compare...
-            SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
-            vmin, vmax = extrema(SPL_s)
-            err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
-            @test maximum(err) < 0.077
+                # Now compare...
+                SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
+                vmin, vmax = extrema(SPL_s)
+                err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
+                @test maximum(err) < 0.077
 
-            SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
-            vmin, vmax = extrema(SPL_p)
-            err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
-            @test maximum(err) < 0.077
+                SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
+                vmin, vmax = extrema(SPL_p)
+                err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
+                @test maximum(err) < 0.077
 
-            SPL_teb_vs_jl_interp = linear(freqs, SPL_teb_vs_jl, f_teb_vs.*1e3)
-            vmin, vmax = extrema(SPL_teb_vs)
-            err = abs.(SPL_teb_vs_jl_interp .- SPL_teb_vs)./(vmax - vmin)
-            # Last two points are off.
-            # Not sure why.
-            @test maximum(err[1:end-2]) < 0.091
-            @test         err[  end-1]  < 0.251
-            @test         err[  end  ]  < 0.400
+                SPL_teb_vs_jl_interp = linear(freqs, SPL_teb_vs_jl, f_teb_vs.*1e3)
+                vmin, vmax = extrema(SPL_teb_vs)
+                err = abs.(SPL_teb_vs_jl_interp .- SPL_teb_vs)./(vmax - vmin)
+                # Last two points are off.
+                # Not sure why.
+                @test maximum(err[1:end-2]) < 0.091
+                @test         err[  end-1]  < 0.251
+                @test         err[  end  ]  < 0.400
+            end
         end
     end
 
@@ -2574,27 +2615,29 @@ end
         SPL_teb_vs = bpm[:, 2]
 
         for angle_of_attack_sign in [1, -1]
-            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_teb_vs_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; do_tebvs=true, h=h, Psi=Psi)
+            for use_Ualpha in [false, true]
+                freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_teb_vs_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; do_tebvs=true, h=h, Psi=Psi, use_Ualpha=use_Ualpha)
 
-            # Now compare...
-            SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
-            vmin, vmax = extrema(SPL_s)
-            err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
-            @test maximum(err) < 0.077
+                # Now compare...
+                SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
+                vmin, vmax = extrema(SPL_s)
+                err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
+                @test maximum(err) < 0.077
 
-            SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
-            vmin, vmax = extrema(SPL_p)
-            err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
-            @test maximum(err) < 0.077
+                SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
+                vmin, vmax = extrema(SPL_p)
+                err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
+                @test maximum(err) < 0.077
 
-            SPL_teb_vs_jl_interp = linear(freqs, SPL_teb_vs_jl, f_teb_vs.*1e3)
-            vmin, vmax = extrema(SPL_teb_vs)
-            err = abs.(SPL_teb_vs_jl_interp .- SPL_teb_vs)./(vmax - vmin)
-            # Last two points are off.
-            # Not sure why.
-            @test maximum(err[1:end-2]) < 0.057
-            @test         err[  end-1]  < 0.070
-            @test         err[  end  ]  < 0.256
+                SPL_teb_vs_jl_interp = linear(freqs, SPL_teb_vs_jl, f_teb_vs.*1e3)
+                vmin, vmax = extrema(SPL_teb_vs)
+                err = abs.(SPL_teb_vs_jl_interp .- SPL_teb_vs)./(vmax - vmin)
+                # Last two points are off.
+                # Not sure why.
+                @test maximum(err[1:end-2]) < 0.057
+                @test         err[  end-1]  < 0.070
+                @test         err[  end  ]  < 0.256
+            end
         end
     end
 
@@ -2632,28 +2675,30 @@ end
         SPL_teb_vs = bpm[:, 2]
 
         for angle_of_attack_sign in [1, -1]
-            freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_teb_vs_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; do_tebvs=true, h=h, Psi=Psi)
+            for use_Ualpha in [false, true]
+                freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_teb_vs_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; do_tebvs=true, h=h, Psi=Psi, use_Ualpha=use_Ualpha)
 
-            # Now compare...
-            SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
-            vmin, vmax = extrema(SPL_s)
-            err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
-            @test maximum(err) < 0.077
+                # Now compare...
+                SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
+                vmin, vmax = extrema(SPL_s)
+                err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
+                @test maximum(err) < 0.077
 
-            SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
-            vmin, vmax = extrema(SPL_p)
-            err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
-            @test maximum(err) < 0.077
+                SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
+                vmin, vmax = extrema(SPL_p)
+                err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
+                @test maximum(err) < 0.077
 
-            SPL_teb_vs_jl_interp = linear(freqs, SPL_teb_vs_jl, f_teb_vs.*1e3)
-            vmin, vmax = extrema(SPL_teb_vs)
-            err = abs.(SPL_teb_vs_jl_interp .- SPL_teb_vs)./(vmax - vmin)
-            # Last two points are off.
-            # Not sure why.
-            @test maximum(err[1:end-3]) < 0.047
-            @test err[end-2] < 0.068
-            @test err[end-1] < 0.213
-            @test err[end] < 0.225
+                SPL_teb_vs_jl_interp = linear(freqs, SPL_teb_vs_jl, f_teb_vs.*1e3)
+                vmin, vmax = extrema(SPL_teb_vs)
+                err = abs.(SPL_teb_vs_jl_interp .- SPL_teb_vs)./(vmax - vmin)
+                # Last two points are off.
+                # Not sure why.
+                @test maximum(err[1:end-3]) < 0.047
+                @test err[end-2] < 0.068
+                @test err[end-1] < 0.213
+                @test err[end] < 0.225
+            end
         end
     end
 end

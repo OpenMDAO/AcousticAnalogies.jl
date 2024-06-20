@@ -1,3 +1,38 @@
+import FillArrays: getindex_value
+
+# Normal implementation is this from FillArrays.jl:
+#
+# @inline getindex_value(F::Fill) = F.value
+#
+# But that breaks with CCBlade.
+# Why?
+# Because, since a FillArrays.Fill <: AbstractArray, it calls this:
+#
+# function Base.getproperty(obj::AbstractVector{<:Section}, sym::Symbol)
+#     return getfield.(obj, sym)
+# end
+#
+# which eventually calls FillArrays.getindex_value again, leading to recursion and a stack overflow.
+#
+# This is type piracy :-(.
+# But it may also be type piracy to extend Base.getproperty in CCBlade.jl, since CCBlade.jl doesn't own Base.getproperty or AbstractVector.
+@inline getindex_value(F::Fill{<:Union{CCBlade.Section,CCBlade.OperatingPoint,CCBlade.Outputs}}) = getfield(F, :value)
+
+# Normal implementation is this from FillArrays.jl:
+#
+# @inline axes(F::Fill) = F.axes
+#
+# But that hits 
+#
+# function Base.getproperty(obj::AbstractVector{<:Section}, sym::Symbol)
+#     return getfield.(obj, sym)
+# end
+#
+# from CCBlade.
+# This is type piracy :-(.
+# But it may also be type piracy to extend Base.getproperty in CCBlade.jl, since CCBlade.jl doesn't own Base.getproperty or AbstractVector.
+@inline Base.axes(F::Fill{<:Union{CCBlade.Section,CCBlade.OperatingPoint,CCBlade.Outputs}}) = getfield(F, :axes)
+
 function _standard_ccblade_transform(rotor::CCBlade.Rotor, sections::AbstractVector{<:CCBlade.Section}, ops::AbstractVector{<:CCBlade.OperatingPoint}, period, num_src_times, positive_x_rotation)
     # Assume the rotor is traveling in the positive x direction, with the first
     # blade aligned with the positive y axis. Rotor hub is initially at the origin.
@@ -836,12 +871,16 @@ function tip_vortex_source_elements_ccblade(TDirect::Type{<:AbstractDirectivity}
     # Ugh, hate doing this.
     # Wish there was a way to make a allocation-free array-like thingy from a scaler.
     # But I doubt it makes any difference.
-    sections = [section]
-    ops = [op]
+    # sections = [section]
+    # ops = [op]
     # Good news!
     # Learned about the FillArrays.jl package.
-    # sections = Fill(section, 1)
-    # ops = Fill(op, 1)
+    sections = Fill(section, 1)
+    ops = Fill(op, 1)
+    # But that breaks with CCBlade.jl.
+    # So back to 1D arrays.
+    # sections = [section]
+    # ops = [op]
 
     # Get the transformation that will put the source elements in the "standard" CCBlade.jl reference frame (moving axially in the positive x axis direction, rotating about the positive x axis, first blade initially aligned with the positive y axis).
     src_times, dt, trans = _standard_ccblade_transform(rotor, sections, ops, period, num_src_times, positive_x_rotation)
@@ -1130,29 +1169,6 @@ function combined_broadband_source_elements_ccblade(TDirect::Type{<:AbstractDire
 
     return ses_no_tip, ses_with_tip
 end
-
-# """
-#     combined_broadband_source_elements_ccblade(rotor::CCBlade.Rotor, sections::Vector{CCBlade.Section}, ops::Vector{CCBlade.OperatingPoint}, outputs::Vector{CCBlade.Outputs}, hs::Vector{Float64}, Psis::Vector{Float64}, bl::AbstractBoundaryLayer, blade_tip::AbstractBladeTip, period, num_src_times, positive_x_rotation)
-
-# Construct and return an array of broadband prediction source element objects from CCBlade structs.
-
-# # Arguments
-# - `rotor`: CCBlade rotor object.
-# - `sections`: `Vector` of CCBlade section object.
-# - `ops`: `Vector` of CCBlade operating point.
-# - `outputs`: `Vector` of CCBlade output objects.
-# - `hs`: `Vector` of trailing edge thicknesses (m)
-# - `Psis`: `Vector` of solid angles between the blade surfaces immediately upstream of the trailing edge (rad)
-# - `bl`:: boundary layer `AbstractBoundaryLayer` `struct`.
-# - `blade_tip`: Blade tip struct, i.e. an AbstractBladeTip.
-# - `period`: length of the source time over which the returned source elements will evaluated.
-# - `num_src_times`: number of source times.
-# - `positive_x_rotation`: rotate blade around the positive-x axis if `true`, negative-x axis otherwise.
-# """
-# function combined_broadband_source_elements_ccblade(rotor, sections, ops, outputs, hs, Psis, bl::AbstractBoundaryLayer, blade_tip, period, num_src_times, positive_x_rotation)
-#     bls = Fill(bl, length(sections))
-#     return combined_broadband_source_elements_ccblade(rotor, sections, ops, outputs, hs, Psis, bls, blade_tip, period, num_src_times, positive_x_rotation)
-# end
 
 """
     get_ccblade_dradii(rotor::CCBlade.Rotor, sections::Vector{CCBlade.Section})

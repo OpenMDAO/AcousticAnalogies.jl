@@ -1,27 +1,29 @@
-@concrete struct CompactSourceElement <: AbstractCompactSourceElement
+struct CompactSourceElement{
+    Tρ0,Tc0,TΔr,TΛ,Ty0dot,Ty1dot,Ty2dot,Ty3dot,Tf0dot,Tf1dot,Tτ,Tu
+    } <: AbstractCompactSourceElement
     # Density.
-    ρ0
+    ρ0::Tρ0
     # Speed of sound.
-    c0
+    c0::Tc0
     # Radial length of element.
-    Δr
+    Δr::TΔr
     # Cross-sectional area.
-    Λ
+    Λ::TΛ
     # Source position and its time derivatives.
-    y0dot
-    y1dot
-    y2dot
-    y3dot
+    y0dot::Ty0dot
+    y1dot::Ty1dot
+    y2dot::Ty2dot
+    y3dot::Ty3dot
 
     # Load *on the fluid*, and its time derivative.
-    f0dot
-    f1dot
+    f0dot::Tf0dot
+    f1dot::Tf1dot
 
     # Source time.
-    τ
+    τ::Tτ
 
     # orientation of the element. Only used for WriteVTK.
-    u
+    u::Tu
 end
 
 orientation(se::CompactSourceElement) = se.u
@@ -98,8 +100,8 @@ abstract type AbstractAcousticObserver end
 
 Construct an acoustic observer that does not move with position `x` (m).
 """
-@concrete struct StationaryAcousticObserver <: AbstractAcousticObserver
-    x
+struct StationaryAcousticObserver{Tx} <: AbstractAcousticObserver
+    x::Tx
 end
 
 """
@@ -115,10 +117,10 @@ Return the velocity of `obs` at time `t_obs` (hint—will always be zero ☺)
 Construct an acoustic observer moving with a constant velocity `v`, located at
 `x0` at time `t0`.
 """
-@concrete struct ConstVelocityAcousticObserver <: AbstractAcousticObserver
-    t0 
-    x0
-    v
+struct ConstVelocityAcousticObserver{Tt0,Tx0,Tv} <: AbstractAcousticObserver
+    t0 ::Tt0
+    x0::Tx0
+    v::Tv
 end
 
 function (obs::StationaryAcousticObserver)(t)
@@ -180,10 +182,10 @@ end
 Output of the F1A calculation: the acoustic pressure value at time `t`, broken into monopole component `p_m` and
 dipole component `p_d`.
 """
-@concrete struct F1AOutput
-    t
-    p_m
-    p_d
+struct F1AOutput{Tt,Tp_m,Tp_d}
+    t::Tt
+    p_m::Tp_m
+    p_d::Tp_d
 end
 
 
@@ -289,16 +291,16 @@ function common_obs_time(apth, period, n, axis=1)
     return t_common
 end
 
-@concrete struct F1APressureTimeHistory{IsEven} <: AcousticMetrics.AbstractPressureTimeHistory{IsEven}
-    p_m
-    p_d
-    dt
-    t0
+struct F1APressureTimeHistory{IsEven,Tp_m,Tp_d,Tdt,Tt0} <: AcousticMetrics.AbstractPressureTimeHistory{IsEven}
+    p_m::Tp_m
+    p_d::Tp_d
+    dt::Tdt
+    t0::Tt0
     function F1APressureTimeHistory{IsEven}(p_m, p_d, dt, t0) where {IsEven}
         n_p_m = length(p_m)
         n_p_d = length(p_d)
-        n_p_m == n_p_d || throw(ArgumentError("length(p_m) = $(n_p_m) is not the same as length(p_d) = $(n_p_d)"))
-        iseven(n_p_m) == IsEven || throw(ArgumentError("IsEven = $(IsEven) is not consistent with length(p_m) = $n_p_m"))
+        n_p_m == n_p_d || throw(ArgumentError("length(p_m) is not the same as length(p_d)"))
+        iseven(n_p_m) == IsEven || throw(ArgumentError("IsEven is not consistent with length(p_m) and length(p_d)"))
         return new{IsEven, typeof(p_m), typeof(p_d), typeof(dt), typeof(t0)}(p_m, p_d, dt, t0)
     end
 end
