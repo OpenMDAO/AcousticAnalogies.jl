@@ -1575,7 +1575,7 @@ end
         bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
 
         # Now, need to get the data from the BPM report.
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure11-a-TBL-TE-suction.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure11-a-TBL-TE-suction.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_s = bpm[:, 1] # This is in kHz.
         SPL_s = bpm[:, 2]
@@ -1618,7 +1618,7 @@ end
         bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
 
         # Now, need to get the data from the BPM report.
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure11-d-TBL-TE-suction.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure11-d-TBL-TE-suction.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_s = bpm[:, 1] # This is in kHz.
         SPL_s = bpm[:, 2]
@@ -1661,17 +1661,17 @@ end
         bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
 
         # Now, need to get the data from the BPM report.
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure12-U71.3-TBL-TE-suction.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure12-U71.3-TBL-TE-suction.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_s = bpm[:, 1]
         SPL_s = bpm[:, 2]
 
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure12-U71.3-TBL-TE-pressure.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure12-U71.3-TBL-TE-pressure.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_p = bpm[:, 1]
         SPL_p = bpm[:, 2]
 
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure12-U71.3-separation.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure12-U71.3-separation.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_alpha = bpm[:, 1]
         SPL_alpha = bpm[:, 2]
@@ -1712,7 +1712,7 @@ end
         bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
 
         # Now, need to get the data from the BPM report.
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure26-a-TBL-TE-suction.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure26-a-TBL-TE-suction.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_s = bpm[:, 1]
         SPL_s = bpm[:, 2]
@@ -1755,7 +1755,7 @@ end
         bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
 
         # Now, need to get the data from the BPM report.
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure26-d-TBL-TE-suction.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure26-d-TBL-TE-suction.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_s = bpm[:, 1]
         SPL_s = bpm[:, 2]
@@ -1799,17 +1799,17 @@ end
         bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
 
         # Now, need to get the data from the BPM report.
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure28-a-TBL-TE-suction.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure28-a-TBL-TE-suction.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_s = bpm[:, 1]
         SPL_s = bpm[:, 2]
 
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure28-a-TBL-TE-pressure.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure28-a-TBL-TE-pressure.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_p = bpm[:, 1]
         SPL_p = bpm[:, 2]
 
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure28-a-separation.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure28-a-separation.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_alpha = bpm[:, 1]
         SPL_alpha = bpm[:, 2]
@@ -1851,17 +1851,17 @@ end
         bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
 
         # Now, need to get the data from the BPM report.
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure28-d-TBL-TE-suction.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure28-d-TBL-TE-suction.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_s = bpm[:, 1]
         SPL_s = bpm[:, 2]
 
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure28-d-TBL-TE-pressure.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure28-d-TBL-TE-pressure.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_p = bpm[:, 1]
         SPL_p = bpm[:, 2]
 
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure28-d-separation.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure28-d-separation.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_alpha = bpm[:, 1]
         SPL_alpha = bpm[:, 2]
@@ -1903,7 +1903,7 @@ end
         bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
 
         # Now, need to get the data from the BPM report.
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure38-d-TBL-TE-suction.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure38-d-TBL-TE-suction.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_s = bpm[:, 1]
         SPL_s = bpm[:, 2]
@@ -1948,17 +1948,17 @@ end
         bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
 
         # Now, need to get the data from the BPM report.
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure39-d-TBL-TE-suction.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure39-d-TBL-TE-suction.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_s = bpm[:, 1]
         SPL_s = bpm[:, 2]
 
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure39-d-TBL-TE-pressure.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure39-d-TBL-TE-pressure.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_p = bpm[:, 1]
         SPL_p = bpm[:, 2]
 
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure39-d-separation.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure39-d-separation.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_alpha = bpm[:, 1]
         SPL_alpha = bpm[:, 2]
@@ -1999,22 +1999,22 @@ end
         bl = AcousticAnalogies.UntrippedN0012BoundaryLayer()
 
         # Now, need to get the data from the BPM report.
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure45-a-TBL-TE-suction.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure45-a-TBL-TE-suction.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_s = bpm[:, 1]
         SPL_s = bpm[:, 2]
 
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure45-a-TBL-TE-pressure.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure45-a-TBL-TE-pressure.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_p = bpm[:, 1]
         SPL_p = bpm[:, 2]
 
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure45-a-separation.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure45-a-separation.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_alpha = bpm[:, 1]
         SPL_alpha = bpm[:, 2]
 
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure45-a-LBL-VS.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure45-a-LBL-VS.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_lbl_vs = bpm[:, 1]
         SPL_lbl_vs = bpm[:, 2]
@@ -2077,7 +2077,7 @@ end
         alphastar = 0.0*pi/180
         bl = AcousticAnalogies.UntrippedN0012BoundaryLayer()
 
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure48-c-LBL-VS.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure48-c-LBL-VS.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_lbl_vs = bpm[:, 1]
         SPL_lbl_vs = bpm[:, 2]
@@ -2108,7 +2108,7 @@ end
         bl = AcousticAnalogies.UntrippedN0012BoundaryLayer()
 
         # Now, need to get the data from the BPM report.
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure54-a-LBL-VS.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure54-a-LBL-VS.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_lbl_vs = bpm[:, 1]
         SPL_lbl_vs = bpm[:, 2]
@@ -2137,7 +2137,7 @@ end
         alphastar = 0.0*pi/180
         bl = AcousticAnalogies.UntrippedN0012BoundaryLayer()
 
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure59-c-LBL-VS.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure59-c-LBL-VS.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_lbl_vs = bpm[:, 1]
         SPL_lbl_vs = bpm[:, 2]
@@ -2167,7 +2167,7 @@ end
         alphastar = 3.3*pi/180
         bl = AcousticAnalogies.UntrippedN0012BoundaryLayer()
 
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure60-c-LBL-VS.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure60-c-LBL-VS.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_lbl_vs = bpm[:, 1]
         SPL_lbl_vs = bpm[:, 2]
@@ -2197,7 +2197,7 @@ end
         alphastar = 3.3*pi/180
         bl = AcousticAnalogies.UntrippedN0012BoundaryLayer()
 
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure60-d-LBL-VS.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure60-d-LBL-VS.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_lbl_vs = bpm[:, 1]
         SPL_lbl_vs = bpm[:, 2]
@@ -2226,7 +2226,7 @@ end
         alphastar = 0.0*pi/180
         bl = AcousticAnalogies.UntrippedN0012BoundaryLayer()
 
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure65-d-LBL-VS.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure65-d-LBL-VS.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_lbl_vs = bpm[:, 1]
         SPL_lbl_vs = bpm[:, 2]
@@ -2255,7 +2255,7 @@ end
         alphastar = 4.2*pi/180
         bl = AcousticAnalogies.UntrippedN0012BoundaryLayer()
 
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure66-b-LBL-VS.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure66-b-LBL-VS.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_lbl_vs = bpm[:, 1]
         SPL_lbl_vs = bpm[:, 2]
@@ -2288,7 +2288,7 @@ end
         bl = AcousticAnalogies.UntrippedN0012BoundaryLayer()
 
         # Now, need to get the data from the BPM report.
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure69-a-separation.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure69-a-separation.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_alpha = bpm[:, 1]
         SPL_alpha = bpm[:, 2]
@@ -2324,7 +2324,7 @@ end
         # blade_tip = AcousticAnalogies.RoundedTip{AcousticAnalogies.BPMTipAlphaCorrection}()
         blade_tip = AcousticAnalogies.RoundedTip(AcousticAnalogies.BPMTipAlphaCorrection(), 0.0)
 
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure91-tip.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure91-tip.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_tip = bpm[:, 1]
         SPL_tip = bpm[:, 2]
@@ -2358,18 +2358,18 @@ end
         # Now, need to get the data from the BPM report.
         # Figures 98 a-d only differ in trailing edge bluntness, so the other sources are all the same.
         # And TBL-TE is the only significant source, other than bluntness.
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure98-a-TBL-TE-suction.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure98-a-TBL-TE-suction.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_s = bpm[:, 1]
         SPL_s = bpm[:, 2]
 
         # Suction and pressure are the same for zero angle of attack.
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure98-a-TBL-TE-suction.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure98-a-TBL-TE-suction.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_p = bpm[:, 1]
         SPL_p = bpm[:, 2]
 
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure98-b-bluntness.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure98-b-bluntness.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_teb_vs = bpm[:, 1]
         SPL_teb_vs = bpm[:, 2]
@@ -2420,18 +2420,18 @@ end
         # Now, need to get the data from the BPM report.
         # Figures 98 a-d only differ in trailing edge bluntness, so the other sources are all the same.
         # And TBL-TE is the only significant source, other than bluntness.
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure98-a-TBL-TE-suction.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure98-a-TBL-TE-suction.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_s = bpm[:, 1]
         SPL_s = bpm[:, 2]
 
         # Suction and pressure are the same for zero angle of attack.
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure98-a-TBL-TE-suction.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure98-a-TBL-TE-suction.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_p = bpm[:, 1]
         SPL_p = bpm[:, 2]
 
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure98-c-bluntness.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure98-c-bluntness.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_teb_vs = bpm[:, 1]
         SPL_teb_vs = bpm[:, 2]
@@ -2480,18 +2480,18 @@ end
         # Now, need to get the data from the BPM report.
         # Figures 98 a-d only differ in trailing edge bluntness, so the other sources are all the same.
         # And TBL-TE is the only significant source, other than bluntness.
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure98-a-TBL-TE-suction.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure98-a-TBL-TE-suction.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_s = bpm[:, 1]
         SPL_s = bpm[:, 2]
 
         # Suction and pressure are the same for zero angle of attack.
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure98-a-TBL-TE-suction.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure98-a-TBL-TE-suction.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_p = bpm[:, 1]
         SPL_p = bpm[:, 2]
 
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure98-d-bluntness.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure98-d-bluntness.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_teb_vs = bpm[:, 1]
         SPL_teb_vs = bpm[:, 2]
@@ -2538,18 +2538,18 @@ end
         bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
 
         # Now, need to get the data from the BPM report.
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure99-b-TBL-TE-suction.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure99-b-TBL-TE-suction.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_s = bpm[:, 1]
         SPL_s = bpm[:, 2]
 
         # Suction and pressure are the same for zero angle of attack.
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure99-b-TBL-TE-suction.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure99-b-TBL-TE-suction.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_p = bpm[:, 1]
         SPL_p = bpm[:, 2]
 
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure99-b-bluntness.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure99-b-bluntness.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_teb_vs = bpm[:, 1]
         SPL_teb_vs = bpm[:, 2]
@@ -2598,18 +2598,18 @@ end
         # Now, need to get the data from the BPM report.
         # Figures 99 a-d only differ in trailing edge bluntness, so the other sources are all the same.
         # And TBL-TE is the only significant source, other than bluntness.
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure99-b-TBL-TE-suction.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure99-b-TBL-TE-suction.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_s = bpm[:, 1]
         SPL_s = bpm[:, 2]
 
         # Suction and pressure are the same for zero angle of attack.
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure99-b-TBL-TE-suction.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure99-b-TBL-TE-suction.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_p = bpm[:, 1]
         SPL_p = bpm[:, 2]
 
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure99-c-bluntness.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure99-c-bluntness.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_teb_vs = bpm[:, 1]
         SPL_teb_vs = bpm[:, 2]
@@ -2658,18 +2658,18 @@ end
         # Now, need to get the data from the BPM report.
         # Figures 99 a-d only differ in trailing edge bluntness, so the other sources are all the same.
         # And TBL-TE is the only significant source, other than bluntness.
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure99-b-TBL-TE-suction.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure99-b-TBL-TE-suction.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_s = bpm[:, 1]
         SPL_s = bpm[:, 2]
 
         # Suction and pressure are the same for zero angle of attack.
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure99-b-TBL-TE-suction.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure99-b-TBL-TE-suction.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_p = bpm[:, 1]
         SPL_p = bpm[:, 2]
 
-        fname = joinpath(@__DIR__, "bpm_data", "19890016302-figure99-d-bluntness.csv")
+        fname = joinpath(@__DIR__, "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure99-d-bluntness.csv")
         bpm = DelimitedFiles.readdlm(fname, ',')
         f_teb_vs = bpm[:, 1]
         SPL_teb_vs = bpm[:, 2]
