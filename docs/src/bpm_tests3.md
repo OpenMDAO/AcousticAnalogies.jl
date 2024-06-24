@@ -92,12 +92,6 @@ M_c = 0.8*M
 D_h = AcousticAnalogies.Dbar_h(θ_e, Φ_e, M, M_c)
 alphastar = 0.0
 
-# f_jl = ExactThirdOctaveCenterBands(0.2, 20e3)
-# SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
-# SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
-# SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
-# SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
-
 bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
 f_jl, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = AcousticAnalogies.calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl)
 
@@ -384,13 +378,6 @@ r_e = 1.22 # radiation distance in meters
 M_c = 0.8*M
 alphastar = 0.0*pi/180
 
-# f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
-# SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
-# 
-# SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
-# SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
-# SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
-
 bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
 f_jl, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = AcousticAnalogies.calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl)
 
@@ -446,13 +433,6 @@ r_e = 1.22 # radiation distance in meters
 Φ_e = 90*pi/180
 M_c = 0.8*M
 alphastar = 0.0*pi/180
-
-# f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
-# SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
-# 
-# SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
-# SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
-# SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
 
 bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
 f_jl, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = AcousticAnalogies.calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl)
@@ -510,13 +490,6 @@ r_e = 1.22 # radiation distance in meters
 M_c = 0.8*M
 alphastar = 0.0*pi/180
 
-# f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
-# SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
-# 
-# SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
-# SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
-# SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
-
 bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
 f_jl, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = AcousticAnalogies.calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl)
 
@@ -569,13 +542,6 @@ r_e = 1.22 # radiation distance in meters
 Φ_e = 90*pi/180
 M_c = 0.8*M
 alphastar = 0.0*pi/180
-
-# f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
-# SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
-# 
-# SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
-# SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
-# SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
 
 bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
 f_jl, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = AcousticAnalogies.calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl)
@@ -639,13 +605,6 @@ r_e = 1.22 # radiation distance in meters
 M_c = 0.8*M
 alphastar = 6.7*pi/180
 
-# f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
-# SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
-# 
-# SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
-# SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
-# SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
-
 bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
 f_jl, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = AcousticAnalogies.calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl)
 
@@ -707,13 +666,6 @@ r_e = 1.22 # radiation distance in meters
 Φ_e = 90*pi/180
 M_c = 0.8*M
 alphastar = 6.7*pi/180
-
-# f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
-# SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
-# 
-# SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
-# SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
-# SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
 
 bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
 f_jl, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = AcousticAnalogies.calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl)
@@ -777,13 +729,6 @@ r_e = 1.22 # radiation distance in meters
 M_c = 0.8*M
 alphastar = 6.7*pi/180
 
-# f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
-# SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
-# 
-# SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
-# SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
-# SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
-
 bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
 f_jl, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = AcousticAnalogies.calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl)
 
@@ -845,13 +790,6 @@ r_e = 1.22 # radiation distance in meters
 Φ_e = 90*pi/180
 M_c = 0.8*M
 alphastar = 6.7*pi/180
-
-# f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
-# SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
-# 
-# SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
-# SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
-# SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
 
 bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
 f_jl, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = AcousticAnalogies.calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl)
@@ -915,13 +853,6 @@ r_e = 1.22 # radiation distance in meters
 M_c = 0.8*M
 alphastar = 0.0*pi/180
 
-# f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
-# SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
-# 
-# SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
-# SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
-# SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
-
 bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
 f_jl, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = AcousticAnalogies.calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl)
 
@@ -983,13 +914,6 @@ r_e = 1.22 # radiation distance in meters
 Φ_e = 90*pi/180
 M_c = 0.8*M
 alphastar = 4.8*pi/180
-
-# f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
-# SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
-# 
-# SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
-# SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
-# SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
 
 bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
 f_jl, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = AcousticAnalogies.calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl)
@@ -1471,15 +1395,7 @@ using GLMakie
 struct IntegerTicks end
 Makie.get_tickvalues(::IntegerTicks, vmin, vmax) = ceil(Int, vmin) : floor(Int, vmax)
 
-# fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure69-b-TBL-TE-suction.csv")
-# bpm = DelimitedFiles.readdlm(fname, ',')
-# f_s = bpm[:, 1]
-# SPL_s = bpm[:, 2]
-
-# fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure69-b-TBL-TE-pressure.csv")
-# bpm = DelimitedFiles.readdlm(fname, ',')
-# f_p = bpm[:, 1]
-# SPL_p = bpm[:, 2]
+# TBL-TE suction and pressure aren't significant sources for this case (deep stall).
 
 fname = joinpath(@__DIR__, "..", "..", "test", "bpm_data", "brooks_airfoil_self_noise_and_prediction_1989", "19890016302-figure69-b-separation.csv")
 bpm = DelimitedFiles.readdlm(fname, ',')
@@ -1496,12 +1412,9 @@ r_e = 1.22 # radiation distance in meters
 Φ_e = 90*pi/180
 M_c = 0.8*M
 alphastar = 15.4*pi/180
-f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
-SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.UntrippedN0012BoundaryLayer()))
 
-SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
-SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
-SPL_alpha_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 3)
+bl = AcousticAnalogies.UntrippedN0012BoundaryLayer()
+f_jl, SPL_s_jl, SPL_p_jl, SPL_alpha_jl = AcousticAnalogies.calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl)
 
 fig = Figure()
 ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
@@ -1541,8 +1454,8 @@ bpm = DelimitedFiles.readdlm(fname, ',')
 f_tip = bpm[:, 1]
 SPL_tip = bpm[:, 2]
 
-# nu = 1.4529e-5  # kinematic viscosity, m^2/s
-# L = 30.48e-2  # span in meters
+nu = 1.4529e-5  # kinematic viscosity, m^2/s
+L = 30.48e-2  # span in meters
 chord = 15.24e-2  # chord in meters
 speedofsound = 340.46
 U = 71.3  # freestream velocity in m/s
@@ -1553,13 +1466,11 @@ M_c = 0.8*M
 r_e = 1.22 # radiation distance in meters
 θ_e = 90*pi/180 
 Φ_e = 90*pi/180
-alphatip = 10.8*pi/180
-alphatip_prime = 0.71*alphatip
-# Equation 64 in the BPM report.
-M_max = (1 + 0.036*(alphatip_prime*180/pi))*M
-U_max = M_max*speedofsound
-f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
-SPL_tip_jl = AcousticAnalogies.TIP.(f_jl, chord, M, M_c, U_max, M_max, r_e, θ_e, Φ_e, alphatip_prime, Ref(AcousticAnalogies.RoundedTip()))
+alphastar = 10.8*pi/180
+
+bl = AcousticAnalogies.UntrippedN0012BoundaryLayer()
+blade_tip = AcousticAnalogies.RoundedTip(AcousticAnalogies.BPMTipAlphaCorrection(), 0.0)
+f_jl, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_tip_jl = AcousticAnalogies.calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl; do_tip_vortex=true, blade_tip=blade_tip)
 
 fig = Figure()
 ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
@@ -1619,13 +1530,8 @@ r_e = 1.22 # radiation distance in meters
 M_c = 0.8*M
 alphastar = 0.0*pi/180
 
-f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
-SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
-
-SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
-SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
-
-SPL_teb_vs_jl = AcousticAnalogies.BLUNT.(f_jl, nu, L, chord, h, Psi, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
+f_jl, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_teb_vs_jl = AcousticAnalogies.calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl; do_tebvs=true, h=h, Psi=Psi)
 
 
 fig = Figure()
@@ -1692,14 +1598,8 @@ r_e = 1.22 # radiation distance in meters
 M_c = 0.8*M
 alphastar = 0.0*pi/180
 
-f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
-SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
-
-SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
-SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
-
-SPL_teb_vs_jl = AcousticAnalogies.BLUNT.(f_jl, nu, L, chord, h, Psi, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
-
+bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
+f_jl, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_teb_vs_jl = AcousticAnalogies.calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl; do_tebvs=true, h=h, Psi=Psi)
 
 fig = Figure()
 ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
@@ -1719,7 +1619,7 @@ lines!(ax1, f_jl./1e3, SPL_teb_vs_jl; label="Bluntness, Julia")
 
 xlims!(ax1, 0.2, 20.0)
 ylims!(ax1, 40, 80)
-axislegend(ax1, position=:rt)
+axislegend(ax1, position=:lt)
 save("19890016302-figure98-c.png", fig)
 ```
 ![](19890016302-figure98-c.png)
@@ -1765,13 +1665,8 @@ r_e = 1.22 # radiation distance in meters
 M_c = 0.8*M
 alphastar = 0.0*pi/180
 
-f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
-SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
-
-SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
-SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
-
-SPL_teb_vs_jl = AcousticAnalogies.BLUNT.(f_jl, nu, L, chord, h, Psi, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
+bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
+f_jl, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_teb_vs_jl = AcousticAnalogies.calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl; do_tebvs=true, h=h, Psi=Psi)
 
 
 fig = Figure()
@@ -1792,7 +1687,7 @@ lines!(ax1, f_jl./1e3, SPL_teb_vs_jl; label="Bluntness, Julia")
 
 xlims!(ax1, 0.2, 20.0)
 ylims!(ax1, 40, 80)
-axislegend(ax1, position=:rt)
+axislegend(ax1, position=:lt)
 save("19890016302-figure98-d.png", fig)
 ```
 ![](19890016302-figure98-d.png)
@@ -1838,14 +1733,8 @@ r_e = 1.22 # radiation distance in meters
 M_c = 0.8*M
 alphastar = 0.0*pi/180
 
-f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
-SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
-
-SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
-SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
-
-SPL_teb_vs_jl = AcousticAnalogies.BLUNT.(f_jl, nu, L, chord, h, Psi, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
-
+bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
+f_jl, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_teb_vs_jl = AcousticAnalogies.calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl; do_tebvs=true, h=h, Psi=Psi)
 
 fig = Figure()
 ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
@@ -1911,14 +1800,8 @@ r_e = 1.22 # radiation distance in meters
 M_c = 0.8*M
 alphastar = 0.0*pi/180
 
-f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
-SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
-
-SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
-SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
-
-SPL_teb_vs_jl = AcousticAnalogies.BLUNT.(f_jl, nu, L, chord, h, Psi, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
-
+bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
+f_jl, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_teb_vs_jl = AcousticAnalogies.calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl; do_tebvs=true, h=h, Psi=Psi)
 
 fig = Figure()
 ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
@@ -1984,14 +1867,8 @@ r_e = 1.22 # radiation distance in meters
 M_c = 0.8*M
 alphastar = 0.0*pi/180
 
-f_jl = ExactThirdOctaveCenterBands(0.2e3, 20e3)
-SPL_s_SPL_p_SPL_alpha = AcousticAnalogies.TBL_TE.(f_jl, nu, L, chord, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
-
-SPL_s_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 1)
-SPL_p_jl = getindex.(SPL_s_SPL_p_SPL_alpha, 2)
-
-SPL_teb_vs_jl = AcousticAnalogies.BLUNT.(f_jl, nu, L, chord, h, Psi, U, M, M_c, r_e, θ_e, Φ_e, alphastar, Ref(AcousticAnalogies.TrippedN0012BoundaryLayer()))
-
+bl = AcousticAnalogies.TrippedN0012BoundaryLayer()
+f_jl, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_teb_vs_jl = AcousticAnalogies.calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl; do_tebvs=true, h=h, Psi=Psi)
 
 fig = Figure()
 ax1 = fig[1, 1] = Axis(fig; xlabel="frequency, kHz", ylabel="SPL_1/3, dB",
@@ -2015,4 +1892,3 @@ axislegend(ax1, position=:rt)
 save("19890016302-figure99-d.png", fig)
 ```
 ![](19890016302-figure99-d.png)
-

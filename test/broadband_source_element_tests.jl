@@ -2023,24 +2023,8 @@ end
             for use_Ualpha in [false, true]
                 freqs, SPL_s_jl, SPL_p_jl, SPL_alpha_jl, SPL_lbl_vs_jl = calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, angle_of_attack_sign*alphastar, bl; do_lblvs=true, use_Ualpha=use_Ualpha)
 
-                # # Now compare...
-                # SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
-                # vmin, vmax = extrema(SPL_s)
-                # err = abs.(SPL_s_jl_interp .- SPL_s)./(vmax - vmin)
-                # @test maximum(err) < 0.036
-
-                # SPL_p_jl_interp = linear(freqs, SPL_p_jl, f_p.*1e3)
-                # vmin, vmax = extrema(SPL_p)
-                # err = abs.(SPL_p_jl_interp .- SPL_p)./(vmax - vmin)
-                # @test maximum(err) < 0.043
-
-                # SPL_alpha_jl_interp = linear(freqs, SPL_alpha_jl, f_alpha.*1e3)
-                # vmin, vmax = extrema(SPL_alpha)
-                # err = abs.(SPL_alpha_jl_interp .- SPL_alpha)./(vmax - vmin)
-                # @test maximum(err) < 0.039
-
+                # Now compare...
                 # The agreement with these ones aren't so great.
-                    # Might be better if I grabbed the listing in the BPM appendix?
                 # Might be better if I grabbed the listing in the BPM appendix?
                 SPL_s_jl_interp = linear(freqs, SPL_s_jl, f_s.*1e3)
                 vmin, vmax = extrema(SPL_s)
