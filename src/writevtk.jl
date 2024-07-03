@@ -97,45 +97,70 @@ function _write_data_to_vtk!(vtkfile, ses::AbstractArray{<:Union{TEBVSSourceElem
     vtkfile["ChordUnitVector", VTKCellData()] = hcat(SingleFieldStructArray(ses, Val{:chord_uvec})...)
 end
 
+function to_paraview_collection!(pvd, name, ses::AbstractArray{<:AbstractCompactSourceElement}, time_axis=1)
+    # These are the time indices, i.e., the ones we actually want to iterate
+    # over.
+    indices = axes(ses, time_axis)
+
+    # idx is all the indicies, including the time one that we want to iterate
+    # over, and the others that we want to grab all at once. They're all colons
+    # right now, but the time one will be replaced with each index in `indices`
+    # in the `for i in indices` loop below.
+    idx = Any[Colon() for ind in axes(ses)]
+
+    for i in indices
+        idx[time_axis] = i
+        namei = format("{}{:08d}", name, i)
+        sesi = @view ses[idx...]
+        vtkfile = to_vtp(namei, sesi)
+
+        # Assume that all the times in sesi are the same. They should be if the
+        # user specified the correct time_axis. I suppose I could check that and
+        # issue a warning.
+        t = first(sesi).τ
+        pvd[t] = vtkfile
+    end
+end
+
 """
-    to_paraview_collection(name::AbstractString, ses::AbstractArray{<:CompactSourceElement}, axis::Integer=1)
+    to_paraview_collection(name::AbstractString, ses::NTuple{N, AbstractArray{<:AbstractCompactSourceElement}}, time_axes::NTuple{N, Int64}=ntuple(i->1, N))
+
+
+Construct and write out a ParaView collection data file (`.pvd`) object for a tuple of arrays of `CompactSourceElement`s with name `name.pvd` (i.e., the `name` argument should not contain a file extension).
+
+`time_axes` is a tuple of time axis indices, one for each entry of `ses`, indicating the axis over which the source time for the source elements in `ses` vary.
+One VTK PolyData (`.vtp`) file will be written for each valid index along `time_axis` for each array in the `ses` tuple.
+
+Returns a list of filenames written out by [WriteVTK.jl](https://github.com/jipolanco/WriteVTK.jl).
+"""
+function to_paraview_collection(name, ses::NTuple{N, AbstractArray{<:AbstractCompactSourceElement}}, time_axes::NTuple{N, Int64}=ntuple(i->1, N)) where {N}
+
+    outfiles = paraview_collection(name) do pvd
+        for (i, (sesi, time_axis)) in enumeratet(zip(ses, time_axes))
+            namei = format("{}-{:03d}-", name, i)
+            to_paraview_collection!(pvd, namei, sesi, time_axis)
+        end
+    end
+
+    return outfiles
+end
+
+"""
+    to_paraview_collection(name::AbstractString, ses::AbstractArray{<:AbstractCompactSourceElement}, time_axis::Integer=1)
 
 
 Construct and write out a ParaView collection data file (`.pvd`) object for an array of `CompactSourceElement` with name `name.pvd` (i.e., the `name` argument should not contain a file extension).
 
-`axis` indicates the axis of `ses` over which the source time for the source
+`time_axis` indicates the time_axis of `ses` over which the source time for the source
 elements in `ses` vary. One VTK PolyData (`.vtp`) file will be written for each
-valid index along `axis`.
+valid index along `time_axis`.
 
 Returns a list of filenames written out by [WriteVTK.jl](https://github.com/jipolanco/WriteVTK.jl).
 """
-function to_paraview_collection(name, ses, axis=1)
-    # pvd = paraview_collection(name)
+function to_paraview_collection(name, ses::AbstractArray{<:AbstractCompactSourceElement}, time_axis=1)
+
     outfiles = paraview_collection(name) do pvd
-
-        # These are the time indices, i.e., the ones we actually want to iterate
-        # over.
-        indices = axes(ses, axis)
-
-        # idx is all the indicies, including the time one that we want to iterate
-        # over, and the others that we want to grab all at once. They're all colons
-        # right now, but the time one will be replaced with each index in `indices`
-        # in the `for i in indices` loop below.
-        idx = Any[Colon() for ind in axes(ses)]
-
-        for i in indices
-            idx[axis] = i
-            namei = format("{}{:08d}", name, i)
-            sesi = @view ses[idx...]
-            vtkfile = to_vtp(namei, sesi)
-
-            # Assume that all the times in sesi are the same. They should be if the
-            # user specified the correct axis. I suppose I could check that and
-            # issue a warning.
-            t = first(sesi).τ
-            pvd[t] = vtkfile
-        end
-
+        to_paraview_collection!(pvd, name, ses, time_axis)
     end
 
     return outfiles
