@@ -276,7 +276,7 @@ source varies.
 function common_obs_time(apth, period, n, axis=1)
     # Make a single field struct array that behaves like a time array. 4%-6%
     # faster than creating the array with getproperty.
-    t_obs = SingleFieldStructArray(apth, Val{:t})
+    t_obs = mapview(:t, apth)
 
     # Get the first time for all the sources (returns a view ♥).
     t_starts = selectdim(t_obs, axis, 1)
@@ -305,8 +305,11 @@ struct F1APressureTimeHistory{IsEven,Tp_m,Tp_d,Tdt,Tt0} <: AcousticMetrics.Abstr
     end
 end
 
-# Assume the pressure time history arrays `p_m` and `p_d` will have an even length.
-# F1APressureTimeHistory(p_m, p_d, dt, t0) = F1APressureTimeHistory{true}(p_m, p_d, dt, t0)
+function F1APressureTimeHistory(p_m, p_d, dt, t0)
+    ie = iseven(length(p_m))
+    return F1APressureTimeHistory{ie}(p_m, p_d, dt, t0)
+end
+
 
 """
     F1APressureTimeHistory([T=Float64,] n, dt, t0)
@@ -376,9 +379,10 @@ function combine!(apth_out, apth, time_axis; f_interp=akima)
     # speedup of <1%, sometimes a slowdown of <1%). I'm sure it'd be worse if I
     # didn't pass in the cache. But it's nice to not have to worry about passing
     # it in.
-    t_obs = SingleFieldStructArray(apth, Val{:t})
-    p_m = SingleFieldStructArray(apth, Val{:p_m})
-    p_d = SingleFieldStructArray(apth, Val{:p_d})
+    # But now I'm using FlexiMaps.mapview.
+    t_obs = mapview(:t, apth)
+    p_m = mapview(:p_m, apth)
+    p_d = mapview(:p_d, apth)
 
     # Unpack the output arrays for clarity.
     t_common = AcousticMetrics.time(apth_out)
@@ -433,7 +437,27 @@ Combine the acoustic pressures of multiple sources (`apth`) into a single acoust
 For example, if `time_axis == 1` and `apth` is a three-dimensional array, then `apth[:, i, j]` would be the `F1AOutput` objects of the `i`, `j` source element for all time.
 But if `time_axis == 3`, then `apth[i, j, :]` would be the `F1AOutput` objects of the `i`, `j` source element for all time.
 """
-function combine(apth, period, n::Integer, time_axis::Integer=1; f_interp=akima)
-    apth_out = F1APressureTimeHistory(apth, period, n, time_axis)
-    return combine!(apth_out, apth, time_axis; f_interp=f_interp)
+function combine(apth, period, n::Integer, axis::Integer=1; f_interp=akima)
+    # Get the common observer time.
+    t_common = common_obs_time(apth, period, n, axis)
+
+    # Construct a julienned array that will give me the time history of each source when we iterate over it.
+    alongs = (d == axis ? JuliennedArrays.True() : JuliennedArrays.False() for d in 1:ndims(apth))
+    apth_ja = JuliennedArrays.Slices(apth, alongs...)
+
+    p_m_interp = mapreduce(+, apth_ja) do p
+        t_obs = mapview(:t, p)
+        p_m = mapview(:p_m, p)
+        out = f_interp(t_obs, p_m, t_common)
+        return out
+    end
+
+    p_d_interp = mapreduce(+, apth_ja) do p
+        t_obs = mapview(:t, p)
+        p_d = mapview(:p_d, p)
+        out = f_interp(t_obs, p_d, t_common)
+        return out
+    end
+
+    return F1APressureTimeHistory(p_m_interp, p_d_interp, step(t_common), first(t_common))
 end

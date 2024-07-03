@@ -5,9 +5,10 @@ using CCBlade
 using FillArrays: Fill
 using FLOWMath: akima, linear, ksmax, norm_cs_safe, dot_cs_safe, atan_cs_safe, abs_cs_safe
 using Formatting: format
+using JuliennedArrays: JuliennedArrays
 using KinematicCoordinateTransformations
 using LinearAlgebra: cross, norm, mul!
-using SingleFieldStructArrays
+using FlexiMaps: mapview
 using StaticArrays
 using WriteVTK
 

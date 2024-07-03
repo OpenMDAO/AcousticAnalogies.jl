@@ -1,7 +1,7 @@
 module GenCCBladeData
 
 using CCBlade: CCBlade
-using DelimitedFiles: DelimitedFiles
+using FileIO: save
 using JLD2: JLD2
 using Printf: @sprintf
 
@@ -35,17 +35,13 @@ function omega_sweep()
         ops = CCBlade.OperatingPoint.(CCBladeTestCaseConstants.v, omega.*CCBladeTestCaseConstants.radii, CCBladeTestCaseConstants.rho, CCBladeTestCaseConstants.pitch, CCBladeTestCaseConstants.mu, CCBladeTestCaseConstants.c0)
         outs = CCBlade.solve.(Ref(rotor), sections, ops)
 
-        # # Get the normal and circumferential loading from the CCBlade output.
-        # fn = getproperty.(outs, :Np) # N/m
-        # fc = getproperty.(outs, :Tp) # N/m
+        outs_d = Dict{String,Any}(string(f)=>getproperty.(outs, f) for f in fieldnames(eltype(outs)))
+        outs_d["omega"] = omega
+        save("ccblade_omega$(@sprintf "%02d" i)-outputs.jld2", outs_d)
 
-        # data = hcat(fn, fc)
-        # DelimitedFiles.writedlm("ccblade_omega$(@sprintf "%02d" i).csv", data, ',')
-        JLD2.jldsave("ccblade_omega$(@sprintf "%02d" i).jld2"; rotor=rotor, sections=sections, ops=ops, outs=outs)
-
-        data = DelimitedFiles.readdlm("ccblade_omega$(@sprintf "%02d" i).csv", ',')
-        @show maximum(abs.(getproperty.(outs, :Np) .- data[:, 1]))
-        @show maximum(abs.(getproperty.(outs, :Tp) .- data[:, 2]))
+        # data = DelimitedFiles.readdlm("ccblade_omega$(@sprintf "%02d" i).csv", ',')
+        # @show maximum(abs.(getproperty.(outs, :Np) .- data[:, 1]))
+        # @show maximum(abs.(getproperty.(outs, :Tp) .- data[:, 2]))
     end 
 
     return nothing

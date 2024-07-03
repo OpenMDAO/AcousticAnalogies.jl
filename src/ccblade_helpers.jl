@@ -47,9 +47,12 @@ function _standard_ccblade_transform(rotor::CCBlade.Rotor, sections::AbstractVec
 
     # Get transformations for each blade element.
     cos_precone = cos(rotor.precone)
-    r = SingleFieldStructArray(sections, Val{:r})
-    Vx = SingleFieldStructArray(ops, Val{:Vx})
-    Vy = SingleFieldStructArray(ops, Val{:Vy})
+    # r = SingleFieldStructArray(sections, Val{:r})
+    # Vx = SingleFieldStructArray(ops, Val{:Vx})
+    # Vy = SingleFieldStructArray(ops, Val{:Vy})
+    r = mapview(:r, sections)
+    Vx = mapview(:Vx, ops)
+    Vy = mapview(:Vy, ops)
     if positive_x_rotation
         rot_trans = SteadyRotXTransformation.(t0, Vy./(r.*cos_precone), 0.0)  # size (num_radial,)
     else
@@ -1176,7 +1179,7 @@ end
 Construct and return a Vector of the lengths of each CCBlade section.
 """
 function get_ccblade_dradii(rotor, sections)
-    radii = SingleFieldStructArray(sections, Val{:r})
+    radii = mapview(:r, sections)
     dradii = get_dradii(radii, rotor.Rhub, rotor.Rtip)
     return dradii
 end

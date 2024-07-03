@@ -5,6 +5,7 @@ using AcousticAnalogies: calculate_bpm_test
 using AcousticMetrics: AcousticMetrics
 using CCBlade
 using DelimitedFiles: DelimitedFiles
+using FileIO: load
 using FLOWMath: linear
 using KinematicCoordinateTransformations
 using StaticArrays
@@ -128,16 +129,27 @@ end
     τ = 0.1
     Δτ = 0.02
     bl = AcousticAnalogies.UntrippedN0012BoundaryLayer()
-    ccblade_fname = joinpath(@__DIR__, "gen_test_data", "gen_ccblade_data", "ccblade_omega11.jld2")
-    out, section_loaded, Δr, op, rotor0precone = nothing, nothing, nothing, nothing, nothing
-    jldopen(ccblade_fname, "r") do f
-        out = f["outs"][1]
-        section_loaded = f["sections"][1]
-        Δr = f["sections"][2].r - f["sections"][1].r
-        op = f["ops"][1]
-        rotor0precone = f["rotor"]
-        @test rotor0precone.precone ≈ 0.0
-    end
+
+    # ccblade_fname = joinpath(@__DIR__, "gen_test_data", "gen_ccblade_data", "ccblade_omega11.jld2")
+    # out, section_loaded, Δr, op, rotor0precone = nothing, nothing, nothing, nothing, nothing
+    # jldopen(ccblade_fname, "r") do f
+    #     out = f["outs"][1]
+    #     section_loaded = f["sections"][1]
+    #     Δr = f["sections"][2].r - f["sections"][1].r
+    #     op = f["ops"][1]
+    #     rotor0precone = f["rotor"]
+    #     @test rotor0precone.precone ≈ 0.0
+    # end
+
+    ccblade_fname = joinpath(@__DIR__, "gen_test_data", "gen_ccblade_data", "ccblade_omega11-outputs.jld2")
+    outs_d = load(ccblade_fname)
+    section_loaded = CCBlade.Section(first(ccbc.radii), first(ccbc.chord), first(ccbc.theta)*pi/180, nothing)
+    Δr = ccbc.radii[2] - ccbc.radii[1]
+    op = CCBlade.OperatingPoint(ccbc.v, outs_d["omega"]*first(ccbc.radii), ccbc.rho, ccbc.pitch, ccbc.mu, ccbc.c0)
+    rotor0precone = CCBlade.Rotor(ccbc.Rhub, ccbc.Rtip, ccbc.num_blades)
+    out = CCBlade.Outputs(outs_d["Np"][1], outs_d["Tp"][1], outs_d["a"][1], outs_d["ap"][1], outs_d["u"][1], outs_d["v"][1], outs_d["phi"][1], outs_d["alpha"][1], outs_d["W"][1], outs_d["cl"][1], outs_d["cd"][1], outs_d["cn"][1], outs_d["ct"][1], outs_d["F"][1], outs_d["G"][1])
+    @test rotor0precone.precone ≈ 0.0
+
     for positive_x_rotation in [true, false]
         for twist in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
             section = CCBlade.Section(section_loaded.r, section_loaded.chord, twist, section_loaded.af)
@@ -335,16 +347,27 @@ end
     τ = 0.1
     Δτ = 0.02
     bl = AcousticAnalogies.UntrippedN0012BoundaryLayer()
-    ccblade_fname = joinpath(@__DIR__, "gen_test_data", "gen_ccblade_data", "ccblade_omega11.jld2")
-    out, section_loaded, Δr, op, rotor0precone = nothing, nothing, nothing, nothing, nothing
-    jldopen(ccblade_fname, "r") do f
-        out = f["outs"][1]
-        section_loaded = f["sections"][1]
-        Δr = f["sections"][2].r - f["sections"][1].r
-        op = f["ops"][1]
-        rotor0precone = f["rotor"]
-        @test rotor0precone.precone ≈ 0.0
-    end
+
+    # ccblade_fname = joinpath(@__DIR__, "gen_test_data", "gen_ccblade_data", "ccblade_omega11.jld2")
+    # out, section_loaded, Δr, op, rotor0precone = nothing, nothing, nothing, nothing, nothing
+    # jldopen(ccblade_fname, "r") do f
+    #     out = f["outs"][1]
+    #     section_loaded = f["sections"][1]
+    #     Δr = f["sections"][2].r - f["sections"][1].r
+    #     op = f["ops"][1]
+    #     rotor0precone = f["rotor"]
+    #     @test rotor0precone.precone ≈ 0.0
+    # end
+
+    ccblade_fname = joinpath(@__DIR__, "gen_test_data", "gen_ccblade_data", "ccblade_omega11-outputs.jld2")
+    outs_d = load(ccblade_fname)
+    section_loaded = CCBlade.Section(first(ccbc.radii), first(ccbc.chord), first(ccbc.theta)*pi/180, nothing)
+    Δr = ccbc.radii[2] - ccbc.radii[1]
+    op = CCBlade.OperatingPoint(ccbc.v, outs_d["omega"]*first(ccbc.radii), ccbc.rho, ccbc.pitch, ccbc.mu, ccbc.c0)
+    rotor0precone = CCBlade.Rotor(ccbc.Rhub, ccbc.Rtip, ccbc.num_blades)
+    out = CCBlade.Outputs(outs_d["Np"][1], outs_d["Tp"][1], outs_d["a"][1], outs_d["ap"][1], outs_d["u"][1], outs_d["v"][1], outs_d["phi"][1], outs_d["alpha"][1], outs_d["W"][1], outs_d["cl"][1], outs_d["cd"][1], outs_d["cn"][1], outs_d["ct"][1], outs_d["F"][1], outs_d["G"][1])
+    @test rotor0precone.precone ≈ 0.0
+
     for positive_x_rotation in [true, false]
         for twist in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
             section = CCBlade.Section(section_loaded.r, section_loaded.chord, twist, section_loaded.af)
@@ -546,16 +569,26 @@ end
     h = 0.1
     Psi = 0.2
     bl = AcousticAnalogies.UntrippedN0012BoundaryLayer()
-    ccblade_fname = joinpath(@__DIR__, "gen_test_data", "gen_ccblade_data", "ccblade_omega11.jld2")
-    out, section_loaded, Δr, op, rotor0precone = nothing, nothing, nothing, nothing, nothing
-    jldopen(ccblade_fname, "r") do f
-        out = f["outs"][1]
-        section_loaded = f["sections"][1]
-        Δr = f["sections"][2].r - f["sections"][1].r
-        op = f["ops"][1]
-        rotor0precone = f["rotor"]
-        @test rotor0precone.precone ≈ 0.0
-    end
+    # ccblade_fname = joinpath(@__DIR__, "gen_test_data", "gen_ccblade_data", "ccblade_omega11.jld2")
+    # out, section_loaded, Δr, op, rotor0precone = nothing, nothing, nothing, nothing, nothing
+    # jldopen(ccblade_fname, "r") do f
+    #     out = f["outs"][1]
+    #     section_loaded = f["sections"][1]
+    #     Δr = f["sections"][2].r - f["sections"][1].r
+    #     op = f["ops"][1]
+    #     rotor0precone = f["rotor"]
+    #     @test rotor0precone.precone ≈ 0.0
+    # end
+
+    ccblade_fname = joinpath(@__DIR__, "gen_test_data", "gen_ccblade_data", "ccblade_omega11-outputs.jld2")
+    outs_d = load(ccblade_fname)
+    section_loaded = CCBlade.Section(first(ccbc.radii), first(ccbc.chord), first(ccbc.theta)*pi/180, nothing)
+    Δr = ccbc.radii[2] - ccbc.radii[1]
+    op = CCBlade.OperatingPoint(ccbc.v, outs_d["omega"]*first(ccbc.radii), ccbc.rho, ccbc.pitch, ccbc.mu, ccbc.c0)
+    rotor0precone = CCBlade.Rotor(ccbc.Rhub, ccbc.Rtip, ccbc.num_blades)
+    out = CCBlade.Outputs(outs_d["Np"][1], outs_d["Tp"][1], outs_d["a"][1], outs_d["ap"][1], outs_d["u"][1], outs_d["v"][1], outs_d["phi"][1], outs_d["alpha"][1], outs_d["W"][1], outs_d["cl"][1], outs_d["cd"][1], outs_d["cn"][1], outs_d["ct"][1], outs_d["F"][1], outs_d["G"][1])
+    @test rotor0precone.precone ≈ 0.0
+
     for positive_x_rotation in [true, false]
         for twist in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
             section = CCBlade.Section(section_loaded.r, section_loaded.chord, twist, section_loaded.af)
@@ -759,16 +792,26 @@ end
     Δτ = 0.02
     bl = AcousticAnalogies.UntrippedN0012BoundaryLayer()
     blade_tip = AcousticAnalogies.RoundedTip()
-    ccblade_fname = joinpath(@__DIR__, "gen_test_data", "gen_ccblade_data", "ccblade_omega11.jld2")
-    out, section_loaded, Δr, op, rotor0precone = nothing, nothing, nothing, nothing, nothing
-    jldopen(ccblade_fname, "r") do f
-        out = f["outs"][1]
-        section_loaded = f["sections"][1]
-        Δr = f["sections"][2].r - f["sections"][1].r
-        op = f["ops"][1]
-        rotor0precone = f["rotor"]
-        @test rotor0precone.precone ≈ 0.0
-    end
+    # ccblade_fname = joinpath(@__DIR__, "gen_test_data", "gen_ccblade_data", "ccblade_omega11.jld2")
+    # out, section_loaded, Δr, op, rotor0precone = nothing, nothing, nothing, nothing, nothing
+    # jldopen(ccblade_fname, "r") do f
+    #     out = f["outs"][1]
+    #     section_loaded = f["sections"][1]
+    #     Δr = f["sections"][2].r - f["sections"][1].r
+    #     op = f["ops"][1]
+    #     rotor0precone = f["rotor"]
+    #     @test rotor0precone.precone ≈ 0.0
+    # end
+
+    ccblade_fname = joinpath(@__DIR__, "gen_test_data", "gen_ccblade_data", "ccblade_omega11-outputs.jld2")
+    outs_d = load(ccblade_fname)
+    section_loaded = CCBlade.Section(first(ccbc.radii), first(ccbc.chord), first(ccbc.theta)*pi/180, nothing)
+    Δr = ccbc.radii[2] - ccbc.radii[1]
+    op = CCBlade.OperatingPoint(ccbc.v, outs_d["omega"]*first(ccbc.radii), ccbc.rho, ccbc.pitch, ccbc.mu, ccbc.c0)
+    rotor0precone = CCBlade.Rotor(ccbc.Rhub, ccbc.Rtip, ccbc.num_blades)
+    out = CCBlade.Outputs(outs_d["Np"][1], outs_d["Tp"][1], outs_d["a"][1], outs_d["ap"][1], outs_d["u"][1], outs_d["v"][1], outs_d["phi"][1], outs_d["alpha"][1], outs_d["W"][1], outs_d["cl"][1], outs_d["cd"][1], outs_d["cn"][1], outs_d["ct"][1], outs_d["F"][1], outs_d["G"][1])
+    @test rotor0precone.precone ≈ 0.0
+
     for positive_x_rotation in [true, false]
         for twist in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
             section = CCBlade.Section(section_loaded.r, section_loaded.chord, twist, section_loaded.af)
@@ -960,16 +1003,26 @@ end
     h = 0.1
     Psi = 0.2
     bl = AcousticAnalogies.UntrippedN0012BoundaryLayer()
-    ccblade_fname = joinpath(@__DIR__, "gen_test_data", "gen_ccblade_data", "ccblade_omega11.jld2")
-    out, section_loaded, Δr, op, rotor0precone = nothing, nothing, nothing, nothing, nothing
-    jldopen(ccblade_fname, "r") do f
-        out = f["outs"][1]
-        section_loaded = f["sections"][1]
-        Δr = f["sections"][2].r - f["sections"][1].r
-        op = f["ops"][1]
-        rotor0precone = f["rotor"]
-        @test rotor0precone.precone ≈ 0.0
-    end
+    # ccblade_fname = joinpath(@__DIR__, "gen_test_data", "gen_ccblade_data", "ccblade_omega11.jld2")
+    # out, section_loaded, Δr, op, rotor0precone = nothing, nothing, nothing, nothing, nothing
+    # jldopen(ccblade_fname, "r") do f
+    #     out = f["outs"][1]
+    #     section_loaded = f["sections"][1]
+    #     Δr = f["sections"][2].r - f["sections"][1].r
+    #     op = f["ops"][1]
+    #     rotor0precone = f["rotor"]
+    #     @test rotor0precone.precone ≈ 0.0
+    # end
+
+    ccblade_fname = joinpath(@__DIR__, "gen_test_data", "gen_ccblade_data", "ccblade_omega11-outputs.jld2")
+    outs_d = load(ccblade_fname)
+    section_loaded = CCBlade.Section(first(ccbc.radii), first(ccbc.chord), first(ccbc.theta)*pi/180, nothing)
+    Δr = ccbc.radii[2] - ccbc.radii[1]
+    op = CCBlade.OperatingPoint(ccbc.v, outs_d["omega"]*first(ccbc.radii), ccbc.rho, ccbc.pitch, ccbc.mu, ccbc.c0)
+    rotor0precone = CCBlade.Rotor(ccbc.Rhub, ccbc.Rtip, ccbc.num_blades)
+    out = CCBlade.Outputs(outs_d["Np"][1], outs_d["Tp"][1], outs_d["a"][1], outs_d["ap"][1], outs_d["u"][1], outs_d["v"][1], outs_d["phi"][1], outs_d["alpha"][1], outs_d["W"][1], outs_d["cl"][1], outs_d["cd"][1], outs_d["cn"][1], outs_d["ct"][1], outs_d["F"][1], outs_d["G"][1])
+    @test rotor0precone.precone ≈ 0.0
+
     for positive_x_rotation in [true, false]
         for twist in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
             section = CCBlade.Section(section_loaded.r, section_loaded.chord, twist, section_loaded.af)
@@ -1082,16 +1135,26 @@ end
     Psi = 0.2
     bl = AcousticAnalogies.UntrippedN0012BoundaryLayer()
     blade_tip = AcousticAnalogies.RoundedTip()
-    ccblade_fname = joinpath(@__DIR__, "gen_test_data", "gen_ccblade_data", "ccblade_omega11.jld2")
-    out, section_loaded, Δr, op, rotor0precone = nothing, nothing, nothing, nothing, nothing
-    jldopen(ccblade_fname, "r") do f
-        out = f["outs"][1]
-        section_loaded = f["sections"][1]
-        Δr = f["sections"][2].r - f["sections"][1].r
-        op = f["ops"][1]
-        rotor0precone = f["rotor"]
-        @test rotor0precone.precone ≈ 0.0
-    end
+    # ccblade_fname = joinpath(@__DIR__, "gen_test_data", "gen_ccblade_data", "ccblade_omega11.jld2")
+    # out, section_loaded, Δr, op, rotor0precone = nothing, nothing, nothing, nothing, nothing
+    # jldopen(ccblade_fname, "r") do f
+    #     out = f["outs"][1]
+    #     section_loaded = f["sections"][1]
+    #     Δr = f["sections"][2].r - f["sections"][1].r
+    #     op = f["ops"][1]
+    #     rotor0precone = f["rotor"]
+    #     @test rotor0precone.precone ≈ 0.0
+    # end
+
+    ccblade_fname = joinpath(@__DIR__, "gen_test_data", "gen_ccblade_data", "ccblade_omega11-outputs.jld2")
+    outs_d = load(ccblade_fname)
+    section_loaded = CCBlade.Section(first(ccbc.radii), first(ccbc.chord), first(ccbc.theta)*pi/180, nothing)
+    Δr = ccbc.radii[2] - ccbc.radii[1]
+    op = CCBlade.OperatingPoint(ccbc.v, outs_d["omega"]*first(ccbc.radii), ccbc.rho, ccbc.pitch, ccbc.mu, ccbc.c0)
+    rotor0precone = CCBlade.Rotor(ccbc.Rhub, ccbc.Rtip, ccbc.num_blades)
+    out = CCBlade.Outputs(outs_d["Np"][1], outs_d["Tp"][1], outs_d["a"][1], outs_d["ap"][1], outs_d["u"][1], outs_d["v"][1], outs_d["phi"][1], outs_d["alpha"][1], outs_d["W"][1], outs_d["cl"][1], outs_d["cd"][1], outs_d["cn"][1], outs_d["ct"][1], outs_d["F"][1], outs_d["G"][1])
+    @test rotor0precone.precone ≈ 0.0
+
     for positive_x_rotation in [true, false]
         for twist in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
             section = CCBlade.Section(section_loaded.r, section_loaded.chord, twist, section_loaded.af)
@@ -1475,17 +1538,28 @@ end
         τ = 0.1
         Δτ = 0.02
         bl = AcousticAnalogies.UntrippedN0012BoundaryLayer()
-        ccblade_fname = joinpath(@__DIR__, "gen_test_data", "gen_ccblade_data", "ccblade_omega11.jld2")
-        out, section, Δr, op, rotor = nothing, nothing, nothing, nothing, nothing
-        jldopen(ccblade_fname, "r") do f
-            out = f["outs"][1]
-            section = f["sections"][1]
-            Δr = f["sections"][2].r - f["sections"][1].r
-            op = f["ops"][1]
-            rotor = f["rotor"]
-            @test rotor.precone ≈ 0.0
-            @test op.pitch ≈ 0.0
-        end
+        # ccblade_fname = joinpath(@__DIR__, "gen_test_data", "gen_ccblade_data", "ccblade_omega11.jld2")
+        # out, section, Δr, op, rotor = nothing, nothing, nothing, nothing, nothing
+        # jldopen(ccblade_fname, "r") do f
+        #     out = f["outs"][1]
+        #     section = f["sections"][1]
+        #     Δr = f["sections"][2].r - f["sections"][1].r
+        #     op = f["ops"][1]
+        #     rotor = f["rotor"]
+        #     @test rotor.precone ≈ 0.0
+        #     @test op.pitch ≈ 0.0
+        # end
+
+        ccblade_fname = joinpath(@__DIR__, "gen_test_data", "gen_ccblade_data", "ccblade_omega11-outputs.jld2")
+        outs_d = load(ccblade_fname)
+        section = CCBlade.Section(first(ccbc.radii), first(ccbc.chord), first(ccbc.theta)*pi/180, nothing)
+        Δr = ccbc.radii[2] - ccbc.radii[1]
+        op = CCBlade.OperatingPoint(ccbc.v, outs_d["omega"]*first(ccbc.radii), ccbc.rho, ccbc.pitch, ccbc.mu, ccbc.c0)
+        rotor = CCBlade.Rotor(ccbc.Rhub, ccbc.Rtip, ccbc.num_blades)
+        out = CCBlade.Outputs(outs_d["Np"][1], outs_d["Tp"][1], outs_d["a"][1], outs_d["ap"][1], outs_d["u"][1], outs_d["v"][1], outs_d["phi"][1], outs_d["alpha"][1], outs_d["W"][1], outs_d["cl"][1], outs_d["cd"][1], outs_d["cn"][1], outs_d["ct"][1], outs_d["F"][1], outs_d["G"][1])
+        @test rotor.precone ≈ 0.0
+        @test op.pitch ≈ 0.0
+
         for positive_x_rotation in [true, false]
             for θ in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
                 se = AcousticAnalogies.TBLTESourceElement(rotor, section, op, out, θ, Δr, τ, Δτ, bl, positive_x_rotation)

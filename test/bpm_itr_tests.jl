@@ -131,7 +131,6 @@ end
     bl = [ifelse(tf,
                  AcousticAnalogies.TrippedN0012BoundaryLayer(),
                  AcousticAnalogies.UntrippedN0012BoundaryLayer()) for tf in tripped_flags]
-    @show bl
 
     # Do it.
     

@@ -31,7 +31,7 @@ ForwardDiff test | None  14.1s
 (jl_jncZ1E) pkg> 
 ```
 
-(The output associated with installing all the dependencies the tests need aren't shown above.)
+(The output associated with installing all the dependencies the tests need isn't shown above.)
 
 Here is a description of each category of test:
 

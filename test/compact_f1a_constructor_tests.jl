@@ -2,7 +2,7 @@ module CompactF1AConstructorTests
 
 using AcousticAnalogies
 using CCBlade
-using DelimitedFiles
+using FileIO: load
 using KinematicCoordinateTransformations
 using StaticArrays
 using JLD2
@@ -54,15 +54,15 @@ end
         # Create the CCBlade objects.
         area_per_chord2 = 0.1
         τ = 0.1
-        ccblade_fname = joinpath(@__DIR__, "gen_test_data", "gen_ccblade_data", "ccblade_omega11.jld2")
-        out, section, Δr, op, rotor0precone = nothing, nothing, nothing, nothing, nothing
-        jldopen(ccblade_fname, "r") do f
-            out = f["outs"][1]
-            section = f["sections"][1]
-            Δr = f["sections"][2].r - f["sections"][1].r
-            op = f["ops"][1]
-            rotor0precone = f["rotor"]
-        end
+
+        ccblade_fname = joinpath(@__DIR__, "gen_test_data", "gen_ccblade_data", "ccblade_omega11-outputs.jld2")
+        outs_d = load(ccblade_fname)
+        section = CCBlade.Section(first(ccbc.radii), first(ccbc.chord), first(ccbc.theta)*pi/180, nothing)
+        Δr = ccbc.radii[2] - ccbc.radii[1]
+        op = CCBlade.OperatingPoint(ccbc.v, outs_d["omega"]*first(ccbc.radii), ccbc.rho, ccbc.pitch, ccbc.mu, ccbc.c0)
+        rotor0precone = CCBlade.Rotor(ccbc.Rhub, ccbc.Rtip, ccbc.num_blades)
+        out = CCBlade.Outputs(outs_d["Np"][1], outs_d["Tp"][1], outs_d["a"][1], outs_d["ap"][1], outs_d["u"][1], outs_d["v"][1], outs_d["phi"][1], outs_d["alpha"][1], outs_d["W"][1], outs_d["cl"][1], outs_d["cd"][1], outs_d["cn"][1], outs_d["ct"][1], outs_d["F"][1], outs_d["G"][1])
+
         @test rotor0precone.precone ≈ 0.0
         Rhub = rotor0precone.Rhub
         Rtip = rotor0precone.Rtip
@@ -98,11 +98,18 @@ end
 @testset "CCBlade CompactSourceElement complete test" begin
 
     for positive_x_rotation in [true, false]
-        omega = 2200*(2*pi/60)
+        # omega = 2200*(2*pi/60)
         # Read in the loading data.
-        data = readdlm("gen_test_data/gen_ccblade_data/ccblade_omega11.csv", ',')
-        Np = data[:, 1]
-        Tp = data[:, 2]
+        # data = readdlm("gen_test_data/gen_ccblade_data/ccblade_omega11.csv", ',')
+        # Np = data[:, 1]
+        # Tp = data[:, 2]
+
+        # Read in the loading data.
+        fname = joinpath(@__DIR__, "gen_test_data", "gen_ccblade_data", "ccblade_omega11-outputs.jld2")
+        data_d = load(fname)
+        omega = data_d["omega"]
+        Np = data_d["Np"]
+        Tp = data_d["Tp"]
 
         # Create the CCBlade objects.
         rotor = Rotor(ccbc.Rhub, ccbc.Rtip, ccbc.num_blades; turbine=false)

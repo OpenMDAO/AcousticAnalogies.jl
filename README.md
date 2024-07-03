@@ -1,6 +1,7 @@
 # AcousticAnalogies.jl Documentation
 
-[![Tests](https://github.com/dingraha/AcousticAnalogies.jl/actions/workflows/test.yaml/badge.svg)](https://github.com/dingraha/AcousticAnalogies.jl/actions/workflows/test.yaml)
+[![Tests](https://github.com/OpenMDAO/AcousticAnalogies.jl/actions/workflows/test.yaml/badge.svg)](https://github.com/OpenMDAO/AcousticAnalogies.jl/actions/workflows/test.yaml)
+[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://OpenMDAO.github.io/AcousticAnalogies.jl/dev)
 
 **Summary**: A pure-Julia package for propeller/rotor blade noise prediction with acoustic analogies.
 
@@ -41,7 +42,7 @@
   * Thoroughly tested: unit tests for everything, and multiple comparisons of the entire
     calculation to equivalent methods in NASA's ANOPP2 code.
   * Convenient, fast coordinate system transformations through
-    [KinematicCoordinateTransformations.jl](https://github.com/dingraha/KinematicCoordinateTransformations.jl).
+    [KinematicCoordinateTransformations.jl](https://github.com/OpenMDAO/KinematicCoordinateTransformations.jl).
   * Written in pure Julia, and compatible with automatic differentiation (AD)
     tools like [ForwardDiff.jl](https://github.com/JuliaDiff/ForwardDiff.jl).
   * Comprehensive docs (TODO).
@@ -49,6 +50,7 @@
 
 **Installation**
 ```julia-repl
+] registry add git@github.com:dingraha/DanielIngrahamRegistry.git  # Optional, but needed to resolve dependencies in the next step
 ] add AcousticAnalogies
 ```
 
