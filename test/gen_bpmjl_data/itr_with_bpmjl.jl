@@ -4,8 +4,8 @@ using Accessors: Accessors
 using AcousticMetrics: AcousticMetrics
 using BPM: BPM
 using CCBlade: CCBlade
-using DelimitedFiles: writedlm
-# using JLD2: JLD2
+# using DelimitedFiles: writedlm
+using JLD2: JLD2
 using FileIO: save
 
 function get_airfoil(; af_fname, cr75, Re_exp)
@@ -182,7 +182,7 @@ function do_figure22b()
     num_betas = 20
 
     # Save the inputs.
-    data_inputs = Dict(
+    data = Dict(
         "rho"=>rho, "asound"=>asound, "mu"=>mu,
         "Vinf"=>Vinf, "omega"=>omega,
         "B"=>B,
@@ -197,7 +197,7 @@ function do_figure22b()
         "Psis"=>Psis[begin:end-1],
         "tripped_flags"=>fill(tripped_flags, length(sections)),
         "num_src_times_blade_pass"=>num_betas)
-    save("figure22b-inputs.jld2", data_inputs)
+    # save("figure22b-inputs.jld2", data_inputs)
 
     # Now we can start doing the predictions.
     oaspl_pressure, spl_pressure = BPM.sound_pressure_levels(
@@ -347,14 +347,15 @@ function do_figure22b()
     spl_nb_blunt = @. spl_blunt + 10*log10(df_nb/df_pbs)
     spl_nb_tip = @. spl_tip + 10*log10(df_nb/df_pbs)
 
-    header = "BPM.default_f,spl_nb_pressure,spl_nb_suction,spl_nb_separation,spl_nb_lblvs,spl_nb_blunt,spl_nb_tip\n"
-    data = hcat(BPM.default_f, spl_nb_pressure, spl_nb_suction, spl_nb_separation, spl_nb_lblvs, spl_nb_blunt, spl_nb_tip)
+    data["freqs"] = BPM.default_f
+    data["spl_nb_pressure"] = spl_nb_pressure
+    data["spl_nb_suction"] = spl_nb_suction
+    data["spl_nb_separation"] = spl_nb_separation
+    data["spl_nb_lblvs"] = spl_nb_lblvs
+    data["spl_nb_blunt"] = spl_nb_blunt
+    data["spl_nb_tip"] = spl_nb_tip
+    save(joinpath(@__DIR__, "figure22b.jld2"), data)
 
-    fname = joinpath(@__DIR__, "figure22b-spl_nb.csv")
-    open(fname, "w") do f
-        write(f, header)
-        writedlm(f, data, ',')
-    end
     return nothing
 end
 
@@ -499,7 +500,7 @@ function do_figure23c()
     num_betas = 20
 
     # Save the inputs.
-    data_inputs = Dict(
+    data = Dict(
         "rho"=>rho, "asound"=>asound, "mu"=>mu,
         "Vinf"=>Vinf, "omega"=>omega,
         "B"=>B,
@@ -515,7 +516,6 @@ function do_figure23c()
         "tripped_flags"=>tripped_flags[begin:end-1],
         "lblvs_flags"=>lblvs_flags[begin:end-1],
         "num_src_times_blade_pass"=>num_betas)
-    save("figure23c-inputs.jld2", data_inputs)
 
     # Now we can start doing the predictions.
     oaspl_pressure, spl_pressure = BPM.sound_pressure_levels(
@@ -617,15 +617,6 @@ function do_figure23c()
         nbeta=num_betas,
         smooth=false)
 
-    # header = "BPM.default_f,spl_pressure,spl_suction,spl_separation,spl_lblvs,spl_blunt,spl_tip\n"
-    # data = hcat(BPM.default_f, spl_pressure, spl_suction, spl_separation, spl_lblvs, spl_blunt, spl_tip)
-
-    # fname = joinpath(@__DIR__, "figure23c.csv")
-    # open(fname, "w") do f
-    #     write(f, header)
-    #     writedlm(f, data, ',')
-    # end
-
     # Now I'd like to do the narrowband SPL like the Pettingill et al. paper does, instead of 1/3 octave SPL.
     # So, to do that, I need to multiply the mean-squared pressure by Δf_nb/Δf_pbs, where `Δf_nb` is the 20 Hz narrowband and `Δf_pbs` is the bandwidth of each 1/3-octave proportional band.
     # (Dividing the MSP by Δf_pbs aka the 1/3 octave spacing is like getting a power-spectral density, then multiplying by the narrowband spacing Δf_nb gives us the MSP associated with the narrowband.)
@@ -665,14 +656,14 @@ function do_figure23c()
     spl_nb_blunt = @. spl_blunt + 10*log10(df_nb/df_pbs)
     spl_nb_tip = @. spl_tip + 10*log10(df_nb/df_pbs)
 
-    header = "BPM.default_f,spl_nb_pressure,spl_nb_suction,spl_nb_separation,spl_nb_lblvs,spl_nb_blunt,spl_nb_tip\n"
-    data = hcat(BPM.default_f, spl_nb_pressure, spl_nb_suction, spl_nb_separation, spl_nb_lblvs, spl_nb_blunt, spl_nb_tip)
-
-    fname = joinpath(@__DIR__, "figure23c-spl_nb.csv")
-    open(fname, "w") do f
-        write(f, header)
-        writedlm(f, data, ',')
-    end
+    data["freqs"] = BPM.default_f
+    data["spl_nb_pressure"] = spl_nb_pressure
+    data["spl_nb_suction"] = spl_nb_suction
+    data["spl_nb_separation"] = spl_nb_separation
+    data["spl_nb_lblvs"] = spl_nb_lblvs
+    data["spl_nb_blunt"] = spl_nb_blunt
+    data["spl_nb_tip"] = spl_nb_tip
+    save(joinpath(@__DIR__, "figure23c.jld2"), data)
 
     return nothing
 end
@@ -814,8 +805,8 @@ function do_figure24b()
     # Number of azimuthal stations per blade pass, I think.
     num_betas = 20
 
-    # Save the inputs.
-    data_inputs = Dict(
+    # Save the inputs in a dict that we'll write out later.
+    data = Dict(
         "rho"=>rho, "asound"=>asound, "mu"=>mu,
         "Vinf"=>Vinf, "omega"=>omega,
         "B"=>B,
@@ -830,7 +821,7 @@ function do_figure24b()
         "Psis"=>fill(Psi, length(sections)),
         "tripped_flags"=>tripped_flags[begin:end-1],
         "num_src_times_blade_pass"=>num_betas)
-    save("figure24b-inputs.jld2", data_inputs)
+    # save(joinpath(@__DIR__, "figure24b-inputs.jld2"), data_inputs)
 
     # Now we can start doing the predictions.
     oaspl_pressure, spl_pressure = BPM.sound_pressure_levels(
@@ -971,14 +962,14 @@ function do_figure24b()
     spl_nb_blunt = @. spl_blunt + 10*log10(df_nb/df_pbs)
     spl_nb_tip = @. spl_tip + 10*log10(df_nb/df_pbs)
 
-    header = "BPM.default_f,spl_nb_pressure,spl_nb_suction,spl_nb_separation,spl_nb_lblvs,spl_nb_blunt,spl_nb_tip\n"
-    data = hcat(BPM.default_f, spl_nb_pressure, spl_nb_suction, spl_nb_separation, spl_nb_lblvs, spl_nb_blunt, spl_nb_tip)
-
-    fname = joinpath(@__DIR__, "figure24b-spl_nb.csv")
-    open(fname, "w") do f
-        write(f, header)
-        writedlm(f, data, ',')
-    end
+    data["freqs"] = BPM.default_f
+    data["spl_nb_pressure"] = spl_nb_pressure
+    data["spl_nb_suction"] = spl_nb_suction
+    data["spl_nb_separation"] = spl_nb_separation
+    data["spl_nb_lblvs"] = spl_nb_lblvs
+    data["spl_nb_blunt"] = spl_nb_blunt
+    data["spl_nb_tip"] = spl_nb_tip
+    save(joinpath(@__DIR__, "figure24b.jld2"), data)
 
     return nothing
 end

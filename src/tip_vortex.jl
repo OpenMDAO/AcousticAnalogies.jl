@@ -3,6 +3,24 @@ abstract type AbstractTipAlphaCorrection end
 struct NoTipAlphaCorrection <: AbstractTipAlphaCorrection end
 struct BPMTipAlphaCorrection <: AbstractTipAlphaCorrection end
 
+struct BMTipAlphaCorrection{TCorrection} <: AbstractTipAlphaCorrection
+    correction::TCorrection
+
+    function BMTipAlphaCorrection(aspect_ratio)
+        correction = BPM._tip_vortex_alpha_correction_nonsmooth(aspect_ratio)
+        return new{typeof(correction)}(correction)
+    end
+end
+
+struct SmoothBMTipAlphaCorrection{TCorrection} <: AbstractTipAlphaCorrection
+    correction::TCorrection
+
+    function SmoothBMTipAlphaCorrection(aspect_ratio)
+        correction = BPM._tip_vortex_alpha_correction_smooth(aspect_ratio)
+        return new{typeof(correction)}(correction)
+    end
+end
+
 abstract type AbstractBladeTip{TTipAlphaCorrection} end
 
 alpha_zerolift(blade_tip::AbstractBladeTip) = blade_tip.alpha0lift
@@ -36,6 +54,10 @@ function tip_vortex_alpha_correction(blade_tip::AbstractBladeTip{BPMTipAlphaCorr
     # Referencing the tip vortex angle of attack correction to the zero-lift angle of attack ensures that the correction will never cause the angle of attack to drop below the zero-lift value, assuming the correction factor (0.71 here) is between 0 and 1.
     return 0.71*(alphatip - alpha_zerolift(blade_tip)) + alpha_zerolift(blade_tip)
     # return 0.71*alphatip + (1 - 0.71)*alpha_zerolift(blade_tip)
+end
+
+function tip_vortex_alpha_correction(blade_tip::AbstractBladeTip{<:Union{BMTipAlphaCorrection,SmoothBMTipAlphaCorrection}}, alphatip)
+    return tip_alpha_correction(blade_tip).correction * (alphatip - alpha_zerolift(blade_tip)) + alpha_zerolift(blade_tip)
 end
 
 function tip_vortex_size_c(::RoundedTip, alphatip)

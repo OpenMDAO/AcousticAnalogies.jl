@@ -1,6 +1,7 @@
 module AcousticAnalogies
 
 using AcousticMetrics
+using BPM: BPM
 using CCBlade
 using FillArrays: Fill
 using FLOWMath: akima, linear, ksmax, norm_cs_safe, dot_cs_safe, atan_cs_safe, abs_cs_safe
@@ -32,12 +33,18 @@ export combine!, combine
 
 include("tbl_te.jl")
 export TBLTESourceElement
+
 include("lbl_vs.jl")
 export LBLVSSourceElement
+
 include("tip_vortex.jl")
+export AbstractTipAlphaCorrection, NoTipAlphaCorrection, BPMTipAlphaCorrection, BMTipAlphaCorrection, SmoothBMTipAlphaCorrection
+export AbstractBladeTip, RoundedTip, FlatTip
 export TipVortexSourceElement
+
 include("teb_vs.jl")
 export TEBVSSourceElement
+
 include("combined_broadband.jl")
 export CombinedNoTipBroadbandSourceElement, CombinedWithTipBroadbandSourceElement
 export pbs_suction, pbs_pressure, pbs_alpha, pbs_teb, pbs_tip

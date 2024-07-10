@@ -5,6 +5,7 @@ version = "0.7.2"
 
 [deps]
 AcousticMetrics = "046f749b-9c1e-43ca-86bc-6902340f753e"
+BPM = "f91b385c-3ede-44c9-92c8-2a04f762ef2f"
 CCBlade = "e1828068-15df-11e9-03e4-ef195ea46fa4"
 FLOWMath = "6cb5d3fb-0fe8-4cc2-bd89-9fe0b19a99d3"
 FillArrays = "1a297f60-69ca-5386-bcde-b61e274b549b"

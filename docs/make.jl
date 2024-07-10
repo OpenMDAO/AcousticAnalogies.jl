@@ -15,6 +15,8 @@ function doit()
                     "BPM Airfoil Self-Noise Tests"=>"bpm_tests1.md",
                     "BPM Airfoil Self-Noise Tests, Cont."=>"bpm_tests2.md",
                     "BPM Airfoil Self-Noise Tests, Cont."=>"bpm_tests3.md",
+                    "BPM Airfoil Self-Noise Tests, Cont."=>"bpm_tests3.md",
+                    "Ideally Twisted Rotor Tests"=>"itr_tests1.md",
                    ])
 
     if IN_CI
