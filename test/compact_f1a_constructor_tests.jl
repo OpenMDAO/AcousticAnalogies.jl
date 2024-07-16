@@ -26,7 +26,7 @@ ccbc = CCBladeTestCaseConstants
 end
 
 @testset "Constructor rotation tests" begin
-    @testset "CompactSourceElement" begin
+    @testset "CompactF1ASourceElement" begin
         ρ0 = 1.1
         c0 = 1.2
         r = 2.0
@@ -36,20 +36,20 @@ end
         fr = 3.0
         fc = 4.0
         τ = 0.1
-        se_0theta = CompactSourceElement(ρ0, c0, r, 0.0, Δr, Λ, fn, fr, fc, τ)
+        se_0theta = CompactF1ASourceElement(ρ0, c0, r, 0.0, Δr, Λ, fn, fr, fc, τ)
         for θ in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
             # Create a transformation that will undo the θ rotation.
             trans = KinematicCoordinateTransformations.SteadyRotXTransformation(τ, 0.0, -θ)
             # Create a source element with the theta rotation, then undo it.
-            se = CompactSourceElement(ρ0, c0, r, θ, Δr, Λ, fn, fr, fc, τ) |> trans
+            se = CompactF1ASourceElement(ρ0, c0, r, θ, Δr, Λ, fn, fr, fc, τ) |> trans
             # Check that we got the same thing:
-            for field in fieldnames(CompactSourceElement)
+            for field in fieldnames(CompactF1ASourceElement)
                 @test getproperty(se, field) ≈ getproperty(se_0theta, field)
             end
         end
     end
 
-    @testset "CompactSourceElement, CCBlade" begin
+    @testset "CompactF1ASourceElement, CCBlade" begin
 
         # Create the CCBlade objects.
         area_per_chord2 = 0.1
@@ -69,7 +69,7 @@ end
         num_blades = rotor0precone.B
         turbine = rotor0precone.turbine
         for positive_x_rotation in [true, false]
-            se_0theta0precone = CompactSourceElement(rotor0precone, section, op, out, 0.0, Δr, area_per_chord2, τ, positive_x_rotation)
+            se_0theta0precone = CompactF1ASourceElement(rotor0precone, section, op, out, 0.0, Δr, area_per_chord2, τ, positive_x_rotation)
             for precone in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
                 rotor = CCBlade.Rotor(Rhub, Rtip, num_blades; turbine=turbine, precone=precone)
                 # This is tricky: in my "normal" coordinate system, the blade is rotating around the x axis, moving axially in the positive x direction, and is initially aligned with the y axis.
@@ -83,9 +83,9 @@ end
                     # So to reverse it we need to do theta, then precone.
                     trans = KinematicCoordinateTransformations.compose(τ, trans_precone, trans_theta)
                     # Create a source element with the theta and precone rotations, then undo it.
-                    se = CompactSourceElement(rotor, section, op, out, θ, Δr, area_per_chord2, τ, positive_x_rotation) |> trans
+                    se = CompactF1ASourceElement(rotor, section, op, out, θ, Δr, area_per_chord2, τ, positive_x_rotation) |> trans
                     # Check that we got the same thing:
-                    for field in fieldnames(CompactSourceElement)
+                    for field in fieldnames(CompactF1ASourceElement)
                         @test getproperty(se, field) ≈ getproperty(se_0theta0precone, field)
                     end
                 end
@@ -95,7 +95,7 @@ end
     end
 end
 
-@testset "CCBlade CompactSourceElement complete test" begin
+@testset "CCBlade CompactF1ASourceElement complete test" begin
 
     for positive_x_rotation in [true, false]
         # omega = 2200*(2*pi/60)
@@ -128,7 +128,7 @@ end
 
         # Finally get all the source elements.
         aoc2 = fill(ccbc.area_over_chord_squared, length(sections))
-        ses_helper = source_elements_ccblade(rotor, sections, ops, outs, aoc2, src_time_range, num_src_times, positive_x_rotation)
+        ses_helper = f1a_source_elements_ccblade(rotor, sections, ops, outs, aoc2, src_time_range, num_src_times, positive_x_rotation)
 
         # Now need to get the source elements the "normal" way. First get the
         # transformation objects.
@@ -168,12 +168,12 @@ end
 
         # Transform the source elements.
         if positive_x_rotation
-            ses = CompactSourceElement.(ccbc.rho, ccbc.c0, radii, θs, dradii, cs_area, -Np, 0.0, Tp, src_times) .|> trans
+            ses = CompactF1ASourceElement.(ccbc.rho, ccbc.c0, radii, θs, dradii, cs_area, -Np, 0.0, Tp, src_times) .|> trans
         else
-            ses = CompactSourceElement.(ccbc.rho, ccbc.c0, radii, θs, dradii, cs_area, -Np, 0.0, -Tp, src_times) .|> trans
+            ses = CompactF1ASourceElement.(ccbc.rho, ccbc.c0, radii, θs, dradii, cs_area, -Np, 0.0, -Tp, src_times) .|> trans
         end
 
-        for field in fieldnames(CompactSourceElement)
+        for field in fieldnames(CompactF1ASourceElement)
             @test all(getproperty.(ses_helper, field) .≈ getproperty.(ses, field))
         end
     end

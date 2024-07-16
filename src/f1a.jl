@@ -1,5 +1,5 @@
-struct CompactSourceElement{
-    Tρ0,Tc0,TΔr,TΛ,Ty0dot,Ty1dot,Ty2dot,Ty3dot,Tf0dot,Tf1dot,Tτ,Tu
+struct CompactF1ASourceElement{
+    Tρ0,Tc0,TΔr,TΛ,Ty0dot,Ty1dot,Ty2dot,Ty3dot,Tf0dot,Tf1dot,Tτ,Tspan_uvec
     } <: AbstractCompactSourceElement
     # Density.
     ρ0::Tρ0
@@ -23,13 +23,11 @@ struct CompactSourceElement{
     τ::Tτ
 
     # orientation of the element. Only used for WriteVTK.
-    u::Tu
+    span_uvec::Tspan_uvec
 end
 
-orientation(se::CompactSourceElement) = se.u
-
 """
-    CompactSourceElement(ρ0, c0, r, θ, Δr, Λ, fn, fr, fc, τ)
+    CompactF1ASourceElement(ρ0, c0, r, θ, Δr, Λ, fn, fr, fc, τ)
 
 Construct a source element to be used with the compact form of Farassat's formulation 1A, using position and loading data expressed in a cylindrical coordinate system.
 
@@ -55,7 +53,7 @@ This can be done easily with the transformations provided by the `KinematicCoord
 - fc: circumferential load *on the fluid* (N/m)
 - τ: source time (s)
 """
-function CompactSourceElement(ρ0, c0, r, θ, Δr, Λ, fn, fr, fc, τ)
+function CompactF1ASourceElement(ρ0, c0, r, θ, Δr, Λ, fn, fr, fc, τ)
     s, c = sincos(θ)
     y0dot = @SVector [0, r*c, r*s]
     T = eltype(y0dot)
@@ -65,117 +63,24 @@ function CompactSourceElement(ρ0, c0, r, θ, Δr, Λ, fn, fr, fc, τ)
     f0dot = @SVector [fn, c*fr - s*fc, s*fr + c*fc]
     T = eltype(f0dot)
     f1dot = @SVector zeros(T, 3)
-    u = @SVector [0, c, s]
+    span_uvec = @SVector [0, c, s]
 
-    return CompactSourceElement(ρ0, c0, Δr, Λ, y0dot, y1dot, y2dot, y3dot, f0dot, f1dot, τ, u)
+    return CompactF1ASourceElement(ρ0, c0, Δr, Λ, y0dot, y1dot, y2dot, y3dot, f0dot, f1dot, τ, span_uvec)
 end
 
 """
-    (trans::KinematicTransformation)(se::CompactSourceElement)
+    (trans::KinematicTransformation)(se::CompactF1ASourceElement)
 
 Transform the position and forces of a source element according to the coordinate system transformation `trans`.
 """
-function (trans::KinematicTransformation)(se::CompactSourceElement)
+function (trans::KinematicTransformation)(se::CompactF1ASourceElement)
     linear_only = false
     y0dot, y1dot, y2dot, y3dot = trans(se.τ, se.y0dot, se.y1dot, se.y2dot, se.y3dot, linear_only)
     linear_only = true
     f0dot, f1dot= trans(se.τ, se.f0dot, se.f1dot, linear_only)
-    u = trans(se.τ, se.u, linear_only)
+    span_uvec = trans(se.τ, se.span_uvec, linear_only)
 
-    return CompactSourceElement(se.ρ0, se.c0, se.Δr, se.Λ, y0dot, y1dot, y2dot, y3dot, f0dot, f1dot, se.τ, u)
-end
-
-"""
-Supertype for an object that recieves a noise prediction when combined with an
-acoustic analogy source; computational equivalent of a microphone.
-
-    (obs::AbstractAcousticObserver)(t)
-
-Calculate the position of the acoustic observer at time `t`.
-"""
-abstract type AbstractAcousticObserver end
-
-"""
-    StationaryAcousticObserver(x)
-
-Construct an acoustic observer that does not move with position `x` (m).
-"""
-struct StationaryAcousticObserver{Tx} <: AbstractAcousticObserver
-    x::Tx
-end
-
-"""
-    velocity(t_obs, obs::StationaryAcousticObserver)
-
-Return the velocity of `obs` at time `t_obs` (hint—will always be zero ☺)
-"""
-@inline velocity(t_obs, obs::StationaryAcousticObserver) = zero(obs.x)
-
-"""
-    ConstVelocityAcousticObserver(t0, x0, v)
-
-Construct an acoustic observer moving with a constant velocity `v`, located at
-`x0` at time `t0`.
-"""
-struct ConstVelocityAcousticObserver{Tt0,Tx0,Tv} <: AbstractAcousticObserver
-    t0 ::Tt0
-    x0::Tx0
-    v::Tv
-end
-
-function (obs::StationaryAcousticObserver)(t)
-    return obs.x
-end
-
-function (obs::ConstVelocityAcousticObserver)(t)
-    return obs.x0 .+ (t - obs.t0).*obs.v
-end
-
-"""
-    velocity(t_obs, obs::ConstVelocityAcousticObserver)
-
-Return the velocity of `obs` at time `t_obs` (hint—will always be the same)
-"""
-@inline velocity(t_obs, obs::ConstVelocityAcousticObserver) = obs.v
-
-"""
-    adv_time(se::AbstractCompactSourceElement, obs::AbstractAcousticObserver)
-
-Calculate the time an acoustic wave emmited by source `se` at time `se.τ` is
-recieved by observer `obs`.
-"""
-adv_time(se::AbstractCompactSourceElement, obs::AbstractAcousticObserver)
-
-function adv_time(se::AbstractCompactSourceElement, obs::StationaryAcousticObserver)
-    rv = obs(se.τ) .- se.y0dot
-    r = norm_cs_safe(rv)
-    t = se.τ + r/se.c0
-    return t
-end
-
-function adv_time(se::AbstractCompactSourceElement, obs::ConstVelocityAcousticObserver)
-    # Location of the observer at the source time.
-    x = obs(se.τ)
-
-    # Vector from the source to the observer at the source time.
-    rv = x .- se.y0dot
-
-    # Distance from the source to the observer at the source time.
-    r = norm_cs_safe(rv)
-
-    # Speed of the observer divided by speed of sound.
-    Mo = norm_cs_safe(obs.v)/se.c0
-
-    # Unit vector pointing from the source to the observer.
-    rhat = rv/r
-
-    # Velocity of observer dotted with rhat at the source time.
-    Mor = dot_cs_safe(obs.v, rhat)/se.c0
-
-    # Now get the observer time.
-    t = se.τ + r/se.c0*((Mor + sqrt(Mor^2 + 1 - Mo^2))/(1 - Mo^2))
-
-    return t
+    return CompactF1ASourceElement(se.ρ0, se.c0, se.Δr, se.Λ, y0dot, y1dot, y2dot, y3dot, f0dot, f1dot, se.τ, span_uvec)
 end
 
 """
@@ -190,14 +95,14 @@ end
 
 
 """
-    f1a(se::CompactSourceElement, obs::AbstractAcousticObserver, t_obs)
+    noise(se::CompactF1ASourceElement, obs::AbstractAcousticObserver, t_obs)
 
 Calculate the acoustic pressure emitted by source element `se` and recieved by
 observer `obs` at time `t_obs`, returning an [`F1AOutput`](@ref) object.
 
 The correct value for `t_obs` can be found using [`adv_time`](@ref).
 """
-function f1a(se::CompactSourceElement, obs::AbstractAcousticObserver, t_obs)
+function noise(se::CompactF1ASourceElement, obs::AbstractAcousticObserver, t_obs)
     x_obs = obs(t_obs)
 
     rv = x_obs .- se.y0dot
@@ -251,17 +156,20 @@ function f1a(se::CompactSourceElement, obs::AbstractAcousticObserver, t_obs)
     return F1AOutput(t_obs, p_m, p_d)
 end
 
+Base.@deprecate f1a(se::CompactF1ASourceElement, obs::AbstractAcousticObserver, t_obs) noise(se::CompactF1ASourceElement, obs::AbstractAcousticObserver, t_obs)
+
 """
-    f1a(se::CompactSourceElement, obs::AbstractAcousticObserver)
+    noise(se::CompactF1ASourceElement, obs::AbstractAcousticObserver)
 
 Calculate the acoustic pressure emitted by source element `se` and recieved by
 observer `obs`, returning an [`F1AOutput`](@ref) object.
 """
-function f1a(se::CompactSourceElement, obs::AbstractAcousticObserver)
+function noise(se::CompactF1ASourceElement, obs::AbstractAcousticObserver)
     t_obs = adv_time(se, obs)
-    return f1a(se, obs, t_obs)
+    return noise(se, obs, t_obs)
 end
 
+Base.@deprecate f1a(se::CompactF1ASourceElement, obs::AbstractAcousticObserver) noise(se::CompactF1ASourceElement, obs::AbstractAcousticObserver)
 
 """
     common_obs_time(apth::AbstractArray{<:F1AOutput}, period, n, axis=1)

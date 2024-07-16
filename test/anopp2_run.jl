@@ -57,10 +57,10 @@ function cf1a_noise(num_blades, v, omega, radii, dradii, cs_area, fn, fc, statio
     trans = compose.(src_times, Ref(const_vel_trans), compose.(src_times, Ref(global_trans), Ref(rot_trans)))
 
     # Transform the source elements.
-    ses = AcousticAnalogies.CompactSourceElement.(ccbc.rho, ccbc.c0, radii, θs, dradii, cs_area, -fn, 0.0, fc, src_times) .|> trans
+    ses = AcousticAnalogies.CompactF1ASourceElement.(ccbc.rho, ccbc.c0, radii, θs, dradii, cs_area, -fn, 0.0, fc, src_times) .|> trans
 
     # Do the acoustics.
-    apth = AcousticAnalogies.f1a.(ses, Ref(obs))
+    apth = AcousticAnalogies.noise.(ses, Ref(obs))
 
     # Combine all the acoustic pressure time histories into one.
     apth_total = AcousticAnalogies.combine(apth, obs_time_range, num_obs_times, 1; f_interp=f_interp)

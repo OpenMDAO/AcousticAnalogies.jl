@@ -140,9 +140,9 @@ function calculate_bpm_test(nu, L, chord, U, M, r_e, θ_e, Φ_e, alphastar, bl; 
     end
 
     # Now we want to transform the source element into the global frame, which just means we make it move with speed `U` in the negative x direction.
-    trans = KinematicCoordinateTransformations.ConstantVelocityTransformation(τ, [0.0, 0.0, 0.0], [-U, 0.0, 0.0])
+    trans = ConstantVelocityTransformation(τ, [0.0, 0.0, 0.0], [-U, 0.0, 0.0])
     # No, that's not right, I want it to move in the direction of the velocity, which isn't aligned with the x axis any more.
-    # trans = KinematicCoordinateTransformations.ConstantVelocityTransformation(τ, [0.0, 0.0, 0.0], [-U*cos(alphastar), 0.0, -U*sin(alphastar)])
+    # trans = ConstantVelocityTransformation(τ, [0.0, 0.0, 0.0], [-U*cos(alphastar), 0.0, -U*sin(alphastar)])
     se_tblte_global = trans(se_tblte)
     if do_lblvs
         se_lblvs_global = trans(se_lblvs)

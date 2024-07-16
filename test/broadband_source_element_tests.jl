@@ -7,7 +7,7 @@ using CCBlade
 using DelimitedFiles: DelimitedFiles
 using FileIO: load
 using FLOWMath: linear
-using KinematicCoordinateTransformations
+using KinematicCoordinateTransformations: KinematicCoordinateTransformations, compose
 using StaticArrays
 using JLD2
 using Test
@@ -47,7 +47,7 @@ ccbc = CCBladeTestCaseConstants
                 se_0twist0theta = setype(c0, nu, r, 0.0, Δr, chord, 0.0, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
             end
             for θ in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
-                trans_theta = SteadyRotXTransformation(τ, 0.0, -θ)
+                trans_theta = KinematicCoordinateTransformations.SteadyRotXTransformation(τ, 0.0, -θ)
 
                 for ϕ in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
                     # The angle of attack depends on the twist and the fluid velocity
@@ -79,11 +79,11 @@ ccbc = CCBladeTestCaseConstants
 
                     if twist_about_positive_y
                         # If we're applying the twist about the positive y axis, then we need to do a negative rotation about the y axis to undo it.
-                        trans_phi = SteadyRotYTransformation(τ, 0.0, -ϕ)
+                        trans_phi = KinematicCoordinateTransformations.SteadyRotYTransformation(τ, 0.0, -ϕ)
                         chord_uvec_check = @SVector [0.0, 0.0, -1.0]
                     else
                         # If we're applying the twist about the negative y axis, then we need to do a positive rotation about the y axis to undo it.
-                        trans_phi = SteadyRotYTransformation(τ, 0.0, ϕ)
+                        trans_phi = KinematicCoordinateTransformations.SteadyRotYTransformation(τ, 0.0, ϕ)
                         chord_uvec_check = @SVector [0.0, 0.0, 1.0]
                     end
                     se_no_twist = se |> trans_phi
@@ -159,9 +159,9 @@ end
                 # This is tricky: in my "normal" coordinate system, the blade is rotating around the x axis, moving axially in the positive x direction, and is initially aligned with the y axis.
                 # That means that the precone should be a rotation around the negative z axis.
                 # And so to undo it, we want a positive rotation around the positive z axis.
-                trans_precone = SteadyRotZTransformation(τ, 0.0, precone)
+                trans_precone = KinematicCoordinateTransformations.SteadyRotZTransformation(τ, 0.0, precone)
                 for θ in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
-                    trans_theta = SteadyRotXTransformation(τ, 0.0, -θ)
+                    trans_theta = KinematicCoordinateTransformations.SteadyRotXTransformation(τ, 0.0, -θ)
                     # Create a transformation that reverses the theta and precone rotations.
                     # The precone happens first, then theta.
                     # So to reverse it we need to do theta, then precone.
@@ -179,12 +179,12 @@ end
                     if positive_x_rotation
                         # If we're doing a positive-x rotation, we're applying the twist about the positive y axis.
                         # If we're applying the twist about the positive y axis, then we need to do a negative rotation about the y axis to undo it.
-                        trans_phi = SteadyRotYTransformation(τ, 0.0, -twist)
+                        trans_phi = KinematicCoordinateTransformations.SteadyRotYTransformation(τ, 0.0, -twist)
                         chord_uvec_check = @SVector [0.0, 0.0, -1.0]
                     else
                         # If we're doing a negative-x rotation, we're applying the twist about the negative y axis.
                         # If we're applying the twist about the negative y axis, then we need to do a positive rotation about the y axis to undo it.
-                        trans_phi = SteadyRotYTransformation(τ, 0.0, twist)
+                        trans_phi = KinematicCoordinateTransformations.SteadyRotYTransformation(τ, 0.0, twist)
                         chord_uvec_check = @SVector [0.0, 0.0, 1.0]
                     end
                     se_no_twist = se |> trans_phi
@@ -227,11 +227,11 @@ end
         v0_hub = ccbc.v.*rot_axis
         t0 = 0.0
         if positive_x_rotation
-            rot_trans = SteadyRotXTransformation(t0, omega, 0.0)
+            rot_trans = KinematicCoordinateTransformations.SteadyRotXTransformation(t0, omega, 0.0)
         else
-            rot_trans = SteadyRotXTransformation(t0, -omega, 0.0)
+            rot_trans = KinematicCoordinateTransformations.SteadyRotXTransformation(t0, -omega, 0.0)
         end
-        const_vel_trans = ConstantVelocityTransformation(t0, y0_hub, v0_hub)
+        const_vel_trans = KinematicCoordinateTransformations.ConstantVelocityTransformation(t0, y0_hub, v0_hub)
 
         # Need the source times.
         dt = src_time_range/num_src_times
@@ -304,7 +304,7 @@ end
     for twist_about_positive_y in [true, false]
         se_0twist0theta = LBLVSSourceElement(c0, nu, r, 0.0, Δr, chord, 0.0, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
         for θ in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
-            trans_theta = SteadyRotXTransformation(τ, 0.0, -θ)
+            trans_theta = KinematicCoordinateTransformations.SteadyRotXTransformation(τ, 0.0, -θ)
 
             for ϕ in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
                 # The angle of attack depends on the twist and the fluid velocity
@@ -328,11 +328,11 @@ end
 
                 if twist_about_positive_y
                     # If we're applying the twist about the positive y axis, then we need to do a negative rotation about the y axis to undo it.
-                    trans_phi = SteadyRotYTransformation(τ, 0.0, -ϕ)
+                    trans_phi = KinematicCoordinateTransformations.SteadyRotYTransformation(τ, 0.0, -ϕ)
                     chord_uvec_check = @SVector [0.0, 0.0, -1.0]
                 else
                     # If we're applying the twist about the negative y axis, then we need to do a positive rotation about the y axis to undo it.
-                    trans_phi = SteadyRotYTransformation(τ, 0.0, ϕ)
+                    trans_phi = KinematicCoordinateTransformations.SteadyRotYTransformation(τ, 0.0, ϕ)
                     chord_uvec_check = @SVector [0.0, 0.0, 1.0]
                 end
                 se_no_twist = se |> trans_phi
@@ -377,9 +377,9 @@ end
                 # This is tricky: in my "normal" coordinate system, the blade is rotating around the x axis, moving axially in the positive x direction, and is initially aligned with the y axis.
                 # That means that the precone should be a rotation around the negative z axis.
                 # And so to undo it, we want a positive rotation around the positive z axis.
-                trans_precone = SteadyRotZTransformation(τ, 0.0, precone)
+                trans_precone = KinematicCoordinateTransformations.SteadyRotZTransformation(τ, 0.0, precone)
                 for θ in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
-                    trans_theta = SteadyRotXTransformation(τ, 0.0, -θ)
+                    trans_theta = KinematicCoordinateTransformations.SteadyRotXTransformation(τ, 0.0, -θ)
                     # Create a transformation that reverses the theta and precone rotations.
                     # The precone happens first, then theta.
                     # So to reverse it we need to do theta, then precone.
@@ -397,12 +397,12 @@ end
                     if positive_x_rotation
                         # If we're doing a positive-x rotation, we're applying the twist about the positive y axis.
                         # If we're applying the twist about the positive y axis, then we need to do a negative rotation about the y axis to undo it.
-                        trans_phi = SteadyRotYTransformation(τ, 0.0, -twist)
+                        trans_phi = KinematicCoordinateTransformations.SteadyRotYTransformation(τ, 0.0, -twist)
                         chord_uvec_check = @SVector [0.0, 0.0, -1.0]
                     else
                         # If we're doing a negative-x rotation, we're applying the twist about the negative y axis.
                         # If we're applying the twist about the negative y axis, then we need to do a positive rotation about the y axis to undo it.
-                        trans_phi = SteadyRotYTransformation(τ, 0.0, twist)
+                        trans_phi = KinematicCoordinateTransformations.SteadyRotYTransformation(τ, 0.0, twist)
                         chord_uvec_check = @SVector [0.0, 0.0, 1.0]
                     end
                     se_no_twist = se |> trans_phi
@@ -445,11 +445,11 @@ end
         v0_hub = ccbc.v.*rot_axis
         t0 = 0.0
         if positive_x_rotation
-            rot_trans = SteadyRotXTransformation(t0, omega, 0.0)
+            rot_trans = KinematicCoordinateTransformations.SteadyRotXTransformation(t0, omega, 0.0)
         else
-            rot_trans = SteadyRotXTransformation(t0, -omega, 0.0)
+            rot_trans = KinematicCoordinateTransformations.SteadyRotXTransformation(t0, -omega, 0.0)
         end
-        const_vel_trans = ConstantVelocityTransformation(t0, y0_hub, v0_hub)
+        const_vel_trans = KinematicCoordinateTransformations.ConstantVelocityTransformation(t0, y0_hub, v0_hub)
 
         # Need the source times.
         dt = src_time_range/num_src_times
@@ -524,7 +524,7 @@ end
     for twist_about_positive_y in [true, false]
         se_0twist0theta = TEBVSSourceElement(c0, nu, r, 0.0, Δr, chord, 0.0, h, Psi, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
         for θ in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
-            trans_theta = SteadyRotXTransformation(τ, 0.0, -θ)
+            trans_theta = KinematicCoordinateTransformations.SteadyRotXTransformation(τ, 0.0, -θ)
 
             for ϕ in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
                 # The angle of attack depends on the twist and the fluid velocity
@@ -548,11 +548,11 @@ end
 
                 if twist_about_positive_y
                     # If we're applying the twist about the positive y axis, then we need to do a negative rotation about the y axis to undo it.
-                    trans_phi = SteadyRotYTransformation(τ, 0.0, -ϕ)
+                    trans_phi = KinematicCoordinateTransformations.SteadyRotYTransformation(τ, 0.0, -ϕ)
                     chord_uvec_check = @SVector [0.0, 0.0, -1.0]
                 else
                     # If we're applying the twist about the negative y axis, then we need to do a positive rotation about the y axis to undo it.
-                    trans_phi = SteadyRotYTransformation(τ, 0.0, ϕ)
+                    trans_phi = KinematicCoordinateTransformations.SteadyRotYTransformation(τ, 0.0, ϕ)
                     chord_uvec_check = @SVector [0.0, 0.0, 1.0]
                 end
                 se_no_twist = se |> trans_phi
@@ -598,9 +598,9 @@ end
                 # This is tricky: in my "normal" coordinate system, the blade is rotating around the x axis, moving axially in the positive x direction, and is initially aligned with the y axis.
                 # That means that the precone should be a rotation around the negative z axis.
                 # And so to undo it, we want a positive rotation around the positive z axis.
-                trans_precone = SteadyRotZTransformation(τ, 0.0, precone)
+                trans_precone = KinematicCoordinateTransformations.SteadyRotZTransformation(τ, 0.0, precone)
                 for θ in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
-                    trans_theta = SteadyRotXTransformation(τ, 0.0, -θ)
+                    trans_theta = KinematicCoordinateTransformations.SteadyRotXTransformation(τ, 0.0, -θ)
                     # Create a transformation that reverses the theta and precone rotations.
                     # The precone happens first, then theta.
                     # So to reverse it we need to do theta, then precone.
@@ -618,12 +618,12 @@ end
                     if positive_x_rotation
                         # If we're doing a positive-x rotation, we're applying the twist about the positive y axis.
                         # If we're applying the twist about the positive y axis, then we need to do a negative rotation about the y axis to undo it.
-                        trans_phi = SteadyRotYTransformation(τ, 0.0, -twist)
+                        trans_phi = KinematicCoordinateTransformations.SteadyRotYTransformation(τ, 0.0, -twist)
                         chord_uvec_check = @SVector [0.0, 0.0, -1.0]
                     else
                         # If we're doing a negative-x rotation, we're applying the twist about the negative y axis.
                         # If we're applying the twist about the negative y axis, then we need to do a positive rotation about the y axis to undo it.
-                        trans_phi = SteadyRotYTransformation(τ, 0.0, twist)
+                        trans_phi = KinematicCoordinateTransformations.SteadyRotYTransformation(τ, 0.0, twist)
                         chord_uvec_check = @SVector [0.0, 0.0, 1.0]
                     end
                     se_no_twist = se |> trans_phi
@@ -668,11 +668,11 @@ end
         v0_hub = ccbc.v.*rot_axis
         t0 = 0.0
         if positive_x_rotation
-            rot_trans = SteadyRotXTransformation(t0, omega, 0.0)
+            rot_trans = KinematicCoordinateTransformations.SteadyRotXTransformation(t0, omega, 0.0)
         else
-            rot_trans = SteadyRotXTransformation(t0, -omega, 0.0)
+            rot_trans = KinematicCoordinateTransformations.SteadyRotXTransformation(t0, -omega, 0.0)
         end
-        const_vel_trans = ConstantVelocityTransformation(t0, y0_hub, v0_hub)
+        const_vel_trans = KinematicCoordinateTransformations.ConstantVelocityTransformation(t0, y0_hub, v0_hub)
 
         # Need the source times.
         dt = src_time_range/num_src_times
@@ -748,7 +748,7 @@ end
     for twist_about_positive_y in [true, false]
         se_0twist0theta = TipVortexSourceElement(c0, r, 0.0, Δr, chord, 0.0, vn, vr, vc, τ, Δτ, bl, blade_tip, twist_about_positive_y)
         for θ in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
-            trans_theta = SteadyRotXTransformation(τ, 0.0, -θ)
+            trans_theta = KinematicCoordinateTransformations.SteadyRotXTransformation(τ, 0.0, -θ)
 
             for ϕ in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
                 # The angle of attack depends on the twist and the fluid velocity
@@ -772,11 +772,11 @@ end
 
                 if twist_about_positive_y
                     # If we're applying the twist about the positive y axis, then we need to do a negative rotation about the y axis to undo it.
-                    trans_phi = SteadyRotYTransformation(τ, 0.0, -ϕ)
+                    trans_phi = KinematicCoordinateTransformations.SteadyRotYTransformation(τ, 0.0, -ϕ)
                     chord_uvec_check = @SVector [0.0, 0.0, -1.0]
                 else
                     # If we're applying the twist about the negative y axis, then we need to do a positive rotation about the y axis to undo it.
-                    trans_phi = SteadyRotYTransformation(τ, 0.0, ϕ)
+                    trans_phi = KinematicCoordinateTransformations.SteadyRotYTransformation(τ, 0.0, ϕ)
                     chord_uvec_check = @SVector [0.0, 0.0, 1.0]
                 end
                 se_no_twist = se |> trans_phi
@@ -821,9 +821,9 @@ end
                 # This is tricky: in my "normal" coordinate system, the blade is rotating around the x axis, moving axially in the positive x direction, and is initially aligned with the y axis.
                 # That means that the precone should be a rotation around the negative z axis.
                 # And so to undo it, we want a positive rotation around the positive z axis.
-                trans_precone = SteadyRotZTransformation(τ, 0.0, precone)
+                trans_precone = KinematicCoordinateTransformations.SteadyRotZTransformation(τ, 0.0, precone)
                 for θ in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
-                    trans_theta = SteadyRotXTransformation(τ, 0.0, -θ)
+                    trans_theta = KinematicCoordinateTransformations.SteadyRotXTransformation(τ, 0.0, -θ)
                     # Create a transformation that reverses the theta and precone rotations.
                     # The precone happens first, then theta.
                     # So to reverse it we need to do theta, then precone.
@@ -841,12 +841,12 @@ end
                     if positive_x_rotation
                         # If we're doing a positive-x rotation, we're applying the twist about the positive y axis.
                         # If we're applying the twist about the positive y axis, then we need to do a negative rotation about the y axis to undo it.
-                        trans_phi = SteadyRotYTransformation(τ, 0.0, -twist)
+                        trans_phi = KinematicCoordinateTransformations.SteadyRotYTransformation(τ, 0.0, -twist)
                         chord_uvec_check = @SVector [0.0, 0.0, -1.0]
                     else
                         # If we're doing a negative-x rotation, we're applying the twist about the negative y axis.
                         # If we're applying the twist about the negative y axis, then we need to do a positive rotation about the y axis to undo it.
-                        trans_phi = SteadyRotYTransformation(τ, 0.0, twist)
+                        trans_phi = KinematicCoordinateTransformations.SteadyRotYTransformation(τ, 0.0, twist)
                         chord_uvec_check = @SVector [0.0, 0.0, 1.0]
                     end
                     se_no_twist = se |> trans_phi
@@ -893,11 +893,11 @@ end
         v0_hub = ccbc.v.*rot_axis
         t0 = 0.0
         if positive_x_rotation
-            rot_trans = SteadyRotXTransformation(t0, omega, 0.0)
+            rot_trans = KinematicCoordinateTransformations.SteadyRotXTransformation(t0, omega, 0.0)
         else
-            rot_trans = SteadyRotXTransformation(t0, -omega, 0.0)
+            rot_trans = KinematicCoordinateTransformations.SteadyRotXTransformation(t0, -omega, 0.0)
         end
-        const_vel_trans = ConstantVelocityTransformation(t0, y0_hub, v0_hub)
+        const_vel_trans = KinematicCoordinateTransformations.ConstantVelocityTransformation(t0, y0_hub, v0_hub)
 
         # Need the source times.
         dt = src_time_range/num_src_times
@@ -958,7 +958,7 @@ end
     for twist_about_positive_y in [true, false]
         se_0twist0theta = CombinedNoTipBroadbandSourceElement(c0, nu, r, 0.0, Δr, chord, 0.0, h, Psi, vn, vr, vc, τ, Δτ, bl, twist_about_positive_y)
         for θ in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
-            trans_theta = SteadyRotXTransformation(τ, 0.0, -θ)
+            trans_theta = KinematicCoordinateTransformations.SteadyRotXTransformation(τ, 0.0, -θ)
 
             for ϕ in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
                 # The angle of attack depends on the twist and the fluid velocity
@@ -982,11 +982,11 @@ end
 
                 if twist_about_positive_y
                     # If we're applying the twist about the positive y axis, then we need to do a negative rotation about the y axis to undo it.
-                    trans_phi = SteadyRotYTransformation(τ, 0.0, -ϕ)
+                    trans_phi = KinematicCoordinateTransformations.SteadyRotYTransformation(τ, 0.0, -ϕ)
                     chord_uvec_check = @SVector [0.0, 0.0, -1.0]
                 else
                     # If we're applying the twist about the negative y axis, then we need to do a positive rotation about the y axis to undo it.
-                    trans_phi = SteadyRotYTransformation(τ, 0.0, ϕ)
+                    trans_phi = KinematicCoordinateTransformations.SteadyRotYTransformation(τ, 0.0, ϕ)
                     chord_uvec_check = @SVector [0.0, 0.0, 1.0]
                 end
                 se_no_twist = se |> trans_phi
@@ -1032,9 +1032,9 @@ end
                 # This is tricky: in my "normal" coordinate system, the blade is rotating around the x axis, moving axially in the positive x direction, and is initially aligned with the y axis.
                 # That means that the precone should be a rotation around the negative z axis.
                 # And so to undo it, we want a positive rotation around the positive z axis.
-                trans_precone = SteadyRotZTransformation(τ, 0.0, precone)
+                trans_precone = KinematicCoordinateTransformations.SteadyRotZTransformation(τ, 0.0, precone)
                 for θ in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
-                    trans_theta = SteadyRotXTransformation(τ, 0.0, -θ)
+                    trans_theta = KinematicCoordinateTransformations.SteadyRotXTransformation(τ, 0.0, -θ)
                     # Create a transformation that reverses the theta and precone rotations.
                     # The precone happens first, then theta.
                     # So to reverse it we need to do theta, then precone.
@@ -1052,12 +1052,12 @@ end
                     if positive_x_rotation
                         # If we're doing a positive-x rotation, we're applying the twist about the positive y axis.
                         # If we're applying the twist about the positive y axis, then we need to do a negative rotation about the y axis to undo it.
-                        trans_phi = SteadyRotYTransformation(τ, 0.0, -twist)
+                        trans_phi = KinematicCoordinateTransformations.SteadyRotYTransformation(τ, 0.0, -twist)
                         chord_uvec_check = @SVector [0.0, 0.0, -1.0]
                     else
                         # If we're doing a negative-x rotation, we're applying the twist about the negative y axis.
                         # If we're applying the twist about the negative y axis, then we need to do a positive rotation about the y axis to undo it.
-                        trans_phi = SteadyRotYTransformation(τ, 0.0, twist)
+                        trans_phi = KinematicCoordinateTransformations.SteadyRotYTransformation(τ, 0.0, twist)
                         chord_uvec_check = @SVector [0.0, 0.0, 1.0]
                     end
                     se_no_twist = se |> trans_phi
@@ -1089,7 +1089,7 @@ end
     for twist_about_positive_y in [true, false]
         se_0twist0theta = CombinedWithTipBroadbandSourceElement(c0, nu, r, 0.0, Δr, chord, 0.0, h, Psi, vn, vr, vc, τ, Δτ, bl, blade_tip, twist_about_positive_y)
         for θ in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
-            trans_theta = SteadyRotXTransformation(τ, 0.0, -θ)
+            trans_theta = KinematicCoordinateTransformations.SteadyRotXTransformation(τ, 0.0, -θ)
 
             for ϕ in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
                 # The angle of attack depends on the twist and the fluid velocity
@@ -1113,11 +1113,11 @@ end
 
                 if twist_about_positive_y
                     # If we're applying the twist about the positive y axis, then we need to do a negative rotation about the y axis to undo it.
-                    trans_phi = SteadyRotYTransformation(τ, 0.0, -ϕ)
+                    trans_phi = KinematicCoordinateTransformations.SteadyRotYTransformation(τ, 0.0, -ϕ)
                     chord_uvec_check = @SVector [0.0, 0.0, -1.0]
                 else
                     # If we're applying the twist about the negative y axis, then we need to do a positive rotation about the y axis to undo it.
-                    trans_phi = SteadyRotYTransformation(τ, 0.0, ϕ)
+                    trans_phi = KinematicCoordinateTransformations.SteadyRotYTransformation(τ, 0.0, ϕ)
                     chord_uvec_check = @SVector [0.0, 0.0, 1.0]
                 end
                 se_no_twist = se |> trans_phi
@@ -1164,9 +1164,9 @@ end
                 # This is tricky: in my "normal" coordinate system, the blade is rotating around the x axis, moving axially in the positive x direction, and is initially aligned with the y axis.
                 # That means that the precone should be a rotation around the negative z axis.
                 # And so to undo it, we want a positive rotation around the positive z axis.
-                trans_precone = SteadyRotZTransformation(τ, 0.0, precone)
+                trans_precone = KinematicCoordinateTransformations.SteadyRotZTransformation(τ, 0.0, precone)
                 for θ in [5, 10, 65, 95, 260, 270, 290].*(pi/180)
-                    trans_theta = SteadyRotXTransformation(τ, 0.0, -θ)
+                    trans_theta = KinematicCoordinateTransformations.SteadyRotXTransformation(τ, 0.0, -θ)
                     # Create a transformation that reverses the theta and precone rotations.
                     # The precone happens first, then theta.
                     # So to reverse it we need to do theta, then precone.
@@ -1184,12 +1184,12 @@ end
                     if positive_x_rotation
                         # If we're doing a positive-x rotation, we're applying the twist about the positive y axis.
                         # If we're applying the twist about the positive y axis, then we need to do a negative rotation about the y axis to undo it.
-                        trans_phi = SteadyRotYTransformation(τ, 0.0, -twist)
+                        trans_phi = KinematicCoordinateTransformations.SteadyRotYTransformation(τ, 0.0, -twist)
                         chord_uvec_check = @SVector [0.0, 0.0, -1.0]
                     else
                         # If we're doing a negative-x rotation, we're applying the twist about the negative y axis.
                         # If we're applying the twist about the negative y axis, then we need to do a positive rotation about the y axis to undo it.
-                        trans_phi = SteadyRotYTransformation(τ, 0.0, twist)
+                        trans_phi = KinematicCoordinateTransformations.SteadyRotYTransformation(τ, 0.0, twist)
                         chord_uvec_check = @SVector [0.0, 0.0, 1.0]
                     end
                     se_no_twist = se |> trans_phi
@@ -1238,11 +1238,11 @@ end
         v0_hub = ccbc.v.*rot_axis
         t0 = 0.0
         if positive_x_rotation
-            rot_trans = SteadyRotXTransformation(t0, omega, 0.0)
+            rot_trans = KinematicCoordinateTransformations.SteadyRotXTransformation(t0, omega, 0.0)
         else
-            rot_trans = SteadyRotXTransformation(t0, -omega, 0.0)
+            rot_trans = KinematicCoordinateTransformations.SteadyRotXTransformation(t0, -omega, 0.0)
         end
-        const_vel_trans = ConstantVelocityTransformation(t0, y0_hub, v0_hub)
+        const_vel_trans = KinematicCoordinateTransformations.ConstantVelocityTransformation(t0, y0_hub, v0_hub)
 
         # Need the source times.
         dt = src_time_range/num_src_times
@@ -1382,13 +1382,13 @@ end
                 # Now, rotate and translate both the source and the observer.
                 # The directivity functions should be the same.
                 # Time parameter for the steady rotations doesn't matter because the rotation rate is zero.
-                trans1 = SteadyRotXTransformation(t_obs, 0.0, 3.0*pi/180)
-                trans2 = SteadyRotYTransformation(t_obs, 0.0, 4.0*pi/180)
-                trans3 = SteadyRotZTransformation(t_obs, 0.0, 5.0*pi/180)
+                trans1 = KinematicCoordinateTransformations.SteadyRotXTransformation(t_obs, 0.0, 3.0*pi/180)
+                trans2 = KinematicCoordinateTransformations.SteadyRotYTransformation(t_obs, 0.0, 4.0*pi/180)
+                trans3 = KinematicCoordinateTransformations.SteadyRotZTransformation(t_obs, 0.0, 5.0*pi/180)
                 # Time parameter for the constant velocity transformations doesn't matter because the velocity is zero.
                 x_trans = @SVector [2.0, 3.0, 4.0]
                 v_trans = @SVector [0.0, 0.0, 0.0]
-                trans4 = ConstantVelocityTransformation(t_obs, x_trans, v_trans)
+                trans4 = KinematicCoordinateTransformations.ConstantVelocityTransformation(t_obs, x_trans, v_trans)
 
                 # Transform the source and observer.
                 trans = compose(t_obs, trans4, compose(t_obs, trans3, compose(t_obs, trans2, trans1)))
@@ -1423,13 +1423,13 @@ end
             # We'll create a random transformation to check that rotating and displacing the source doesn't change the angle of attack.
             # Time parameter for the steady rotations doesn't matter because the rotation rate is zero.
             τ = 0.2
-            trans1 = SteadyRotXTransformation(τ, 0.0, 3.0*pi/180)
-            trans2 = SteadyRotYTransformation(τ, 0.0, 4.0*pi/180)
-            trans3 = SteadyRotZTransformation(τ, 0.0, 5.0*pi/180)
+            trans1 = KinematicCoordinateTransformations.SteadyRotXTransformation(τ, 0.0, 3.0*pi/180)
+            trans2 = KinematicCoordinateTransformations.SteadyRotYTransformation(τ, 0.0, 4.0*pi/180)
+            trans3 = KinematicCoordinateTransformations.SteadyRotZTransformation(τ, 0.0, 5.0*pi/180)
             # Time parameter for the constant velocity transformations doesn't matter because the velocity is zero.
             x_trans = @SVector [2.0, 3.0, 4.0]
             v_trans = @SVector [0.0, 0.0, 0.0]
-            trans4 = ConstantVelocityTransformation(τ, x_trans, v_trans)
+            trans4 = KinematicCoordinateTransformations.ConstantVelocityTransformation(τ, x_trans, v_trans)
             # Combine all the transformations into one.
             trans = compose(τ, trans4, compose(τ, trans3, compose(τ, trans2, trans1)))
 
@@ -1585,13 +1585,13 @@ end
 
                 # Now, rotate and translate the source, which shouldn't change the twist or angle of attack, as long as we don't do anything that would change the velocity.
                 # Time parameter for the steady rotations doesn't matter because the rotation rate is zero.
-                trans1 = SteadyRotXTransformation(τ, 0.0, 3.0*pi/180)
-                trans2 = SteadyRotYTransformation(τ, 0.0, 4.0*pi/180)
-                trans3 = SteadyRotZTransformation(τ, 0.0, 5.0*pi/180)
+                trans1 = KinematicCoordinateTransformations.SteadyRotXTransformation(τ, 0.0, 3.0*pi/180)
+                trans2 = KinematicCoordinateTransformations.SteadyRotYTransformation(τ, 0.0, 4.0*pi/180)
+                trans3 = KinematicCoordinateTransformations.SteadyRotZTransformation(τ, 0.0, 5.0*pi/180)
                 # Time parameter for the constant velocity transformations doesn't matter because the velocity is zero.
                 x_trans = @SVector [2.0, 3.0, 4.0]
                 v_trans = @SVector [0.0, 0.0, 0.0]
-                trans4 = ConstantVelocityTransformation(τ, x_trans, v_trans)
+                trans4 = KinematicCoordinateTransformations.ConstantVelocityTransformation(τ, x_trans, v_trans)
 
                 # Transform the source.
                 trans = compose(τ, trans4, compose(τ, trans3, compose(τ, trans2, trans1)))

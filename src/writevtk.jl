@@ -58,7 +58,7 @@ function to_vtp(name, ses::AbstractArray{<:AbstractCompactSourceElement})
     return vtkfile
 end
 
-function _write_data_to_vtk!(vtkfile, ses::AbstractArray{<:CompactSourceElement})
+function _write_data_to_vtk!(vtkfile, ses::AbstractArray{<:CompactF1ASourceElement})
     # Now need to add the cell data. I would have expected to have to flatten
     # these arrays, but apparently that's not necessary.
     vtkfile["Length", WriteVTK.VTKCellData()] = mapview(:Δr, ses)
@@ -129,7 +129,7 @@ r"""
 to_paraview_collection(name::AbstractString, ses::NTuple{N, AbstractArray{<:AbstractCompactSourceElement}}; time_axes::NTuple{N, Int64}=ntuple(i->1, N), block_names=["block$(b)" for b in 1:N], observers=(), observer_names=nothing, observer_radii=nothing)
 
 
-Construct and write out a ParaView collection data file (`.pvd`) object for a tuple of arrays of `CompactSourceElement`s with name `name.pvd` (i.e., the `name` argument should not contain a file extension).
+Construct and write out a ParaView collection data file (`.pvd`) object for a tuple of arrays of `CompactF1ASourceElement`s with name `name.pvd` (i.e., the `name` argument should not contain a file extension).
 
 `time_axes` is a tuple of time axis indices, one for each entry of `ses`, indicating the axis over which the source time for the source elements in `ses` vary.
 `block_names` is a `Vector` of strings, one for each entry in `ses`, that will be used to name each `ses` entry in the multiblock VTK file.
@@ -283,7 +283,7 @@ end
     to_paraview_collection(name::AbstractString, ses::AbstractArray{<:AbstractCompactSourceElement}; time_axis::Integer=1)
 
 
-Construct and write out a ParaView collection data file (`.pvd`) object for an array of `CompactSourceElement` with name `name.pvd` (i.e., the `name` argument should not contain a file extension).
+Construct and write out a ParaView collection data file (`.pvd`) object for an array of `AbstractCompactSourceElement`s with name `name.pvd` (i.e., the `name` argument should not contain a file extension).
 
 `time_axis` indicates the time_axis of `ses` over which the source time for the source
 elements in `ses` vary. One VTK PolyData (`.vtp`) file will be written for each
