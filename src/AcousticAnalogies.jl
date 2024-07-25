@@ -63,4 +63,6 @@ include("bpm_test_utils.jl")
 
 include("writevtk.jl")
 
+include("deprecated.jl")
+
 end # module

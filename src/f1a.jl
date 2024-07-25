@@ -156,8 +156,6 @@ function noise(se::CompactF1ASourceElement, obs::AbstractAcousticObserver, t_obs
     return F1AOutput(t_obs, p_m, p_d)
 end
 
-Base.@deprecate f1a(se::CompactF1ASourceElement, obs::AbstractAcousticObserver, t_obs) noise(se::CompactF1ASourceElement, obs::AbstractAcousticObserver, t_obs)
-
 """
     noise(se::CompactF1ASourceElement, obs::AbstractAcousticObserver)
 
@@ -168,8 +166,6 @@ function noise(se::CompactF1ASourceElement, obs::AbstractAcousticObserver)
     t_obs = adv_time(se, obs)
     return noise(se, obs, t_obs)
 end
-
-Base.@deprecate f1a(se::CompactF1ASourceElement, obs::AbstractAcousticObserver) noise(se::CompactF1ASourceElement, obs::AbstractAcousticObserver)
 
 """
     common_obs_time(apth::AbstractArray{<:F1AOutput}, period, n, axis=1)

@@ -216,8 +216,6 @@ function f1a_source_elements_ccblade(rotor, sections, ops, outputs, area_per_cho
     return ses
 end
 
-@deprecate source_elements_ccblade(rotor, sections, ops, outputs, area_per_chord2, period, num_src_times, positive_x_rotation) f1a_source_elements_ccblade(rotor, sections, ops, outputs, area_per_chord2, period, num_src_times, positive_x_rotation)
-
 function _get_position_velocity_span_uvec_chord_uvec(theta, precone, pitch, r, θ, W, phi, positive_x_rotation)
     sθ, cθ = sincos(θ)
     spc, cpc = sincos(precone)
