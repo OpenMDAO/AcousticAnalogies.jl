@@ -4,6 +4,7 @@ CurrentModule = AADocs
 # Software Quality Assurance, Cont.
 
 ## BPM.jl Comparisons for the Pettingill et al. Ideally Twisted Rotor 
+See [here](http://dx.doi.org/10.2514/6.2021-1928) or [here](https://ntrs.nasa.gov/citations/20205003328) for details on the Ideally Twisted Rotor.
 
 ### Figure 22b
 ```@example figure22b
