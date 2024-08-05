@@ -17,23 +17,19 @@ jobs:
       matrix:
         version:
           - '1' # Leave this line unchanged. '1' will automatically expand to the latest stable 1.x release of Julia.
+          - 'nightly'
         os:
           - ubuntu-latest
+          - macOS-latest
+          - windows-latest
         arch:
           - x64
     steps:
       - uses: actions/checkout@v2
-      - uses: julia-actions/setup-julia@v1
+      - uses: julia-actions/setup-julia@latest
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
-      - name: Add General
-        shell: julia --color=yes {0}
-        run: |
-          using Pkg
-          Pkg.Registry.add(RegistrySpec(url="https://github.com/JuliaRegistries/General"))
-        env:
-              JULIA_PKG_USE_CLI_GIT: 'true'
-      - uses: julia-actions/julia-runtest@v1
+      - uses: julia-actions/julia-runtest@latest
         env:
               JULIA_PKG_USE_CLI_GIT: 'true'
