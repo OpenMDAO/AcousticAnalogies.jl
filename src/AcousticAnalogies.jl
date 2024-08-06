@@ -1,7 +1,7 @@
 module AcousticAnalogies
 
 using AcousticMetrics: AcousticMetrics
-using BPM: BPM
+# using BPM: BPM
 using CCBlade: CCBlade
 using FillArrays: Fill
 using FLOWMath: akima, linear, ksmax, norm_cs_safe, dot_cs_safe, atan_cs_safe, abs_cs_safe

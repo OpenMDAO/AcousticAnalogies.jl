@@ -3,23 +3,23 @@ abstract type AbstractTipAlphaCorrection end
 struct NoTipAlphaCorrection <: AbstractTipAlphaCorrection end
 struct BPMTipAlphaCorrection <: AbstractTipAlphaCorrection end
 
-struct BMTipAlphaCorrection{TCorrection} <: AbstractTipAlphaCorrection
-    correction::TCorrection
+# struct BMTipAlphaCorrection{TCorrection} <: AbstractTipAlphaCorrection
+#     correction::TCorrection
 
-    function BMTipAlphaCorrection(aspect_ratio)
-        correction = BPM._tip_vortex_alpha_correction_nonsmooth(aspect_ratio)
-        return new{typeof(correction)}(correction)
-    end
-end
+#     function BMTipAlphaCorrection(aspect_ratio)
+#         correction = BPM._tip_vortex_alpha_correction_nonsmooth(aspect_ratio)
+#         return new{typeof(correction)}(correction)
+#     end
+# end
 
-struct SmoothBMTipAlphaCorrection{TCorrection} <: AbstractTipAlphaCorrection
-    correction::TCorrection
+# struct SmoothBMTipAlphaCorrection{TCorrection} <: AbstractTipAlphaCorrection
+#     correction::TCorrection
 
-    function SmoothBMTipAlphaCorrection(aspect_ratio)
-        correction = BPM._tip_vortex_alpha_correction_smooth(aspect_ratio)
-        return new{typeof(correction)}(correction)
-    end
-end
+#     function SmoothBMTipAlphaCorrection(aspect_ratio)
+#         correction = BPM._tip_vortex_alpha_correction_smooth(aspect_ratio)
+#         return new{typeof(correction)}(correction)
+#     end
+# end
 
 abstract type AbstractBladeTip{TTipAlphaCorrection} end
 
@@ -56,9 +56,9 @@ function tip_vortex_alpha_correction(blade_tip::AbstractBladeTip{BPMTipAlphaCorr
     # return 0.71*alphatip + (1 - 0.71)*alpha_zerolift(blade_tip)
 end
 
-function tip_vortex_alpha_correction(blade_tip::AbstractBladeTip{<:Union{BMTipAlphaCorrection,SmoothBMTipAlphaCorrection}}, alphatip)
-    return tip_alpha_correction(blade_tip).correction * (alphatip - alpha_zerolift(blade_tip)) + alpha_zerolift(blade_tip)
-end
+# function tip_vortex_alpha_correction(blade_tip::AbstractBladeTip{<:Union{BMTipAlphaCorrection,SmoothBMTipAlphaCorrection}}, alphatip)
+#     return tip_alpha_correction(blade_tip).correction * (alphatip - alpha_zerolift(blade_tip)) + alpha_zerolift(blade_tip)
+# end
 
 function tip_vortex_size_c(::RoundedTip, alphatip)
     # Equation 63 in the BPM report.

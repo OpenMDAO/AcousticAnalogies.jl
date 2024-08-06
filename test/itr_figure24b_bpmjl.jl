@@ -6,6 +6,41 @@ using FLOWMath: Akima
 using StaticArrays: @SVector
 using Test
 
+# tip vortex noise correction data based on "Airfoil Tip Vortex Formation Noise"
+# Copied from BPM.jl (would like to add BPM.jl as a dependency if it's registered in General some day).
+const bm_tip_alpha_aspect_data = [2.0,2.67,4.0,6.0,12.0,24.0]
+const bm_tip_alpha_aratio_data = [0.54,0.62,0.71,0.79,0.89,0.95]
+const bm_tip_alpha_aspect_ratio_correction = Akima(bm_tip_alpha_aspect_data, bm_tip_alpha_aratio_data)
+
+function bm_tip_vortex_alpha_correction_nonsmooth(aspect_ratio)
+    # compute tip lift curve slope
+    if aspect_ratio < 2.0
+        aratio = 0.5*one(aspect_ratio)
+    elseif 2.0 <= aspect_ratio <= 24.0
+        aratio = bm_tip_alpha_aspect_ratio_correction(aspect_ratio)
+    elseif aspect_ratio > 24.0
+        aratio = 1.0*one(aspect_ratio)
+    end
+
+    return aratio
+end
+
+struct BMTipAlphaCorrection{TCorrection} <: AbstractTipAlphaCorrection
+    correction::TCorrection
+
+    function BMTipAlphaCorrection(aspect_ratio)
+        # correction = BPM._tip_vortex_alpha_correction_nonsmooth(aspect_ratio)
+        correction = bm_tip_vortex_alpha_correction_nonsmooth(aspect_ratio)
+        return new{typeof(correction)}(correction)
+    end
+end
+
+function AcousticAnalogies.tip_vortex_alpha_correction(blade_tip::AbstractBladeTip{<:BMTipAlphaCorrection}, alphatip)
+    a0l = AcousticAnalogies.alpha_zerolift(blade_tip)
+    correction_factor = AcousticAnalogies.tip_alpha_correction(blade_tip).correction
+    return correction_factor * (alphatip - a0l) + a0l
+end
+
 data = load(joinpath(@__DIR__, "gen_bpmjl_data", "figure24b.jld2"))
 rho = data["rho"]
 asound = data["asound"]
@@ -46,7 +81,7 @@ src_times = t0 .+ (0:num_src_times-1).*dt
 cbar = sum(chord .* dradii) / (Rtip - Rhub)
 aspect_ratio = Rtip/cbar
 alpha0lift = 0.0
-blade_tip = AcousticAnalogies.FlatTip(AcousticAnalogies.BMTipAlphaCorrection(aspect_ratio), alpha0lift)
+blade_tip = AcousticAnalogies.FlatTip(BMTipAlphaCorrection(aspect_ratio), alpha0lift)
 
 # Getting the coordinate system consistent with BPM.jl is a bit tricky.
 # Here's a bit of code from BPM.jl:
