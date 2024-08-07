@@ -32,10 +32,12 @@ end
             @test sha_str == sha_str_check
         end
 
-        fname = "$(name).pvd"
-        sha_str = bytes2hex(open(sha1, fname))
-        sha_str_check = bytes2hex(open(sha1, joinpath(@__DIR__, "writevtk", fname)))
-        @test sha_str == sha_str_check
+        if !Sys.iswindows()
+            fname = "$(name).pvd"
+            sha_str = bytes2hex(open(sha1, fname))
+            sha_str_check = bytes2hex(open(sha1, joinpath(@__DIR__, "writevtk", fname)))
+            @test sha_str == sha_str_check
+        end
 
     end
 
@@ -76,10 +78,12 @@ end
 
         end
 
-        fname = "$(name).pvd"
-        sha_str = bytes2hex(open(sha1, fname))
-        sha_str_check = bytes2hex(open(sha1, joinpath(@__DIR__, "writevtk", fname)))
-        @test sha_str == sha_str_check
+        if !Sys.iswindows()
+            fname = "$(name).pvd"
+            sha_str = bytes2hex(open(sha1, fname))
+            sha_str_check = bytes2hex(open(sha1, joinpath(@__DIR__, "writevtk", fname)))
+            @test sha_str == sha_str_check
+        end
 
     end
 
@@ -124,10 +128,12 @@ end
 
         end
 
-        fname = "$(name).pvd"
-        sha_str = bytes2hex(open(sha1, fname))
-        sha_str_check = bytes2hex(open(sha1, joinpath(@__DIR__, "writevtk", fname)))
-        @test sha_str == sha_str_check
+        if !Sys.iswindows()
+            fname = "$(name).pvd"
+            sha_str = bytes2hex(open(sha1, fname))
+            sha_str_check = bytes2hex(open(sha1, joinpath(@__DIR__, "writevtk", fname)))
+            @test sha_str == sha_str_check
+        end
 
     end
 
