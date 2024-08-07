@@ -239,7 +239,7 @@ function to_paraview_collection(name, ses::NTuple{N, AbstractArray{<:AbstractCom
             t = source_time(ses_first[idx_first...])
 
             # We will create a multiblock VTK file for each time step, with one block for each array in `ses`.
-            name_mb = format("{}-{:08d}", name, tidx)
+            name_mb = format(FormatExpr("{}-{:08d}"), name, tidx)
             WriteVTK.vtk_multiblock(name_mb) do vtm
                 for (i, (sesi, time_axis)) in enumerate(zip(ses, time_axes))
                     # This will give me each valid index allong the time axis for `sesi`.
@@ -255,7 +255,7 @@ function to_paraview_collection(name, ses::NTuple{N, AbstractArray{<:AbstractCom
                     all(source_time.(sesiv) .≈ t) || thow(ArgumentError("ses[$i][$(idx)] does not have all source elements with source time $(t)"))
 
                     # Now create a VTK file for the source elements we've selected.
-                    namei = format("{}-{}-{:08d}", name, block_names[i], tidx)
+                    namei = format(FormatExpr("{}-{}-{:08d}"), name, block_names[i], tidx)
                     vtkfile = to_vtp(namei, sesiv)
 
                     # And add it to the multiblock file.
@@ -264,7 +264,7 @@ function to_paraview_collection(name, ses::NTuple{N, AbstractArray{<:AbstractCom
 
                 for (obs, obs_name, obs_radius) in zip(observers, obs_names, obs_radii)
                     # Now also need to write out the observers.
-                    namei = format("{}-{}-{:08d}", name, obs_name, tidx)
+                    namei = format(FormatExpr("{}-{}-{:08d}"), name, obs_name, tidx)
                     vtkfile = to_vtu(namei, obs, t; sphere_radius=obs_radius)
 
                     WriteVTK.multiblock_add_block(vtm, vtkfile)
@@ -306,7 +306,7 @@ function to_paraview_collection(name, ses::AbstractArray{<:AbstractCompactSource
 
         for (i, it) in enumerate(time_indices)
             idx[time_axis] = it
-            namei = format("{}{:08d}", name, i)
+            namei = format(FormatExpr("{}{:08d}"), name, i)
             sesi = @view ses[idx...]
             vtkfile = to_vtp(namei, sesi)
 
