@@ -1,3 +1,5 @@
 *.png
 *.vtp
+*.vtu
+*.vtm
 *.pvd

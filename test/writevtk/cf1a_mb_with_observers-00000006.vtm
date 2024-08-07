@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<VTKFile type="vtkMultiBlockDataSet" version="1.0" byte_order="LittleEndian">
+  <vtkMultiBlockDataSet>
+    <DataSet index="0" file="cf1a_mb_with_observers-block1-00000006.vtp"/>
+    <DataSet index="1" file="cf1a_mb_with_observers-block2-00000006.vtp"/>
+    <DataSet index="2" file="cf1a_mb_with_observers-observer1-00000006.vtu"/>
+    <DataSet index="3" file="cf1a_mb_with_observers-observer2-00000006.vtu"/>
+  </vtkMultiBlockDataSet>
+</VTKFile>

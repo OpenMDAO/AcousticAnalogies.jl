@@ -76,7 +76,7 @@ function guided_example(x)
     fc = reshape(fc, 1, :, 1)
     src_times = reshape(src_times, :, 1, 1)  # This isn't really necessary.
 
-    ses = CompactSourceElement.(rho, c0, radii, θs, dradii, cs_area, -fn, 0.0, fc, src_times)
+    ses = CompactF1ASourceElement.(rho, c0, radii, θs, dradii, cs_area, -fn, 0.0, fc, src_times)
 
     t0 = 0.0  # Time at which the angle between the source and target coordinate systems is equal to offest.
     offset = 0.0  # Angular offset between the source and target cooridante systems at t0.
@@ -99,7 +99,7 @@ function guided_example(x)
 
     obs_time = adv_time.(ses, Ref(obs))
 
-    apth = f1a.(ses, Ref(obs), obs_time)
+    apth = noise.(ses, Ref(obs), obs_time)
 
     bpp = period/num_blades  # blade passing period
     obs_time_range = 2 * bpp

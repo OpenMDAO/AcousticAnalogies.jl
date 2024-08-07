@@ -240,7 +240,7 @@ function af_xrotor(alpha, Re, Mach, config::XROTORAirfoilConfig)
 end
 ```
 
-AcousticAnalogies.jl can write out [`CompactSourceElement`](@ref) `structs` to VTK
+AcousticAnalogies.jl can write out [`CompactF1ASourceElement`](@ref) `structs` to VTK
 files, allowing us to easily visualize the state and motion of the acoustic
 sources in popular visualization tools (e.g.
 [ParaView](https://www.paraview.org/)). This is very useful for checking that
@@ -305,7 +305,8 @@ outs = solve.(Ref(rotor), sections, ops)
 bpp = 60/(rpm*B)
 period = 2*bpp
 num_source_times = 64
-ses = source_elements_ccblade(rotor, sections, ops, outs, fill(cs_area_over_chord_squared, length(radii)), period, num_source_times)
+positive_x_rotation = true
+ses = f1a_source_elements_ccblade(rotor, sections, ops, outs, fill(cs_area_over_chord_squared, length(radii)), period, num_source_times, positive_x_rotation)
 @show size(ses)
 ```
 `ses` is an array of source elements of shape `(num_source_times, num_radial,
