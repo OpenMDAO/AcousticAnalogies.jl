@@ -21,7 +21,7 @@ F1A tests     |    2      2  5.9s
 Test Summary:               | Pass  Total  Time
 CCBlade private utils tests |    1      1  0.3s
 Test Summary:                     | Pass  Total  Time
-CCBlade CompactSourceElement test |   12     12  3.4s
+CCBlade CompactF1ASourceElement test |   12     12  3.4s
 Test Summary:     | Pass  Total  Time
 ANOPP2 Comparison |  176    176  5.9s
 Test Summary:    | Time
@@ -48,7 +48,7 @@ Mathematically, we need to solve the equation
 R(t) = t - \left( \tau + \frac{|\vec{x}(t) - \vec{y}(τ)|}{c_0} \right) = 0
 ```
 
-whereon
+where
 
   * ``τ`` is the time the source has emitted an acoustic disturbance
   * ``t`` is the time the observer encounters the acoustic disturbance
@@ -84,7 +84,7 @@ y = @SVector [-4.0, 3.0, 6.0]
 c0 = 2.0
 dummy0 = 1.0
 dummy3 = @SVector [0.0, 0.0, 0.0]
-se = AcousticAnalogies.CompactSourceElement(dummy0, c0, dummy0, dummy0, y, dummy3, dummy3, dummy3, dummy3, dummy3, τ, dummy3)
+se = AcousticAnalogies.CompactF1ASourceElement(dummy0, c0, dummy0, dummy0, y, dummy3, dummy3, dummy3, dummy3, dummy3, τ, dummy3)
 
 # Define a function that solves the advanced time equation using `nlsolve.
 function adv_time_nlsolve(se, obs)
@@ -123,11 +123,11 @@ println("constant velocity observer, exact: $(t_exact), nlsorve: $(t_nlsolve), d
 Almost identical results, so things are good!
 
 ### Combine `F1AOutput` Tests
-The function `f1a(se::CompactSourceElement, obs::AcousticObserver)` uses Farassat's formulation 1A to perform a prediction of the noise experienced by one observer `obs` due to one acoustic source `se`.
+The function `noise(se::CompactF1ASourceElement, obs::AcousticObserver)` uses Farassat's formulation 1A to perform a prediction of the noise experienced by one observer `obs` due to one acoustic source `se`.
 Typically we will not have just one source, however.
 For example, the [guided example in the docs](@ref guided_example) uses 30 "source elements" to model each propeller blade.
 But we're interested in the acoustics experienced by `obs` due to **all** of the source elements, not just one.
-So, we need to combine the output of `f1a` for one observer and all of the source elements.
+So, we need to combine the output of `noise` for one observer and all of the source elements.
 In AcousticAnalogies.jl, this is done by interpolating the time history of each source element's acoustics (the "pressure time history") onto a common chunk of time, and then adding them up.
 No big deal.
 
@@ -338,14 +338,14 @@ function doit()
     f0dot(τ) = [-fn, -sin(omega*τ)*fc, cos(omega*τ)*fc]
     f1dot(τ) = [0, -omega*cos(omega*τ)*fc, -omega*sin(omega*τ)*fc]
     u(τ) = y0dot(τ)./radii
-    sef1 = CompactSourceElement(rho, c0, dradii, Λ, y0dot, y1dot, nothing, nothing, f0dot, nothing, 0.0, u)
+    sef1 = CompactF1ASourceElement(rho, c0, dradii, Λ, y0dot, y1dot, nothing, nothing, f0dot, nothing, 0.0, u)
 
     t = 0.0
     dt = period*0.5^4
 
     τ0, pmi0, pdiff0, pdinf0 = f1_integrand(sef1, obs, t)
-    sef1a = CompactSourceElement(rho, c0, dradii, Λ, y0dot(τ0), y1dot(τ0), y2dot(τ0), y3dot(τ0), f0dot(τ0), f1dot(τ0), τ0, u(τ0))
-    apth = f1a(sef1a, obs)
+    sef1a = CompactF1ASourceElement(rho, c0, dradii, Λ, y0dot(τ0), y1dot(τ0), y2dot(τ0), y3dot(τ0), f0dot(τ0), f1dot(τ0), τ0, u(τ0))
+    apth = noise(sef1a, obs)
 
     err_prev_pm = nothing
     err_prev_pd = nothing
@@ -442,6 +442,8 @@ save("anopp2_comparison.png", fig)
 ![](anopp2_comparison.png)
 
 The difference between the two codes' predictions is very small (less than 1% error).
+
+### Brooks, Pope & Marcolini Tests
 
 ## Signed Commits
 The AcousticAnalogies.jl GitHub repository requires all commits to the `main` branch to be signed.

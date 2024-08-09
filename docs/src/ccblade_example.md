@@ -113,15 +113,16 @@ nothing # hide
 ![](ccblade_example-ccblade_loads.png)
 
 Now we can use the CCBlade.jl `structs` to create AcousticAnalogies.jl source
-elements. The key function is [`source_elements_ccblade`](@ref):
+elements. The key function is [`f1a_source_elements_ccblade`](@ref):
 ```@docs
-source_elements_ccblade
+f1a_source_elements_ccblade
 ```
 So let's try that:
 ```@example first_example
-using AcousticAnalogies: source_elements_ccblade, ConstVelocityAcousticObserver, f1a, combine, pressure_monopole, pressure_dipole
+using AcousticAnalogies: f1a_source_elements_ccblade, ConstVelocityAcousticObserver, noise, combine, pressure_monopole, pressure_dipole
 bpp = 2*pi/omega/num_blades  # blade passing period
-ses = source_elements_ccblade(rotor, sections, ops, outs, [area_over_chord_squared], 4*bpp, 64)
+positive_x_rotation = true
+ses = f1a_source_elements_ccblade(rotor, sections, ops, outs, [area_over_chord_squared], 4*bpp, 64, positive_x_rotation)
 nothing # hide
 ```
 
@@ -134,7 +135,7 @@ using AcousticMetrics
 x_obs = [0.0, 2.3033, 2.6842]
 v_obs = [v, 0.0, 0.0]
 obs = ConstVelocityAcousticObserver(0.0, x_obs, v_obs)
-apth = f1a.(ses, Ref(obs))
+apth = noise.(ses, Ref(obs))
 apth_total = combine(apth, 2*bpp, 64)
 nothing # hide
 ```

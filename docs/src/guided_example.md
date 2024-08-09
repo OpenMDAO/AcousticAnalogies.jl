@@ -164,8 +164,8 @@ a rate of `omega` and moving forward at a speed of `v` defined above. Let's do
 that. We want one source element for each radial station along the blade at each
 `src_time` and each of the `num_blades` blades. Sounds kind of complicated, but
 luckily Julia's broadcasting makes this easy. What we'd like is an array `ses`
-of `CompactSourceElement` types that has `size` `(num_src_times, num_radial,
-num_blades)`, where `ses[i, j, k]` holds the `CompactSourceElement` at
+of `CompactF1ASourceElement` types that has `size` `(num_src_times, num_radial,
+num_blades)`, where `ses[i, j, k]` holds the `CompactF1ASourceElement` at
 `src_time[i]`, `radii[j]`, and blade number `k`. So let's reshape the input
 arrays to make that happen.
 
@@ -184,7 +184,7 @@ Now, the last thing we need to think about is the coordinate system we're
 defining these quantities in. Again, right now we are in the blade-fixed frame,
 which means the coordinate system is rotating with the blades at a rate of
 `omega` and translating with a velocity `v` in the positive x direction. The
-`CompactSourceElement` constructor we'll use allows us to specify each source
+`CompactF1ASourceElement` constructor we'll use allows us to specify each source
 element's location in terms of `r` and `θ`, where `r` is the distance from the
 origin and `θ` is the polar angle from the positive y axis, rotating toward the
 positive `z` axis. So the `radii` and `θs` arrays are set up correctly. 
@@ -207,19 +207,19 @@ the `fc` array.
 
 So let's create all the source elements:
 ```@example first_example
-ses = CompactSourceElement.(rho, c0, radii, θs, dradii, cs_area, -fn, 0.0, fc, src_times)
+ses = CompactF1ASourceElement.(rho, c0, radii, θs, dradii, cs_area, -fn, 0.0, fc, src_times)
 size(ses)
 ```
 
 The size of the source element array ended up like we wanted: `(num_src_times, num_radial, num_blades)`.
 
 ### The Global Reference Frame
-At this point we have an array of `CompactSourceElement` that describes the what
+At this point we have an array of `CompactF1ASourceElement` that describes the what
 each blade element "source" is doing from the perspective of the blade-fixed
 reference frame. But in order to perform the F1A calculation, we need to move
 the sources from the blade-fixed frame to the global reference frame, i.e., the
 one for which the fluid medium (air) appears to be stationary. This involves
-just setting the position and loading components of each `CompactSourceElement`
+just setting the position and loading components of each `CompactF1ASourceElement`
 to the correct values (`y0dot` through `y3dot` and `f0dot` and `f1dot`). This
 could be done manually, but it's easier to use the
 [KinematicCoordinateTransformations.jl](https://github.com/OpenMDAO/KinematicCoordinateTransformations.jl)
@@ -280,7 +280,7 @@ the global reference frame. We could have created the source elements and
 transformed them all in one line, too, which is pretty slick:
 
 ```@example first_example
-ses = AcousticAnalogies.CompactSourceElement.(rho, c0, radii, θs, dradii, cs_area, -fn, 0.0, fc, src_times) .|> trans
+ses = AcousticAnalogies.CompactF1ASourceElement.(rho, c0, radii, θs, dradii, cs_area, -fn, 0.0, fc, src_times) .|> trans
 nothing # hide
 ```
 
@@ -321,11 +321,11 @@ nothing # hide
 We're finally ready to do the compact F1A calculation!
 
 ```@example first_example
-apth = f1a.(ses, Ref(obs), obs_time)
+apth = noise.(ses, Ref(obs), obs_time)
 nothing # hide
 ```
 
-When called this way (notice the `.` after `f1a`), the `f1a` routine returns an
+When called this way (notice the `.` after `noise`), the `noise` routine returns an
 array of `F1AOutput` `struct`s, the same size as `ses` and `obs_time`.
 Each `F1AOutput` `struct` has three components: the observer time `t`,
 the thickness/monopole part of the acoustic pressure `p_m`, and the
@@ -389,7 +389,7 @@ with the `F1AAcousticPressure` returned by `combine`:
 using AcousticMetrics
 # Calculate the overall sound pressure level from the acoustic pressure time history.
 oaspl_from_apth = AcousticMetrics.OASPL(apth_total)
-# Calculate the narrowband spectrum.
+# Calculate the narrowband spectrum of mean-squared pressure.
 nbs = AcousticMetrics.MSPSpectrumAmplitude(apth_total)
 # Calculate the OASPL from the NBS.
 oaspl_from_nbs = AcousticMetrics.OASPL(nbs)

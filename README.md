@@ -36,6 +36,7 @@
     or
     [http://dx.doi.org/10.2514/1.C034048](http://dx.doi.org/10.2514/1.C034048)
     for details).
+  * Implementation of Brooks & Burley's rotor broadband noise prediction method [http://dx.doi.org/10.2514/6.2001-2210](http://dx.doi.org/10.2514/6.2001-2210).
   * Support for stationary or constant-velocity moving observers, with an
     explict calculation for the latter from D. Casalino
     [http://dx.doi.org/10.1016/S0022-460X(02)00986-0](http://dx.doi.org/10.1016/S0022-460X(02)00986-0).
@@ -50,7 +51,6 @@
 
 **Installation**
 ```julia-repl
-] registry add git@github.com:dingraha/DanielIngrahamRegistry.git  # Optional, but needed to resolve dependencies in the next step
 ] add AcousticAnalogies
 ```
 
