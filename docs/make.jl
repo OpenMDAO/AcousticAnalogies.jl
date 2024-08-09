@@ -1,7 +1,7 @@
 module AADocs
 using Documenter, AcousticAnalogies
 
-function main()
+function doit()
     IN_CI = get(ENV, "CI", nothing)=="true"
 
     makedocs(sitename="AcousticAnalogies.jl", modules=[AcousticAnalogies], doctest=false,
@@ -10,6 +10,7 @@ function main()
                     "Guided Example"=>"guided_example.md",
                     "CCBlade.jl Example"=>"ccblade_example.md",
                     "WriteVTK.jl Support"=>"writevtk_support.md",
+                    "OpenFAST Example"=>"openfast_example.md",
                     "API Reference"=>"api.md",
                     "Software Quality Assurance"=>"sqa.md"])
 
@@ -20,7 +21,7 @@ function main()
 end
 
 if !isinteractive()
-    main()
+    doit()
 end
 
 end # module

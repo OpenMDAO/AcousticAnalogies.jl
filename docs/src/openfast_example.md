@@ -15,22 +15,18 @@ https://github.com/IEAWindTask37/IEA-3.4-130-RWT.
 
 We start by loading Julia dependencies, which are available in the General registry
 ```@example first_example
-module iea3p4
 using AcousticAnalogies
 using AcousticMetrics
 using ColorSchemes: colorschemes
 using GLMakie
-using DelimitedFiles
+using Interpolations: linear_interpolation
+using FLOWMath: FLOWMath
 using KinematicCoordinateTransformations
 using LinearAlgebra: ×
-using StaticArrays
-using AcousticMetrics
+using StaticArrays: @SVector
 using Statistics
-using Interpolations
 nothing # hide
 ```
-
-
 
 Next, we set the user-defined inputs:
 * number of blades, usually 3 for modern wind turbines
@@ -51,7 +47,8 @@ Chord = [2.600e+00, 2.645e+00, 3.020e+00, 3.437e+00, 3.781e+00, 4.036e+00, 4.201
     4.284e+00, 4.288e+00, 4.223e+00, 4.098e+00, 3.923e+00, 3.709e+00, 3.468e+00, 3.220e+00, 
     2.986e+00, 2.770e+00, 2.581e+00, 2.412e+00, 2.266e+00, 2.142e+00, 2.042e+00, 1.964e+00, 
     1.909e+00, 1.870e+00, 1.807e+00, 1.666e+00, 1.387e+00, 9.172e-01, 1.999e-01]
-file_path = joinpath(@__DIR__, "IEA-3.4-130-RWT.out")
+file_path = joinpath(@__DIR__, "..", "..", "test", "gen_test_data", "openfast_data", "IEA-3.4-130-RWT.out")
+@show @__DIR__
 HH = 110. # m
 RSpn = BlSpn .+ Rhub
 x0 = @SVector [HH .+ RSpn[end], 0.0, -HH]
@@ -70,106 +67,172 @@ dradii = RSpn[begin+1:end] .- RSpn[begin:end-1]
 # Compute the blade angles
 θs = 2*pi/num_blades.*(0:(num_blades-1))
 # Create a linear interpolation object to interpolate chord onto the radial mid-points
-itp = LinearInterpolation(RSpn, Chord)
+itp_chord = linear_interpolation(RSpn, Chord)
 # Perform interpolation
-chord = itp(radii)
-# Cross-sectional area of each element in m**2. This is taking a bit of a shortcut
+chord = itp_chord(radii)
+# Cross-sectional area of each element in m**2. This is taking a bit of a shortcut—the value of `cs_area_over_chord_squared` does not actually correspond to the IEAWindTask37 turbine blade.
 cs_area_over_chord_squared = 0.064
 cs_area = cs_area_over_chord_squared.*chord.^2
 
-# Code to parse the data from the OpenFAST .out file
-# Function to parse a line of data, converting strings to floats
-function parse_line(line)
-    # Split the line by whitespace and filter out any empty strings
-    elements = filter(x -> !isempty(x), split(line))
-    # Convert elements to Float64
-    return map(x -> parse(Float64, x), elements)
+# # Code to parse the data from the OpenFAST .out file
+# # Function to parse a line of data, converting strings to floats
+# function parse_line(line)
+#     # Split the line by whitespace and filter out any empty strings
+#     elements = filter(x -> !isempty(x), split(line))
+#     # Convert elements to Float64
+#     return map(x -> parse(Float64, x), elements)
+# end
+# 
+# # Initialize an empty array to store the data
+# data = []
+# 
+# # Open the file and read the data, skipping the first 8 lines
+# open(file_path) do file
+#     # Skip the first 8 lines (header and description)
+#     for i in 1:8
+#         readline(file)
+#     end
+# 
+#     # Read the rest of the lines and parse them
+#     for line in eachline(file)
+#         push!(data, parse_line(line))
+#     end
+# end
+# 
+# # Convert the data to an array of arrays (matrix)
+# data = reduce(hcat, data)
+# time = data[1, :]
+# avg_wind_speed = mean(data[2, :])
+# sim_length_s = time[end] - time[1] # s
+# @show length(time)
+# 
+# # Reopen the file and read the lines
+# lines = open(file_path) do f
+#     readlines(f)
+# end
+# 
+# # Find the index of the line that contains the column headers
+# header_index = findfirst(x -> startswith(x, "Time"), lines)
+# 
+# # Extract the headers
+# headers = split(lines[header_index], '\t')
+# 
+# id_b1_Fx = findfirst(x -> x == "AB1N001Fxl", headers)
+# id_b2_Fx = findfirst(x -> x == "AB2N001Fxl", headers)
+# id_b3_Fx = findfirst(x -> x == "AB3N001Fxl", headers)
+# id_b1_Fy = findfirst(x -> x == "AB1N001Fyl", headers)
+# id_b2_Fy = findfirst(x -> x == "AB2N001Fyl", headers)
+# id_b3_Fy = findfirst(x -> x == "AB3N001Fyl", headers)
+# id_rot_speed = findfirst(x -> x == "RotSpeed", headers)
+# n_elems = length(radii)
+# Fx_b1_locs = data[id_b1_Fx:id_b1_Fx+n_elems,:]
+# Fy_b1_locs = data[id_b1_Fy:id_b1_Fy+n_elems,:]
+# Fx_b2_locs = data[id_b2_Fx:id_b2_Fx+n_elems,:]
+# Fy_b2_locs = data[id_b2_Fy:id_b2_Fy+n_elems,:]
+# Fx_b3_locs = data[id_b3_Fx:id_b3_Fx+n_elems,:]
+# Fy_b3_locs = data[id_b3_Fy:id_b3_Fy+n_elems,:]
+# 
+# # Reinterpolate onto the mid-sections
+# Fx_b1 = Array{Float64}(undef, 29, 6001)
+# Fx_b2 = Array{Float64}(undef, 29, 6001)
+# Fx_b3 = Array{Float64}(undef, 29, 6001)
+# Fy_b1 = Array{Float64}(undef, 29, 6001)
+# Fy_b2 = Array{Float64}(undef, 29, 6001)
+# Fy_b3 = Array{Float64}(undef, 29, 6001)
+# for j in axes(Fx_b1_locs, 2)
+#     itp = LinearInterpolation(RSpn, Fx_b1_locs[:, j], extrapolation_bc=Line())  
+#     Fx_b1[:, j] = itp(radii)
+# end
+# for j in axes(Fx_b2_locs, 2)
+#     itp = LinearInterpolation(RSpn, Fx_b2_locs[:, j], extrapolation_bc=Line())  
+#     Fx_b2[:, j] = itp(radii)
+# end
+# for j in axes(Fx_b3_locs, 2)
+#     itp = LinearInterpolation(RSpn, Fx_b3_locs[:, j], extrapolation_bc=Line())  
+#     Fx_b3[:, j] = itp(radii)
+# end
+# for j in axes(Fy_b1_locs, 2)
+#     itp = LinearInterpolation(RSpn, Fy_b1_locs[:, j], extrapolation_bc=Line())  
+#     Fy_b1[:, j] = itp(radii)
+# end
+# for j in axes(Fy_b2_locs, 2)
+#     itp = LinearInterpolation(RSpn, Fy_b2_locs[:, j], extrapolation_bc=Line())  
+#     Fy_b2[:, j] = itp(radii)
+# end
+# for j in axes(Fy_b3_locs, 2)
+#     itp = LinearInterpolation(RSpn, Fy_b3_locs[:, j], extrapolation_bc=Line())  
+#     Fy_b3[:, j] = itp(radii)
+# end
+
+# Read the data from the file and create an `OpenFASTData` object, a simple struct with fields like `time`, `omega`, `axial_loading`, etc.
+data = AcousticAnalogies.read_openfast_file(file_path)
+
+# Interpolate the loading data into the mid-sections.
+# Start with the axial loading.
+# data.axial_loading has size (num_times, num_radial, num_blades).
+# Since we're interpolating onto the mid-sections, the interpolated data will have size (num_times, num_radial-1, num_blades).
+axial_loading = data.axial_loading
+axial_loading_mid = Array{eltype(axial_loading)}(undef, size(axial_loading, 1), size(axial_loading, 2)-1, size(axial_loading, 3))
+
+# Now start doing the interpolation.
+for b in 1:size(axial_loading, 3)
+    for t in 1:size(axial_loading, 1)
+        itp_loading = linear_interpolation(RSpn, axial_loading[t, :, b])
+        axial_loading_mid[t, :, b] .= itp_loading(radii)
+    end
 end
 
-# Initialize an empty array to store the data
-data = []
+# Do the same thing for the circumferential loading.
+circum_loading = data.circum_loading
+circum_loading_mid = Array{eltype(circum_loading)}(undef, size(circum_loading, 1), size(circum_loading, 2)-1, size(circum_loading, 3))
+for bidx in 1:size(circum_loading, 3)
+    for tidx in 1:size(circum_loading, 1)
+        itp_loading = linear_interpolation(RSpn, circum_loading[tidx, :, bidx])
+        circum_loading_mid[tidx, :, bidx] .= itp_loading(radii)
+    end
+end
 
-# Open the file and read the data, skipping the first 8 lines
-open(file_path) do file
-    # Skip the first 8 lines (header and description)
-    for i in 1:8
-        readline(file)
+# New thought: F1A is a function of the time-derivative of the loading.
+# How should we get that?
+# We could use finite differences.
+# I guess we'll do that.
+# But is the time step constant?
+# Let's find out.
+# @show extrema((data.time[2:end] .- data.time[1:end-1]) .- (data.time[2] - data.time[1]))
+dts = data.time[2:end] - data.time[1:end-1]
+@show all(dts .≈ dts[1])
+dt = dts[1]
+
+# Looks like it is uniformly spaced.
+
+# Now use second-order finite differences to differentiate.
+# We'll create a simple function to do that for us.
+function finite_diff_2nd_order(f, h)
+    # Create an array the same size as `f`.
+    fdot = similar(f)
+
+    @views begin
+        # These stencils are in Tannehill, Anderson, Pletcher, "Computational Fluid Mechanics and Heat Transfer," 2nd edition, page 50.
+        # First do the interior points.
+        fdot[begin+1:end-1, :, :] .= (f[begin+2:end, :, :] .- f[begin:end-2, :, :]) ./ (2*h)
+
+        # Then the left boundary.
+        fdot[begin, :, :] .= (-3 .* f[begin] .+ 4 .* f[begin+1] .- f[begin+2]) ./ (2*h)
+
+        # Then the right boundary.
+        fdot[end, :, :] .= (3 .* f[end] .- 4 .* f[end-1] .+ f[end-2]) ./ (2*h)
     end
 
-    # Read the rest of the lines and parse them
-    for line in eachline(file)
-        push!(data, parse_line(line))
-    end
+    return fdot
 end
 
-# Convert the data to an array of arrays (matrix)
-data = reduce(hcat, data)
-time = data[1, :]
-avg_wind_speed = mean(data[2, :])
-sim_length_s = time[end] - time[1] # s
-@show length(time)
-
-# Reopen the file and read the lines
-lines = open(file_path) do f
-    readlines(f)
-end
-
-# Find the index of the line that contains the column headers
-header_index = findfirst(x -> startswith(x, "Time"), lines)
-
-# Extract the headers
-headers = split(lines[header_index], '\t')
-
-id_b1_Fx = findfirst(x -> x == "AB1N001Fxl", headers)
-id_b2_Fx = findfirst(x -> x == "AB2N001Fxl", headers)
-id_b3_Fx = findfirst(x -> x == "AB3N001Fxl", headers)
-id_b1_Fy = findfirst(x -> x == "AB1N001Fyl", headers)
-id_b2_Fy = findfirst(x -> x == "AB2N001Fyl", headers)
-id_b3_Fy = findfirst(x -> x == "AB3N001Fyl", headers)
-id_rot_speed = findfirst(x -> x == "RotSpeed", headers)
-n_elems = length(radii)
-Fx_b1_locs = data[id_b1_Fx:id_b1_Fx+n_elems,:]
-Fy_b1_locs = data[id_b1_Fy:id_b1_Fy+n_elems,:]
-Fx_b2_locs = data[id_b2_Fx:id_b2_Fx+n_elems,:]
-Fy_b2_locs = data[id_b2_Fy:id_b2_Fy+n_elems,:]
-Fx_b3_locs = data[id_b3_Fx:id_b3_Fx+n_elems,:]
-Fy_b3_locs = data[id_b3_Fy:id_b3_Fy+n_elems,:]
-
-# Reinterpolate onto the mid-sections
-Fx_b1 = Array{Float64}(undef, 29, 6001)
-Fx_b2 = Array{Float64}(undef, 29, 6001)
-Fx_b3 = Array{Float64}(undef, 29, 6001)
-Fy_b1 = Array{Float64}(undef, 29, 6001)
-Fy_b2 = Array{Float64}(undef, 29, 6001)
-Fy_b3 = Array{Float64}(undef, 29, 6001)
-for j in axes(Fx_b1_locs, 2)
-    itp = LinearInterpolation(RSpn, Fx_b1_locs[:, j], extrapolation_bc=Line())  
-    Fx_b1[:, j] = itp(radii)
-end
-for j in axes(Fx_b2_locs, 2)
-    itp = LinearInterpolation(RSpn, Fx_b2_locs[:, j], extrapolation_bc=Line())  
-    Fx_b2[:, j] = itp(radii)
-end
-for j in axes(Fx_b3_locs, 2)
-    itp = LinearInterpolation(RSpn, Fx_b3_locs[:, j], extrapolation_bc=Line())  
-    Fx_b3[:, j] = itp(radii)
-end
-for j in axes(Fy_b1_locs, 2)
-    itp = LinearInterpolation(RSpn, Fy_b1_locs[:, j], extrapolation_bc=Line())  
-    Fy_b1[:, j] = itp(radii)
-end
-for j in axes(Fy_b2_locs, 2)
-    itp = LinearInterpolation(RSpn, Fy_b2_locs[:, j], extrapolation_bc=Line())  
-    Fy_b2[:, j] = itp(radii)
-end
-for j in axes(Fy_b3_locs, 2)
-    itp = LinearInterpolation(RSpn, Fy_b3_locs[:, j], extrapolation_bc=Line())  
-    Fy_b3[:, j] = itp(radii)
-end
-
+# Now use that function to differentiate the axial and circumferential loading.
+axial_loading_mid_dot = finite_diff_2nd_order(axial_loading_mid, dt)
+circum_loading_mid_dot = finite_diff_2nd_order(circum_loading_mid, dt)
 
 # Extract the mean rotor speed
-omega_rpm = mean(data[id_rot_speed,:])
+omega_rpm = mean(data.omega)
+@show omega_rpm
 nothing # hide
 ```
 
@@ -177,12 +240,12 @@ Once we are here we have parsed the OpenFAST output file and are ready to run th
 Before that, let's plot the unsteady loading acting on the wind turbine blade. 
 
 ```@example first_example
-
 # Let's plot the unsteady loading 1 of every 500 timesteps
 # x-axis is the span position (mid-sections)
 # times are indicated by the colorbar on the right of the plot.
-@assert size(Fx_b1) == size(Fx_b2) == size(Fx_b3) == size(Fy_b1) == size(Fy_b2) == size(Fy_b3) 
-ntimes_loading = size(Fx_b1, 2)
+# @assert size(Fx_b1) == size(Fx_b2) == size(Fx_b3) == size(Fy_b1) == size(Fy_b2) == size(Fy_b3) 
+# ntimes_loading = size(Fx_b1, 2)
+ntimes_loading = size(axial_loading_mid, 1)
 fig = Figure()
 ax11 = fig[1, 1] = Axis(fig, xlabel="Span Position (m)", ylabel="Fx (N/m)", title="blade 1")
 ax21 = fig[2, 1] = Axis(fig, xlabel="Span Position (m)", ylabel="Fy (N/m)")
@@ -192,14 +255,16 @@ ax13 = fig[1, 3] = Axis(fig, xlabel="Span Position (m)", ylabel="Fx (N/m)", titl
 ax23 = fig[2, 3] = Axis(fig, xlabel="Span Position (m)", ylabel="Fy (N/m)")
 bpp = 60/omega_rpm/num_blades
 colormap = colorschemes[:viridis]
+time = data.time
+sim_length_s = time[end] - time[begin]
 for tidx in 1:500:ntimes_loading
     cidx = (time[tidx] - time[1])/sim_length_s
-    l1 = lines!(ax11, radii, Fx_b1[:,tidx], label ="b1", color=colormap[cidx])
-    l1 = lines!(ax12, radii, Fx_b2[:,tidx], label ="b2", color=colormap[cidx])
-    l1 = lines!(ax13, radii, Fx_b3[:,tidx], label ="b3", color=colormap[cidx])
-    l2 = lines!(ax21, radii, Fy_b1[:,tidx], label ="b1", color=colormap[cidx])
-    l2 = lines!(ax22, radii, Fy_b2[:,tidx], label ="b2", color=colormap[cidx])
-    l2 = lines!(ax23, radii, Fy_b3[:,tidx], label ="b3", color=colormap[cidx])
+    l1 = lines!(ax11, radii, axial_loading_mid[tidx,:,1], label ="b1", color=colormap[cidx])
+    l1 = lines!(ax12, radii, axial_loading_mid[tidx,:,2], label ="b2", color=colormap[cidx])
+    l1 = lines!(ax13, radii, axial_loading_mid[tidx,:,3], label ="b3", color=colormap[cidx])
+    l2 = lines!(ax21, radii, circum_loading_mid[tidx,:,1], label ="b1", color=colormap[cidx])
+    l2 = lines!(ax22, radii, circum_loading_mid[tidx,:,2], label ="b2", color=colormap[cidx])
+    l2 = lines!(ax23, radii, circum_loading_mid[tidx,:,3], label ="b3", color=colormap[cidx])
 end
 
 linkxaxes!(ax21, ax11)
@@ -221,19 +286,76 @@ hideydecorations!(ax13, grid=false)
 hideydecorations!(ax22, grid=false)
 hideydecorations!(ax23, grid=false)
 
+cbar = fig[:, 4] = Colorbar(fig; limits=(time[begin], time[end]), colormap=:viridis, label="time (sec)")
+
 save(joinpath(@__DIR__, "Fx_t-all_time.png"), fig)
 nothing # hide
 ```
+![Axial Loading](Fx_t-all_time.png)
+
+Let's also see what the time derivative of the loading looks like.
+
+```@example first_example
+# Let's plot the unsteady loading time derivative 1 of every 500 timesteps
+# x-axis is the span position (mid-sections)
+# times are indicated by the colorbar on the right of the plot.
+ntimes_loading = size(axial_loading_mid_dot, 1)
+fig = Figure()
+ax11 = fig[1, 1] = Axis(fig, xlabel="Span Position (m)", ylabel="∂Fx/∂t (N/(m*s))", title="blade 1")
+ax21 = fig[2, 1] = Axis(fig, xlabel="Span Position (m)", ylabel="∂Fy/∂t (N/(m*s))")
+ax12 = fig[1, 2] = Axis(fig, xlabel="Span Position (m)", ylabel="∂Fx/∂t (N/(m*s))", title="blade 2")
+ax22 = fig[2, 2] = Axis(fig, xlabel="Span Position (m)", ylabel="∂Fy/∂t (N/(m*s))")
+ax13 = fig[1, 3] = Axis(fig, xlabel="Span Position (m)", ylabel="∂Fx/∂t (N/(m*s))", title="blade 3")
+ax23 = fig[2, 3] = Axis(fig, xlabel="Span Position (m)", ylabel="∂Fy/∂t (N/(m*s))")
+bpp = 60/omega_rpm/num_blades
+colormap = colorschemes[:viridis]
+time = data.time
+sim_length_s = time[end] - time[begin]
+for tidx in 1:500:ntimes_loading
+    cidx = (time[tidx] - time[1])/sim_length_s
+    l1 = lines!(ax11, radii, axial_loading_mid_dot[tidx,:,1], label ="b1", color=colormap[cidx])
+    l1 = lines!(ax12, radii, axial_loading_mid_dot[tidx,:,2], label ="b2", color=colormap[cidx])
+    l1 = lines!(ax13, radii, axial_loading_mid_dot[tidx,:,3], label ="b3", color=colormap[cidx])
+    l2 = lines!(ax21, radii, circum_loading_mid_dot[tidx,:,1], label ="b1", color=colormap[cidx])
+    l2 = lines!(ax22, radii, circum_loading_mid_dot[tidx,:,2], label ="b2", color=colormap[cidx])
+    l2 = lines!(ax23, radii, circum_loading_mid_dot[tidx,:,3], label ="b3", color=colormap[cidx])
+end
+
+linkxaxes!(ax21, ax11)
+linkxaxes!(ax21, ax11)
+linkxaxes!(ax12, ax11)
+linkxaxes!(ax22, ax11)
+linkxaxes!(ax13, ax11)
+linkxaxes!(ax23, ax11)
+linkyaxes!(ax12, ax11)
+linkyaxes!(ax13, ax11)
+linkyaxes!(ax22, ax21)
+linkyaxes!(ax23, ax21)
+
+hidexdecorations!(ax11, grid=false)
+hidexdecorations!(ax12, grid=false)
+hidexdecorations!(ax13, grid=false)
+hideydecorations!(ax12, grid=false)
+hideydecorations!(ax13, grid=false)
+hideydecorations!(ax22, grid=false)
+hideydecorations!(ax23, grid=false)
+
+cbar = fig[:, 4] = Colorbar(fig; limits=(time[begin], time[end]), colormap=:viridis, label="time (sec)")
+
+save(joinpath(@__DIR__, "Fx_t-all_time-dot.png"), fig)
+nothing # hide
+```
+![Axial Loading Time Derivative](Fx_t-all_time-dot.png)
 
 Perfect, we are now ready to run the core of AcousticAnalogies.jl
 
 
 ```@example first_example
-
 # To do F1A correctly, we need to put all source elements in a coordinate system that 
 # moves with the fluid, i.e. one in which the fluid appears stationary.
 # So, to do that, we have the blades translating in the 
 # negative x direction at the average horizontal wind speed.
+avg_wind_speed = mean(data.v)
 v = -avg_wind_speed  # m/s
 omega = omega_rpm * 2*pi/60  # rad/s
 
@@ -243,83 +365,95 @@ radii = reshape(radii, 1, :, 1)
 dradii = reshape(dradii, 1, :, 1)
 cs_area = reshape(cs_area, 1, :, 1)
 src_times = reshape(time, :, 1, 1)  # This isn't really necessary.
-fx = cat(transpose(Fx_b1), transpose(Fx_b2), transpose(Fx_b3), dims=3)
-fc = cat(transpose(Fy_b1), transpose(Fy_b2), transpose(Fy_b3), dims=3)
+# fx = cat(transpose(Fx_b1), transpose(Fx_b2), transpose(Fx_b3), dims=3)
+# fc = cat(transpose(Fy_b1), transpose(Fy_b2), transpose(Fy_b3), dims=3)
+# The `axial_loading_mid` and `circum_loading_mid` have shape `(num_times, num_radial-1, num_blades)`, so no reshaping necessary.
+fx = axial_loading_mid
+fc = circum_loading_mid
 
-# source elements, with negative Fx
-ses = CompactSourceElement.(rho, c0, radii, θs, dradii, cs_area, -fx, 0.0, fc, src_times)
+# AcousticAnalogies.jl requires the loading *on the fluid*, not on the blade/lifting surface/body that is commonly calculated by aerodynamic prediction codes.
+# The freestream velocity is in the positive x direction, so, for a wind turbine, we'd expect the axial loading on the blades to also be in the positive x direction.
+# The plots of the loading above show that the axial loading is positive.
+# The axial loading on the fluid is opposite that, so we'll need to switch the sign on the axial loading.
 
-t0 = 0.0  # Time at which the angle between the source and target coordinate systems is equal to offest.
-offset = 0.0  # Angular offset between the source and target coordinate systems at t0.
-# steady rotation around the x axis
-rot_trans = SteadyRotXTransformation(t0, omega, offset)
+# Next, we'll think about the circumferential loading.
+# We will be rotating the blades about the positive x axis.
+# The `CompactSourceElement` constructor assumes that the blade is initially aligned with the y axis (and then rotated by the angle `θ` about the x axis).
+# So the blade will be moving in the positive z direction, and the circumferential loading on the blade will be in negative z direction, matching the plot of `circum_loading` above.
+# But we want the loading on the fluid, so we'll also need to switch the sign on the `circum_loading` array.
+ses = CompactSourceElement.(rho, c0, radii, θs, dradii, cs_area, -fx, 0.0, -fc, src_times)
 
-# orient the rotation axis of the blades as it is the global frame
-rot_axis = @SVector [1.0, 0.0, 0.0] # rotation axis aligned along global x-axis 
-blade_axis = @SVector [0.0, 0.0, 1.0]  #  blade 1 pointing up, along z-axis 
-global_trans = ConstantLinearMap(hcat(rot_axis, blade_axis, rot_axis×blade_axis))
-
-# blade to move with the appropriate forward velocity, and 
-# start from the desired location in the global reference frame
-y0_hub = @SVector [0.0, 0.0, 0.0]  # Position of the hub at time t0
-v0_hub = SVector{3}(v.*rot_axis)   # Constant velocity of the hub in the global reference frame
-const_vel_trans = ConstantVelocityTransformation(t0, y0_hub, v0_hub)
-
-# combine these three transformations into one, and then use that on the SourceElements
-trans = compose.(src_times, Ref(const_vel_trans), compose.(src_times, Ref(global_trans), Ref(rot_trans)))
-
-# trans will perform the three transformations from right to left (rot_trans, global_trans, const_vel_trans)
-ses = ses .|> trans
-
-# The ses object now describes how each blade element source is moving through the global reference
-#  frame over the time src_time. As it does this, it will emit acoustics that can be sensed by an acoustic observer 
-# (a human, or a microphone). The exact "amount" of acoustics the observer will experience depends 
-# on the relative location and motion between each source and the observer. 
-
-# This creates an acoustic observer moving with constant velocity v0_hub that is at location `x0` at time `t0`.
-obs = ConstVelocityAcousticObserver(t0, x0, v0_hub)
-
-# Now, in order to perform the F1A calculation, 
-# we need to know when each acoustic disturbance emitted 
-# by the source arrives at the observer. This is referred 
-# to an advanced time calculation, and is done this way:
-apth = f1a.(ses, Ref(obs))
-
-# We now have a noise prediction for each of the individual source elements in ses at the acoustic observer obs. 
-# What we ultimately want is the total noise prediction at obs—we want to add all the acoustic pressures in apth together. 
-# But we can't add them directly, yet, since the observer times are not all the same. What we need to do 
-# is first interpolate the apth of each source onto a common observer time grid, and then add them up. 
-# We'll do this using the AcousticAnalogies.combine function.
-period = 2*pi/omega
-bpp = period/num_blades  # blade passing period
-obs_time_range = sim_length_s/60*omega_rpm*bpp
-
-# Note that we need to be careful to avoid extrapolation in the `combine` calculation.
-# That won't happen in this case, since obs_time_range/sim_length_s is 1/3, so the observer time 
-# range is much less than the source time range.
-# The observer time range is 1/3 of the source time range, and we're using the same number of 
-# simulation times, so that means the observer time step is 1/3 that of the source time step.
-num_obs_times = length(time)
-apth_total = combine(apth, obs_time_range, num_obs_times, 1)
-# The loading data is unsteady, so we may need to be careful to window the time history 
-# to avoid problems with discontinuities going from the begining/end of the pressure time history.
-nothing # hide
+# t0 = 0.0  # Time at which the angle between the source and target coordinate systems is equal to offest.
+# offset = 0.0  # Angular offset between the source and target coordinate systems at t0.
+# # steady rotation around the x axis
+# rot_trans = SteadyRotXTransformation(t0, omega, offset)
+# 
+# # orient the rotation axis of the blades as it is the global frame
+# rot_axis = @SVector [1.0, 0.0, 0.0] # rotation axis aligned along global x-axis 
+# blade_axis = @SVector [0.0, 0.0, 1.0]  #  blade 1 pointing up, along z-axis 
+# global_trans = ConstantLinearMap(hcat(rot_axis, blade_axis, rot_axis×blade_axis))
+# 
+# # blade to move with the appropriate forward velocity, and 
+# # start from the desired location in the global reference frame
+# y0_hub = @SVector [0.0, 0.0, 0.0]  # Position of the hub at time t0
+# v0_hub = SVector{3}(v.*rot_axis)   # Constant velocity of the hub in the global reference frame
+# const_vel_trans = ConstantVelocityTransformation(t0, y0_hub, v0_hub)
+# 
+# # combine these three transformations into one, and then use that on the SourceElements
+# trans = compose.(src_times, Ref(const_vel_trans), compose.(src_times, Ref(global_trans), Ref(rot_trans)))
+# 
+# # trans will perform the three transformations from right to left (rot_trans, global_trans, const_vel_trans)
+# ses = ses .|> trans
+# 
+# # The ses object now describes how each blade element source is moving through the global reference
+# #  frame over the time src_time. As it does this, it will emit acoustics that can be sensed by an acoustic observer 
+# # (a human, or a microphone). The exact "amount" of acoustics the observer will experience depends 
+# # on the relative location and motion between each source and the observer. 
+# 
+# # This creates an acoustic observer moving with constant velocity v0_hub that is at location `x0` at time `t0`.
+# obs = ConstVelocityAcousticObserver(t0, x0, v0_hub)
+# 
+# # Now, in order to perform the F1A calculation, 
+# # we need to know when each acoustic disturbance emitted 
+# # by the source arrives at the observer. This is referred 
+# # to an advanced time calculation, and is done this way:
+# apth = f1a.(ses, Ref(obs))
+# 
+# # We now have a noise prediction for each of the individual source elements in ses at the acoustic observer obs. 
+# # What we ultimately want is the total noise prediction at obs—we want to add all the acoustic pressures in apth together. 
+# # But we can't add them directly, yet, since the observer times are not all the same. What we need to do 
+# # is first interpolate the apth of each source onto a common observer time grid, and then add them up. 
+# # We'll do this using the AcousticAnalogies.combine function.
+# period = 2*pi/omega
+# bpp = period/num_blades  # blade passing period
+# obs_time_range = sim_length_s/60*omega_rpm*bpp
+# 
+# # Note that we need to be careful to avoid extrapolation in the `combine` calculation.
+# # That won't happen in this case, since obs_time_range/sim_length_s is 1/3, so the observer time 
+# # range is much less than the source time range.
+# # The observer time range is 1/3 of the source time range, and we're using the same number of 
+# # simulation times, so that means the observer time step is 1/3 that of the source time step.
+# num_obs_times = length(time)
+# apth_total = combine(apth, obs_time_range, num_obs_times, 1)
+# # The loading data is unsteady, so we may need to be careful to window the time history 
+# # to avoid problems with discontinuities going from the begining/end of the pressure time history.
+# nothing # hide
 ```
 
 We can now have a look at the total acoustic pressure time history at the observer:
 
 ```@example first_example
-fig = Figure()
-ax1 = fig[1, 1] = Axis(fig, xlabel="time, s", ylabel="monopole, Pa")
-ax2 = fig[2, 1] = Axis(fig, xlabel="time, s", ylabel="dipole, Pa")
-ax3 = fig[3, 1] = Axis(fig, xlabel="time, s", ylabel="total, Pa")
-l1 = lines!(ax1, time, apth_total.p_m)
-l2 = lines!(ax2, time, apth_total.p_d)
-l3 = lines!(ax3, time, apth_total.p_m.+apth_total.p_d)
-hidexdecorations!(ax1, grid=false)
-hidexdecorations!(ax2, grid=false)
-save(joinpath(@__DIR__, "openfast-apth_total.png"), fig)
-nothing # hide
+# fig = Figure()
+# ax1 = fig[1, 1] = Axis(fig, xlabel="time, s", ylabel="monopole, Pa")
+# ax2 = fig[2, 1] = Axis(fig, xlabel="time, s", ylabel="dipole, Pa")
+# ax3 = fig[3, 1] = Axis(fig, xlabel="time, s", ylabel="total, Pa")
+# l1 = lines!(ax1, time, apth_total.p_m)
+# l2 = lines!(ax2, time, apth_total.p_d)
+# l3 = lines!(ax3, time, apth_total.p_m.+apth_total.p_d)
+# hidexdecorations!(ax1, grid=false)
+# hidexdecorations!(ax2, grid=false)
+# save(joinpath(@__DIR__, "openfast-apth_total.png"), fig)
+# nothing # hide
 ```
 
 The plot shows that the monopole/thickness noise is much lower than the dipole/loading noise.
@@ -332,19 +466,19 @@ Next, we will calculate the narrowband spectrum.
 Finally, we will calculate the overall A-weighted sound pressure level from the narrowband spectrum.
 
 ```@example first_example
-oaspl_from_apth = AcousticMetrics.OASPL(apth_total)
-nbs = AcousticMetrics.MSPSpectrumAmplitude(apth_total)
-oaspl_from_nbs = AcousticMetrics.OASPL(nbs)
-(oaspl_from_apth, oaspl_from_nbs)
-nothing # hide
+# oaspl_from_apth = AcousticMetrics.OASPL(apth_total)
+# nbs = AcousticMetrics.MSPSpectrumAmplitude(apth_total)
+# oaspl_from_nbs = AcousticMetrics.OASPL(nbs)
+# (oaspl_from_apth, oaspl_from_nbs)
+# nothing # hide
 ```
 
 As a last step, we create VTK files that one can visualize in Paraview (or similar software)
 
 ```@example first_example
-name = joinpath(@__DIR__, "vtk", "iea3p4_vtk")
-mkpath(dirname(name))
-outfiles = AcousticAnalogies.to_paraview_collection(name, ses)
-end # module
-nothing # hide
+# name = joinpath(@__DIR__, "vtk", "iea3p4_vtk")
+# mkpath(dirname(name))
+# outfiles = AcousticAnalogies.to_paraview_collection(name, ses)
+# end # module
+# nothing # hide
 ```

@@ -7,6 +7,7 @@ include("ccblade_helper_tests.jl")
 include("anopp2_comparison.jl")
 include("forwarddiff_test.jl")
 include("writevtk_tests.jl")
-include("iea3p4.jl")
+include("openfast_helper_tests.jl")
+# include("iea3p4.jl")
 
 end # module

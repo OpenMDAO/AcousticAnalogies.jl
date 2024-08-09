@@ -3,6 +3,8 @@ module AcousticAnalogies
 using AcousticMetrics
 using CCBlade
 using ConcreteStructs: @concrete
+using CSV: CSV
+using DataFrames: DataFrames
 using FLOWMath: akima, linear, ksmax, dot_cs_safe, norm_cs_safe
 using Formatting: format
 using JuliennedArrays: JuliennedArrays
@@ -26,6 +28,9 @@ export combine!, combine
 
 include("ccblade_helpers.jl")
 export source_elements_ccblade
+
+include("openfast_helpers.jl")
+export read_openfast_file
 
 include("writevtk.jl")
 
