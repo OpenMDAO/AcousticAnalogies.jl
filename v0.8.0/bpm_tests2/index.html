@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>BPM Airfoil Self-Noise Tests, Cont. · AcousticAnalogies.jl</title><meta name="title" content="BPM Airfoil Self-Noise Tests, Cont. · AcousticAnalogies.jl"/><meta property="og:title" content="BPM Airfoil Self-Noise Tests, Cont. · AcousticAnalogies.jl"/><meta property="twitter:title" content="BPM Airfoil Self-Noise Tests, Cont. · AcousticAnalogies.jl"/><meta name="description" content="Documentation for AcousticAnalogies.jl."/><meta property="og:description" content="Documentation for AcousticAnalogies.jl."/><meta property="twitter:description" content="Documentation for AcousticAnalogies.jl."/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">AcousticAnalogies.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Introduction</a></li><li><a class="tocitem" href="../guided_example/">Guided Example</a></li><li><a class="tocitem" href="../ccblade_example/">CCBlade.jl Example</a></li><li><a class="tocitem" href="../writevtk_support/">WriteVTK.jl Support</a></li><li><a class="tocitem" href="../api/">API Reference</a></li><li><a class="tocitem" href="../sqa/">Software Quality Assurance</a></li><li><a class="tocitem" href="../bpm_tests1/">BPM Airfoil Self-Noise Tests</a></li><li class="is-active"><a class="tocitem" href>BPM Airfoil Self-Noise Tests, Cont.</a><ul class="internal"><li><a class="tocitem" href="#Brooks,-Pope,-and-Marcolini-Airfoil-Self-Noise-Tests,-Cont."><span>Brooks, Pope, and Marcolini Airfoil Self-Noise Tests, Cont.</span></a></li></ul></li><li><a class="tocitem" href="../bpm_tests3/">BPM Airfoil Self-Noise Tests, Cont.</a></li><li><a class="tocitem" href="../itr_tests1/">Ideally Twisted Rotor Tests</a></li><li><a class="tocitem" href="../itr_tests2/">Ideally Twisted Rotor Tests, Cont.</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>BPM Airfoil Self-Noise Tests, Cont.</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>BPM Airfoil Self-Noise Tests, Cont.</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/OpenMDAO/AcousticAnalogies.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/OpenMDAO/AcousticAnalogies.jl/blob/main/docs/src/bpm_tests2.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Software-Quality-Assurance,-Cont."><a class="docs-heading-anchor" href="#Software-Quality-Assurance,-Cont.">Software Quality Assurance, Cont.</a><a id="Software-Quality-Assurance,-Cont.-1"></a><a class="docs-heading-anchor-permalink" href="#Software-Quality-Assurance,-Cont." title="Permalink"></a></h1><h2 id="Brooks,-Pope,-and-Marcolini-Airfoil-Self-Noise-Tests,-Cont."><a class="docs-heading-anchor" href="#Brooks,-Pope,-and-Marcolini-Airfoil-Self-Noise-Tests,-Cont.">Brooks, Pope, and Marcolini Airfoil Self-Noise Tests, Cont.</a><a id="Brooks,-Pope,-and-Marcolini-Airfoil-Self-Noise-Tests,-Cont.-1"></a><a class="docs-heading-anchor-permalink" href="#Brooks,-Pope,-and-Marcolini-Airfoil-Self-Noise-Tests,-Cont." title="Permalink"></a></h2><h3 id="Laminar-Boundary-Layer-Vortex-Shedding-Tests"><a class="docs-heading-anchor" href="#Laminar-Boundary-Layer-Vortex-Shedding-Tests">Laminar Boundary Layer-Vortex Shedding Tests</a><a id="Laminar-Boundary-Layer-Vortex-Shedding-Tests-1"></a><a class="docs-heading-anchor-permalink" href="#Laminar-Boundary-Layer-Vortex-Shedding-Tests" title="Permalink"></a></h3><pre><code class="language-julia hljs">using AcousticAnalogies: AcousticAnalogies
+using ColorSchemes: colorschemes
+using DelimitedFiles: DelimitedFiles
+# using FLOWMath: linear
+using GLMakie
+
+# https://docs.makie.org/stable/examples/blocks/axis/index.html#logticks
+struct IntegerTicks end
+Makie.get_tickvalues(::IntegerTicks, vmin, vmax) = ceil(Int, vmin) : floor(Int, vmax)
+
+colors = colorschemes[:tab10]
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig; xlabel=&quot;Re_c&quot;, ylabel=&quot;Peak Strouhal number, St&#39;_peak&quot;,
+                       xscale=log10,
+                       xminorticksvisible=true,
+                       xminorticks=IntervalsBetween(9),
+                       xticks=LogTicks(IntegerTicks()),
+                       yscale=log10,
+                       yminorticksvisible=true,
+                       yminorticks=IntervalsBetween(9),
+                       yticks=LogTicks(IntegerTicks()))
+
+fname = joinpath(@__DIR__, &quot;..&quot;, &quot;..&quot;, &quot;test&quot;, &quot;bpm_data&quot;, &quot;brooks_airfoil_self_noise_and_prediction_1989&quot;, &quot;19890016302-figure86-St_1_prime.csv&quot;)
+bpm = DelimitedFiles.readdlm(fname, &#39;,&#39;)
+Re_c_bpm = bpm[:, 1]
+St_1_prime_bpm = bpm[:, 2]
+scatter!(ax1, Re_c_bpm, St_1_prime_bpm, color=colors[1], markersize=4, label=&quot;BPM&quot;)
+
+Re_c_jl = 10.0.^(range(4, 7; length=100))
+St_1_prime_jl = AcousticAnalogies.St_1_prime.(Re_c_jl)
+lines!(ax1, Re_c_jl, St_1_prime_jl, color=colors[1], label=&quot;Julia&quot;)
+
+xlims!(ax1, 1e4, 1e7)
+ylims!(ax1, 0.01, 1)
+axislegend(ax1, position=:lt)
+save(&quot;19890016302-figure86.png&quot;, fig)</code></pre><p><img src="../19890016302-figure86.png" alt/></p><pre><code class="language-julia hljs">using AcousticAnalogies: AcousticAnalogies
+using ColorSchemes: colorschemes
+using DelimitedFiles: DelimitedFiles
+# using FLOWMath: linear
+using GLMakie
+
+# https://docs.makie.org/stable/examples/blocks/axis/index.html#logticks
+struct IntegerTicks end
+Makie.get_tickvalues(::IntegerTicks, vmin, vmax) = ceil(Int, vmin) : floor(Int, vmax)
+
+colors = colorschemes[:tab10]
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig; xlabel=&quot;St&#39;/St&#39;_peak&quot;, ylabel=&quot;Function G_1 level, dB&quot;,
+                       xscale=log10,
+                       xminorticksvisible=true,
+                       xminorticks=IntervalsBetween(9),
+                       xticks=LogTicks(IntegerTicks()))
+
+fname = joinpath(@__DIR__, &quot;..&quot;, &quot;..&quot;, &quot;test&quot;, &quot;bpm_data&quot;, &quot;brooks_airfoil_self_noise_and_prediction_1989&quot;, &quot;19890016302-figure85-G1.csv&quot;)
+bpm = DelimitedFiles.readdlm(fname, &#39;,&#39;)
+e_bpm = bpm[:, 1]
+G1_bpm = bpm[:, 2]
+scatter!(ax1, e_bpm, G1_bpm, color=colors[1], markersize=4, label=&quot;BPM&quot;)
+
+e_jl = 10.0.^(range(-1, 1; length=101))
+G1_jl = AcousticAnalogies.G1.(e_jl)
+
+lines!(ax1, e_jl, G1_jl, color=colors[1], label=&quot;Julia&quot;)
+
+xlims!(ax1, 0.1, 10)
+ylims!(ax1, -30, 0)
+axislegend(ax1, position=:lt)
+save(&quot;19890016302-figure85.png&quot;, fig)</code></pre><p><img src="../19890016302-figure85.png" alt/></p><pre><code class="language-julia hljs">using AcousticAnalogies: AcousticAnalogies
+using ColorSchemes: colorschemes
+using DelimitedFiles: DelimitedFiles
+# using FLOWMath: linear
+using GLMakie
+
+# https://docs.makie.org/stable/examples/blocks/axis/index.html#logticks
+struct IntegerTicks end
+Makie.get_tickvalues(::IntegerTicks, vmin, vmax) = ceil(Int, vmin) : floor(Int, vmax)
+
+colors = colorschemes[:tab10]
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig; xlabel=&quot;alpha^*, deg&quot;, ylabel=&quot;St&#39;_peak/St&#39;_1&quot;,
+                       yscale=log10,
+                       yminorticksvisible=true,
+                       yminorticks=IntervalsBetween(9),
+                       yticks=LogTicks(IntegerTicks()))
+
+fname = joinpath(@__DIR__, &quot;..&quot;, &quot;..&quot;, &quot;test&quot;, &quot;bpm_data&quot;, &quot;brooks_airfoil_self_noise_and_prediction_1989&quot;, &quot;19890016302-figure87.csv&quot;)
+bpm = DelimitedFiles.readdlm(fname, &#39;,&#39;)
+alphastar_bpm = bpm[:, 1]
+St_peak_ratio_bpm = bpm[:, 2]
+scatter!(ax1, alphastar_bpm, St_peak_ratio_bpm, color=colors[1], markersize=4, label=&quot;BPM&quot;)
+
+St_1_prime = 0.25  # Just make up a value, since we&#39;re multiplying and then dividing by it anyway.
+alphastar_jl = range(0.0*pi/180, 7.0*pi/180; length=21)
+St_peak_ratio_jl = AcousticAnalogies.St_peak_prime.(St_1_prime, alphastar_jl)./St_1_prime
+lines!(ax1, alphastar_jl.*180/pi, St_peak_ratio_jl, color=colors[1], label=&quot;Julia&quot;)
+
+xlims!(ax1, 0, 7)
+ylims!(ax1, 0.5, 2)
+axislegend(ax1, position=:lt)
+save(&quot;19890016302-figure87.png&quot;, fig)</code></pre><p><img src="../19890016302-figure87.png" alt/></p><pre><code class="language-julia hljs">using AcousticAnalogies: AcousticAnalogies
+using ColorSchemes: colorschemes
+using DelimitedFiles: DelimitedFiles
+# using FLOWMath: linear
+using GLMakie
+
+# https://docs.makie.org/stable/examples/blocks/axis/index.html#logticks
+struct IntegerTicks end
+Makie.get_tickvalues(::IntegerTicks, vmin, vmax) = ceil(Int, vmin) : floor(Int, vmax)
+
+colors = colorschemes[:tab10]
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig; xlabel=&quot;Re_c/Re_c0&quot;, ylabel=&quot;G2 + G3&quot;,
+                       xscale=log10,
+                       xminorticksvisible=true,
+                       xminorticks=IntervalsBetween(9),
+                       xticks=LogTicks(IntegerTicks()))
+
+fname = joinpath(@__DIR__, &quot;..&quot;, &quot;..&quot;, &quot;test&quot;, &quot;bpm_data&quot;, &quot;brooks_airfoil_self_noise_and_prediction_1989&quot;, &quot;19890016302-figure88-G2-alpha0.csv&quot;)
+alphastar = 0.0*pi/180
+bpm = DelimitedFiles.readdlm(fname, &#39;,&#39;)
+Re_c_bpm = bpm[:, 1]
+G2_bpm = bpm[:, 2]
+scatter!(ax1, Re_c_bpm, G2_bpm, color=colors[1], markersize=4, label=&quot;BPM - α^* = $(alphastar*180/pi)°&quot;)
+
+Re_c_jl = 10.0.^range(log10(first(Re_c_bpm)), log10(last(Re_c_bpm)), length=51)
+Re_c0 = AcousticAnalogies.Re_c0(alphastar)
+Re_ratio_jl = Re_c_jl./Re_c0
+# G2_jl = AcousticAnalogies.G2.(Re_ratio_jl) .+ 171.04 .- 3.03*(alphastar*180/pi)
+G2_jl = AcousticAnalogies.G2.(Re_ratio_jl) .+ AcousticAnalogies.G3.(alphastar)
+lines!(ax1, Re_c_jl, G2_jl, color=colors[1], label=&quot;Julia - α^* = $(alphastar*180/pi)°&quot;)
+
+fname = joinpath(@__DIR__, &quot;..&quot;, &quot;..&quot;, &quot;test&quot;, &quot;bpm_data&quot;, &quot;brooks_airfoil_self_noise_and_prediction_1989&quot;, &quot;19890016302-figure88-G2-alpha6.csv&quot;)
+alphastar = 6.0*pi/180
+bpm = DelimitedFiles.readdlm(fname, &#39;,&#39;)
+Re_c_bpm = bpm[:, 1]
+G2_bpm = bpm[:, 2]
+scatter!(ax1, Re_c_bpm, G2_bpm, color=colors[2], markersize=4, label=&quot;BPM - α^* = $(alphastar*180/pi)°&quot;)
+
+Re_c_jl = 10.0.^range(log10(first(Re_c_bpm)), log10(last(Re_c_bpm)), length=51)
+Re_c0 = AcousticAnalogies.Re_c0(alphastar)
+Re_ratio_jl = Re_c_jl./Re_c0
+# G2_jl = AcousticAnalogies.G2.(Re_ratio_jl) .+ 171.04 .- 3.03*(alphastar*180/pi)
+G2_jl = AcousticAnalogies.G2.(Re_ratio_jl) .+ AcousticAnalogies.G3.(alphastar)
+lines!(ax1, Re_c_jl, G2_jl, color=colors[2], label=&quot;Julia - α^* = $(alphastar*180/pi)°&quot;)
+
+xlims!(ax1, 10^4, 10^7)
+ylims!(ax1, 125, 175)
+axislegend(ax1, position=:lt)
+save(&quot;19890016302-figure88.png&quot;, fig)</code></pre><p><img src="../19890016302-figure88.png" alt/></p><pre><code class="language-julia hljs">using AcousticAnalogies: AcousticAnalogies
+using ColorSchemes: colorschemes
+using DelimitedFiles: DelimitedFiles
+# using FLOWMath: linear
+using GLMakie
+
+# https://docs.makie.org/stable/examples/blocks/axis/index.html#logticks
+struct IntegerTicks end
+Makie.get_tickvalues(::IntegerTicks, vmin, vmax) = ceil(Int, vmin) : floor(Int, vmax)
+
+colors = colorschemes[:tab10]
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig; xlabel=&quot;Re_c/Re_c0&quot;, ylabel=&quot;G2&quot;,
+                       xscale=log10,
+                       xminorticksvisible=true,
+                       xminorticks=IntervalsBetween(9),
+                       xticks=LogTicks(IntegerTicks()))
+
+fname = joinpath(@__DIR__, &quot;..&quot;, &quot;..&quot;, &quot;test&quot;, &quot;bpm_data&quot;, &quot;brooks_airfoil_self_noise_and_prediction_1989&quot;, &quot;19890016302-figure89.csv&quot;)
+bpm = DelimitedFiles.readdlm(fname, &#39;,&#39;)
+Re_ratio_bpm = bpm[:, 1]
+G2_bpm = bpm[:, 2]
+scatter!(ax1, Re_ratio_bpm, G2_bpm, color=colors[1], markersize=4, label=&quot;BPM&quot;)
+
+Re_ratio_jl = 10.0.^range(-1, 1, length=51)
+G2_jl = AcousticAnalogies.G2.(Re_ratio_jl)
+lines!(ax1, Re_ratio_jl, G2_jl, color=colors[1], label=&quot;Julia&quot;)
+
+xlims!(ax1, 0.1, 100)
+ylims!(ax1, -45, 5)
+axislegend(ax1, position=:lt)
+save(&quot;19890016302-figure89.png&quot;, fig)</code></pre><p><img src="../19890016302-figure89.png" alt/></p><h3 id="Trailing-Edge-Bluntness-Vortex-Shedding-Tests"><a class="docs-heading-anchor" href="#Trailing-Edge-Bluntness-Vortex-Shedding-Tests">Trailing Edge Bluntness-Vortex Shedding Tests</a><a id="Trailing-Edge-Bluntness-Vortex-Shedding-Tests-1"></a><a class="docs-heading-anchor-permalink" href="#Trailing-Edge-Bluntness-Vortex-Shedding-Tests" title="Permalink"></a></h3><pre><code class="language-julia hljs">using AcousticAnalogies: AcousticAnalogies
+using AcousticMetrics: ExactThirdOctaveCenterBands
+using DelimitedFiles: DelimitedFiles
+using GLMakie
+
+# https://docs.makie.org/stable/examples/blocks/axis/index.html#logticks
+struct IntegerTicks end
+Makie.get_tickvalues(::IntegerTicks, vmin, vmax) = ceil(Int, vmin) : floor(Int, vmax)
+
+fname = joinpath(@__DIR__, &quot;..&quot;, &quot;..&quot;, &quot;test&quot;, &quot;bpm_data&quot;, &quot;brooks_airfoil_self_noise_and_prediction_1989&quot;, &quot;19890016302-figure95-0Psi.csv&quot;)
+bpm = DelimitedFiles.readdlm(fname, &#39;,&#39;)
+h_over_deltastar_0Psi = bpm[:, 1]
+St_3prime_peak_0Psi = bpm[:, 2]
+
+fname = joinpath(@__DIR__, &quot;..&quot;, &quot;..&quot;, &quot;test&quot;, &quot;bpm_data&quot;, &quot;brooks_airfoil_self_noise_and_prediction_1989&quot;, &quot;19890016302-figure95-14Psi.csv&quot;)
+bpm = DelimitedFiles.readdlm(fname, &#39;,&#39;)
+h_over_deltastar_14Psi = bpm[:, 1]
+St_3prime_peak_14Psi = bpm[:, 2]
+
+h_over_deltastar_jl = 10.0.^(range(-1, 1; length=51))
+St_3prime_peak_0Psi_jl = AcousticAnalogies.St_3prime_peak.(h_over_deltastar_jl, 0.0*pi/180)
+St_3prime_peak_14Psi_jl = AcousticAnalogies.St_3prime_peak.(h_over_deltastar_jl, 14.0*pi/180)
+
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig; xlabel=&quot;Thickness ratio, h/δ^*&quot;, ylabel=&quot;Peak Strouhal number, St&#39;&#39;&#39;_peak&quot;,
+                       xscale=log10,
+                       xminorticksvisible=true,
+                       xminorticks=IntervalsBetween(9),
+                       xticks=LogTicks(IntegerTicks()),
+                       yscale=log10,
+                       yminorticksvisible=true,
+                       yminorticks=IntervalsBetween(9),
+                       yticks=LogTicks(IntegerTicks()),
+                       title=&quot;Figure 95&quot;)
+
+scatter!(ax1, h_over_deltastar_0Psi, St_3prime_peak_0Psi; marker=&#39;o&#39;, label=&quot;Ψ = 0°, BPM&quot;)
+lines!(ax1, h_over_deltastar_jl, St_3prime_peak_0Psi_jl; label=&quot;Ψ = 0°, Julia&quot;)
+
+scatter!(ax1, h_over_deltastar_14Psi, St_3prime_peak_14Psi; marker=&#39;o&#39;, label=&quot;Ψ = 14°, BPM&quot;)
+lines!(ax1, h_over_deltastar_jl, St_3prime_peak_14Psi_jl; label=&quot;Ψ = 14°, Julia&quot;)
+
+xlims!(ax1, 0.2, 10.0)
+ylims!(ax1, 0.05, 0.3)
+axislegend(ax1, position=:rt)
+save(&quot;19890016302-figure95.png&quot;, fig)</code></pre><p><img src="../19890016302-figure95.png" alt/></p><pre><code class="language-julia hljs">using AcousticAnalogies: AcousticAnalogies
+using AcousticMetrics: ExactThirdOctaveCenterBands
+using DelimitedFiles: DelimitedFiles
+using GLMakie
+
+# https://docs.makie.org/stable/examples/blocks/axis/index.html#logticks
+struct IntegerTicks end
+Makie.get_tickvalues(::IntegerTicks, vmin, vmax) = ceil(Int, vmin) : floor(Int, vmax)
+
+fname = joinpath(@__DIR__, &quot;..&quot;, &quot;..&quot;, &quot;test&quot;, &quot;bpm_data&quot;, &quot;brooks_airfoil_self_noise_and_prediction_1989&quot;, &quot;19890016302-figure96-0Psi.csv&quot;)
+bpm = DelimitedFiles.readdlm(fname, &#39;,&#39;)
+h_over_deltastar_0Psi = bpm[:, 1]
+G4_0Psi = bpm[:, 2]
+
+fname = joinpath(@__DIR__, &quot;..&quot;, &quot;..&quot;, &quot;test&quot;, &quot;bpm_data&quot;, &quot;brooks_airfoil_self_noise_and_prediction_1989&quot;, &quot;19890016302-figure96-14Psi.csv&quot;)
+bpm = DelimitedFiles.readdlm(fname, &#39;,&#39;)
+h_over_deltastar_14Psi = bpm[:, 1]
+G4_14Psi = bpm[:, 2]
+
+h_over_deltastar_jl = 10.0.^(range(-1, 1; length=51))
+G4_0Psi_jl = AcousticAnalogies.G4.(h_over_deltastar_jl, 0.0*pi/180)
+G4_14Psi_jl = AcousticAnalogies.G4.(h_over_deltastar_jl, 14.0*pi/180)
+
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig; xlabel=&quot;Thickness ratio, h/δ^*&quot;, ylabel=&quot;Scaled peak SPL_1/3, dB&quot;,
+                       xscale=log10,
+                       xminorticksvisible=true,
+                       xminorticks=IntervalsBetween(9),
+                       xticks=LogTicks(IntegerTicks()),
+                       title=&quot;Figure 96&quot;)
+
+scatter!(ax1, h_over_deltastar_0Psi, G4_0Psi; marker=&#39;o&#39;, label=&quot;Ψ = 0°, BPM&quot;)
+lines!(ax1, h_over_deltastar_jl, G4_0Psi_jl; label=&quot;Ψ = 0°, Julia&quot;)
+
+scatter!(ax1, h_over_deltastar_14Psi, G4_14Psi; marker=&#39;o&#39;, label=&quot;Ψ = 14°, BPM&quot;)
+lines!(ax1, h_over_deltastar_jl, G4_14Psi_jl; label=&quot;Ψ = 14°, Julia&quot;)
+
+xlims!(ax1, 0.1, 10.0)
+ylims!(ax1, 110, 180)
+axislegend(ax1, position=:lt)
+save(&quot;19890016302-figure96.png&quot;, fig)</code></pre><p><img src="../19890016302-figure96.png" alt/></p><pre><code class="language-julia hljs">using AcousticAnalogies: AcousticAnalogies
+using AcousticMetrics: ExactThirdOctaveCenterBands
+using DelimitedFiles: DelimitedFiles
+using GLMakie
+
+# https://docs.makie.org/stable/examples/blocks/axis/index.html#logticks
+struct IntegerTicks end
+Makie.get_tickvalues(::IntegerTicks, vmin, vmax) = ceil(Int, vmin) : floor(Int, vmax)
+
+fname = joinpath(@__DIR__, &quot;..&quot;, &quot;..&quot;, &quot;test&quot;, &quot;bpm_data&quot;, &quot;brooks_airfoil_self_noise_and_prediction_1989&quot;, &quot;19890016302-figure97-Psi14-h_over_deltastar0p25.csv&quot;)
+bpm = DelimitedFiles.readdlm(fname, &#39;,&#39;)
+St_3prime_over_St_3prime_peak_0p25 = bpm[:, 1]
+G5_14Psi_h_over_deltastar_avg0p25 = bpm[:, 2]
+
+fname = joinpath(@__DIR__, &quot;..&quot;, &quot;..&quot;, &quot;test&quot;, &quot;bpm_data&quot;, &quot;brooks_airfoil_self_noise_and_prediction_1989&quot;, &quot;19890016302-figure97-Psi14-h_over_deltastar0p43.csv&quot;)
+bpm = DelimitedFiles.readdlm(fname, &#39;,&#39;)
+St_3prime_over_St_3prime_peak_0p43 = bpm[:, 1]
+G5_14Psi_h_over_deltastar_avg0p43 = bpm[:, 2]
+
+fname = joinpath(@__DIR__, &quot;..&quot;, &quot;..&quot;, &quot;test&quot;, &quot;bpm_data&quot;, &quot;brooks_airfoil_self_noise_and_prediction_1989&quot;, &quot;19890016302-figure97-Psi14-h_over_deltastar0p50.csv&quot;)
+bpm = DelimitedFiles.readdlm(fname, &#39;,&#39;)
+St_3prime_over_St_3prime_peak_0p50 = bpm[:, 1]
+G5_14Psi_h_over_deltastar_avg0p50 = bpm[:, 2]
+
+fname = joinpath(@__DIR__, &quot;..&quot;, &quot;..&quot;, &quot;test&quot;, &quot;bpm_data&quot;, &quot;brooks_airfoil_self_noise_and_prediction_1989&quot;, &quot;19890016302-figure97-Psi14-h_over_deltastar0p54.csv&quot;)
+bpm = DelimitedFiles.readdlm(fname, &#39;,&#39;)
+St_3prime_over_St_3prime_peak_0p54 = bpm[:, 1]
+G5_14Psi_h_over_deltastar_avg0p54 = bpm[:, 2]
+
+fname = joinpath(@__DIR__, &quot;..&quot;, &quot;..&quot;, &quot;test&quot;, &quot;bpm_data&quot;, &quot;brooks_airfoil_self_noise_and_prediction_1989&quot;, &quot;19890016302-figure97-Psi14-h_over_deltastar0p62.csv&quot;)
+bpm = DelimitedFiles.readdlm(fname, &#39;,&#39;)
+St_3prime_over_St_3prime_peak_0p62 = bpm[:, 1]
+G5_14Psi_h_over_deltastar_avg0p62 = bpm[:, 2]
+
+fname = joinpath(@__DIR__, &quot;..&quot;, &quot;..&quot;, &quot;test&quot;, &quot;bpm_data&quot;, &quot;brooks_airfoil_self_noise_and_prediction_1989&quot;, &quot;19890016302-figure97-Psi14-h_over_deltastar1p20.csv&quot;)
+bpm = DelimitedFiles.readdlm(fname, &#39;,&#39;)
+St_3prime_over_St_3prime_peak_1p20 = bpm[:, 1]
+G5_14Psi_h_over_deltastar_avg1p20 = bpm[:, 2]
+
+St_3prime_over_St_3prime_peak_jl = 10.0.^(range(-1, 10; length=1001))
+G5_14Psi_h_over_deltastar_avg0p25_jl = AcousticAnalogies.G5_Psi14.(0.25, St_3prime_over_St_3prime_peak_jl)
+G5_14Psi_h_over_deltastar_avg0p43_jl = AcousticAnalogies.G5_Psi14.(0.43, St_3prime_over_St_3prime_peak_jl)
+G5_14Psi_h_over_deltastar_avg0p50_jl = AcousticAnalogies.G5_Psi14.(0.50, St_3prime_over_St_3prime_peak_jl)
+G5_14Psi_h_over_deltastar_avg0p54_jl = AcousticAnalogies.G5_Psi14.(0.54, St_3prime_over_St_3prime_peak_jl)
+G5_14Psi_h_over_deltastar_avg0p62_jl = AcousticAnalogies.G5_Psi14.(0.62, St_3prime_over_St_3prime_peak_jl)
+G5_14Psi_h_over_deltastar_avg1p20_jl = AcousticAnalogies.G5_Psi14.(1.20, St_3prime_over_St_3prime_peak_jl)
+
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig; xlabel=&quot;Strouhal ratio, St&#39;&#39;&#39;/St&#39;&#39;&#39;_peak&quot;, ylabel=&quot;G_5, Ψ=14°&quot;,
+                       xscale=log10,
+                       xminorticksvisible=true,
+                       xminorticks=IntervalsBetween(9),
+                       xticks=LogTicks(IntegerTicks()),
+                       title=&quot;Figure 97a&quot;)
+
+scatter!(ax1, St_3prime_over_St_3prime_peak_0p25, G5_14Psi_h_over_deltastar_avg0p25; label=&quot;h/δ^* = 0.25, BPM&quot;, marker=&#39;o&#39;)
+lines!(ax1, St_3prime_over_St_3prime_peak_jl, G5_14Psi_h_over_deltastar_avg0p25_jl; label=&quot;h/δ^* = 0.25, Julia&quot;)
+
+scatter!(ax1, St_3prime_over_St_3prime_peak_0p43, G5_14Psi_h_over_deltastar_avg0p43; label=&quot;h/δ^* = 0.43, BPM&quot;, marker=&#39;o&#39;)
+lines!(ax1, St_3prime_over_St_3prime_peak_jl, G5_14Psi_h_over_deltastar_avg0p43_jl; label=&quot;h/δ^* = 0.43, Julia&quot;)
+
+scatter!(ax1, St_3prime_over_St_3prime_peak_0p50, G5_14Psi_h_over_deltastar_avg0p50; label=&quot;h/δ^* = 0.50, BPM&quot;, marker=&#39;o&#39;)
+lines!(ax1, St_3prime_over_St_3prime_peak_jl, G5_14Psi_h_over_deltastar_avg0p50_jl; label=&quot;h/δ^* = 0.50, Julia&quot;)
+
+scatter!(ax1, St_3prime_over_St_3prime_peak_0p54, G5_14Psi_h_over_deltastar_avg0p54; label=&quot;h/δ^* = 0.54, BPM&quot;, marker=&#39;o&#39;)
+lines!(ax1, St_3prime_over_St_3prime_peak_jl, G5_14Psi_h_over_deltastar_avg0p54_jl; label=&quot;h/δ^* = 0.54, Julia&quot;)
+
+scatter!(ax1, St_3prime_over_St_3prime_peak_0p62, G5_14Psi_h_over_deltastar_avg0p62; label=&quot;h/δ^* = 0.62, BPM&quot;, marker=&#39;o&#39;)
+lines!(ax1, St_3prime_over_St_3prime_peak_jl, G5_14Psi_h_over_deltastar_avg0p62_jl; label=&quot;h/δ^* = 0.62, Julia&quot;)
+
+scatter!(ax1, St_3prime_over_St_3prime_peak_1p20, G5_14Psi_h_over_deltastar_avg1p20; label=&quot;h/δ^* = 1.20, BPM&quot;, marker=&#39;o&#39;)
+lines!(ax1, St_3prime_over_St_3prime_peak_jl, G5_14Psi_h_over_deltastar_avg1p20_jl; label=&quot;h/δ^* = 1.20, Julia&quot;)
+
+xlims!(ax1, 0.1, 10.0)
+ylims!(ax1, -30, 10)
+axislegend(ax1, position=:rt)
+save(&quot;19890016302-figure97a.png&quot;, fig)</code></pre><p><img src="../19890016302-figure97a.png" alt/></p><pre><code class="language-julia hljs">using AcousticAnalogies: AcousticAnalogies
+using AcousticMetrics: ExactThirdOctaveCenterBands
+using DelimitedFiles: DelimitedFiles
+using GLMakie
+
+# https://docs.makie.org/stable/examples/blocks/axis/index.html#logticks
+struct IntegerTicks end
+Makie.get_tickvalues(::IntegerTicks, vmin, vmax) = ceil(Int, vmin) : floor(Int, vmax)
+
+fname = joinpath(@__DIR__, &quot;..&quot;, &quot;..&quot;, &quot;test&quot;, &quot;bpm_data&quot;, &quot;brooks_airfoil_self_noise_and_prediction_1989&quot;, &quot;19890016302-figure97-Psi0-h_over_deltastar0p25.csv&quot;)
+bpm = DelimitedFiles.readdlm(fname, &#39;,&#39;)
+St_3prime_over_St_3prime_peak_0p25 = bpm[:, 1]
+G5_0Psi_h_over_deltastar_avg0p25 = bpm[:, 2]
+
+fname = joinpath(@__DIR__, &quot;..&quot;, &quot;..&quot;, &quot;test&quot;, &quot;bpm_data&quot;, &quot;brooks_airfoil_self_noise_and_prediction_1989&quot;, &quot;19890016302-figure97-Psi0-h_over_deltastar0p43.csv&quot;)
+bpm = DelimitedFiles.readdlm(fname, &#39;,&#39;)
+St_3prime_over_St_3prime_peak_0p43 = bpm[:, 1]
+G5_0Psi_h_over_deltastar_avg0p43 = bpm[:, 2]
+
+fname = joinpath(@__DIR__, &quot;..&quot;, &quot;..&quot;, &quot;test&quot;, &quot;bpm_data&quot;, &quot;brooks_airfoil_self_noise_and_prediction_1989&quot;, &quot;19890016302-figure97-Psi0-h_over_deltastar0p50.csv&quot;)
+bpm = DelimitedFiles.readdlm(fname, &#39;,&#39;)
+St_3prime_over_St_3prime_peak_0p50 = bpm[:, 1]
+G5_0Psi_h_over_deltastar_avg0p50 = bpm[:, 2]
+
+fname = joinpath(@__DIR__, &quot;..&quot;, &quot;..&quot;, &quot;test&quot;, &quot;bpm_data&quot;, &quot;brooks_airfoil_self_noise_and_prediction_1989&quot;, &quot;19890016302-figure97-Psi0-h_over_deltastar0p54.csv&quot;)
+bpm = DelimitedFiles.readdlm(fname, &#39;,&#39;)
+St_3prime_over_St_3prime_peak_0p54 = bpm[:, 1]
+G5_0Psi_h_over_deltastar_avg0p54 = bpm[:, 2]
+
+# fname = joinpath(@__DIR__, &quot;..&quot;, &quot;..&quot;, &quot;test&quot;, &quot;bpm_data&quot;, &quot;brooks_airfoil_self_noise_and_prediction_1989&quot;, &quot;19890016302-figure97-Psi0-h_over_deltastar0p62.csv&quot;)
+# bpm = DelimitedFiles.readdlm(fname, &#39;,&#39;)
+# St_3prime_over_St_3prime_peak_0p62 = bpm[:, 1]
+# G5_0Psi_h_over_deltastar_avg0p62 = bpm[:, 2]
+
+fname = joinpath(@__DIR__, &quot;..&quot;, &quot;..&quot;, &quot;test&quot;, &quot;bpm_data&quot;, &quot;brooks_airfoil_self_noise_and_prediction_1989&quot;, &quot;19890016302-figure97-Psi0-h_over_deltastar1p20.csv&quot;)
+bpm = DelimitedFiles.readdlm(fname, &#39;,&#39;)
+St_3prime_over_St_3prime_peak_1p20 = bpm[:, 1]
+G5_0Psi_h_over_deltastar_avg1p20 = bpm[:, 2]
+
+St_3prime_over_St_3prime_peak_jl = 10.0.^(range(-1, 10; length=1001))
+G5_0Psi_h_over_deltastar_avg0p25_jl = AcousticAnalogies.G5_Psi0.(0.25, St_3prime_over_St_3prime_peak_jl)
+G5_0Psi_h_over_deltastar_avg0p43_jl = AcousticAnalogies.G5_Psi0.(0.43, St_3prime_over_St_3prime_peak_jl)
+G5_0Psi_h_over_deltastar_avg0p50_jl = AcousticAnalogies.G5_Psi0.(0.50, St_3prime_over_St_3prime_peak_jl)
+G5_0Psi_h_over_deltastar_avg0p54_jl = AcousticAnalogies.G5_Psi0.(0.54, St_3prime_over_St_3prime_peak_jl)
+# G5_0Psi_h_over_deltastar_avg0p62_jl = AcousticAnalogies.G5_Psi0.(0.62, St_3prime_over_St_3prime_peak_jl)
+G5_0Psi_h_over_deltastar_avg1p20_jl = AcousticAnalogies.G5_Psi0.(1.20, St_3prime_over_St_3prime_peak_jl)
+
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig; xlabel=&quot;Strouhal ratio, St&#39;&#39;&#39;/St&#39;&#39;&#39;_peak&quot;, ylabel=&quot;G_5, Ψ=0°&quot;,
+                       xscale=log10,
+                       xminorticksvisible=true,
+                       xminorticks=IntervalsBetween(9),
+                       xticks=LogTicks(IntegerTicks()),
+                       title=&quot;Figure 97b&quot;)
+
+scatter!(ax1, St_3prime_over_St_3prime_peak_0p25, G5_0Psi_h_over_deltastar_avg0p25; label=&quot;h/δ^* = 0.25, BPM&quot;, marker=&#39;o&#39;)
+lines!(ax1, St_3prime_over_St_3prime_peak_jl, G5_0Psi_h_over_deltastar_avg0p25_jl; label=&quot;h/δ^* = 0.25, Julia&quot;)
+
+scatter!(ax1, St_3prime_over_St_3prime_peak_0p43, G5_0Psi_h_over_deltastar_avg0p43; label=&quot;h/δ^* = 0.43, BPM&quot;, marker=&#39;o&#39;)
+lines!(ax1, St_3prime_over_St_3prime_peak_jl, G5_0Psi_h_over_deltastar_avg0p43_jl; label=&quot;h/δ^* = 0.43, Julia&quot;)
+
+scatter!(ax1, St_3prime_over_St_3prime_peak_0p50, G5_0Psi_h_over_deltastar_avg0p50; label=&quot;h/δ^* = 0.50, BPM&quot;, marker=&#39;o&#39;)
+lines!(ax1, St_3prime_over_St_3prime_peak_jl, G5_0Psi_h_over_deltastar_avg0p50_jl; label=&quot;h/δ^* = 0.50, Julia&quot;)
+
+scatter!(ax1, St_3prime_over_St_3prime_peak_0p54, G5_0Psi_h_over_deltastar_avg0p54; label=&quot;h/δ^* = 0.54, BPM&quot;, marker=&#39;o&#39;)
+lines!(ax1, St_3prime_over_St_3prime_peak_jl, G5_0Psi_h_over_deltastar_avg0p54_jl; label=&quot;h/δ^* = 0.54, Julia&quot;)
+
+# scatter!(ax1, St_3prime_over_St_3prime_peak_0p62, G5_0Psi_h_over_deltastar_avg0p62; label=&quot;h/δ^* = 0.62, BPM&quot;, marker=&#39;o&#39;)
+# lines!(ax1, St_3prime_over_St_3prime_peak_jl, G5_0Psi_h_over_deltastar_avg0p62_jl; label=&quot;h/δ^* = 0.62, Julia&quot;)
+
+scatter!(ax1, St_3prime_over_St_3prime_peak_1p20, G5_0Psi_h_over_deltastar_avg1p20; label=&quot;h/δ^* = 1.20, BPM&quot;, marker=&#39;o&#39;)
+lines!(ax1, St_3prime_over_St_3prime_peak_jl, G5_0Psi_h_over_deltastar_avg1p20_jl; label=&quot;h/δ^* = 1.20, Julia&quot;)
+
+xlims!(ax1, 0.1, 10.0)
+ylims!(ax1, -30, 10)
+axislegend(ax1, position=:rt)
+save(&quot;19890016302-figure97b.png&quot;, fig)</code></pre><p><img src="../19890016302-figure97b.png" alt/></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../bpm_tests1/">« BPM Airfoil Self-Noise Tests</a><a class="docs-footer-nextpage" href="../bpm_tests3/">BPM Airfoil Self-Noise Tests, Cont. »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.5.0 on <span class="colophon-date" title="Friday 9 August 2024 13:05">Friday 9 August 2024</span>. Using Julia version 1.10.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
