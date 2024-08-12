@@ -7,10 +7,6 @@ using SHA: sha1
 using StaticArrays: @SVector
 using Test
 
-function to_cf1a(se)
-    return CompactF1ASourceElement(se.ρ0, se.c0, se.Δr, se.Λ, se.y0dot, se.y1dot, se.y2dot, se.y3dot, se.f0dot, se.f1dot, se.τ, se.u)
-end
-
 @testset "WriteVTK tests" begin
 
     @testset "Compact F1A source elements" begin
@@ -18,8 +14,7 @@ end
 
         ses = nothing
         JLD2.jldopen(fname, "r") do file
-            # Renaming CompactSourceElement to CompactF1ASourceElement breaks reconstructing the source elements from the jld2file.
-            ses = to_cf1a.(file["ses"])
+            ses = file["ses"]
         end
 
         name = "cf1a"
@@ -46,8 +41,7 @@ end
 
         ses = nothing
         JLD2.jldopen(fname, "r") do file
-            # Renaming CompactSourceElement to CompactF1ASourceElement breaks reconstructing the source elements from the jld2file.
-            ses = to_cf1a.(file["ses"])
+            ses = file["ses"]
         end
 
         obs1 = AcousticAnalogies.ConstVelocityAcousticObserver(0.0, @SVector([0, 2.0, 0]), @SVector([5.0, 0.0, 0.0]))
@@ -92,8 +86,7 @@ end
 
         ses = nothing
         JLD2.jldopen(fname, "r") do file
-            # Renaming CompactSourceElement to CompactF1ASourceElement breaks reconstructing the source elements from the jld2file.
-            ses = to_cf1a.(file["ses"])
+            ses = file["ses"]
         end
 
         # Split the array into "blocks."
