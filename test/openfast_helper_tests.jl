@@ -1,81 +1,47 @@
 module OpenFASTHelperTests
 
-using AcousticAnalogies
-using Statistics: mean
-using Test
+using SafeTestsets: @safetestset
+using Test: @testset
 
-@testset "OpenFAST reader test" begin
 
-    @testset "default" begin
-        fname = joinpath(@__DIR__, "gen_test_data", "openfast_data", "IEA-3.4-130-RWT-small.out")
+@testset "OpenFAST reader tests" begin
 
-        data = read_openfast_file(fname)
-        num_times = length(data.time)
-        num_blades = size(data.pitch, 2)
-        num_radial = size(data.axial_loading, 2)
-        @test size(data.time) == (num_times,)
-        @test size(data.v) == (num_times,)
-        @test size(data.azimuth) == (num_times,)
-        @test size(data.omega) == (num_times,)
-        @test size(data.pitch) == (num_times, num_blades)
-        @test size(data.axial_loading) == (num_times, num_radial, num_blades)
-        @test size(data.circum_loading) == (num_times, num_radial, num_blades)
+    @testset "reading" begin
+        @safetestset "default" begin
+            include("openfast_reading_default.jl")
+        end
 
-        @test all(data.time .≈ (60.0:0.01:60.1))
-        @test all(data.v .≈ 7)
-        @test all(data.pitch .≈ 0)
-        # Just some coarse tests.
-        @test mean(data.omega) ≈ 8.126818181818182
-        @test mean(data.axial_loading) ≈ 1632.1274949494953
-        @test mean(data.circum_loading) ≈ -217.45748949494939
+        @safetestset "different time column name" begin
+            include("openfast_reading_different_time_column_name.jl")
+        end
+
+        @safetestset "no units header" begin
+            include("openfast_reading_no_units_header.jl")
+        end
     end
 
-    @testset "different time column name" begin
-        fname = joinpath(@__DIR__, "gen_test_data", "openfast_data", "IEA-3.4-130-RWT-small-FooTime.out")
+    @testset "radial interpolation" begin
+        @safetestset "linear" begin
+            include("openfast_radial_interpolation_linear.jl")
+        end
 
-        data = read_openfast_file(fname; header_keyword="FooTime")
-        num_times = length(data.time)
-        num_blades = size(data.pitch, 2)
-        num_radial = size(data.axial_loading, 2)
-        @test size(data.time) == (num_times,)
-        @test size(data.v) == (num_times,)
-        @test size(data.azimuth) == (num_times,)
-        @test size(data.omega) == (num_times,)
-        @test size(data.pitch) == (num_times, num_blades)
-        @test size(data.axial_loading) == (num_times, num_radial, num_blades)
-        @test size(data.circum_loading) == (num_times, num_radial, num_blades)
-
-        @test all(data.time .≈ (60.0:0.01:60.1))
-        @test all(data.v .≈ 7)
-        @test all(data.pitch .≈ 0)
-        # Just some coarse tests.
-        @test mean(data.omega) ≈ 8.126818181818182
-        @test mean(data.axial_loading) ≈ 1632.1274949494953
-        @test mean(data.circum_loading) ≈ -217.45748949494939
+        @safetestset "akima" begin
+            include("openfast_radial_interpolation_akima.jl")
+        end
     end
 
-    @testset "nu units header" begin
-        fname = joinpath(@__DIR__, "gen_test_data", "openfast_data", "IEA-3.4-130-RWT-small-no_units.out")
+    @testset "time derivatives" begin
+        @safetestset "constant time step" begin
+            include("openfast_time_derivatives_constant_time_step.jl")
+        end
 
-        data = read_openfast_file(fname; has_units_header=false)
-        num_times = length(data.time)
-        num_blades = size(data.pitch, 2)
-        num_radial = size(data.axial_loading, 2)
-        @test size(data.time) == (num_times,)
-        @test size(data.v) == (num_times,)
-        @test size(data.azimuth) == (num_times,)
-        @test size(data.omega) == (num_times,)
-        @test size(data.pitch) == (num_times, num_blades)
-        @test size(data.axial_loading) == (num_times, num_radial, num_blades)
-        @test size(data.circum_loading) == (num_times, num_radial, num_blades)
-
-        @test all(data.time .≈ (60.0:0.01:60.1))
-        @test all(data.v .≈ 7)
-        @test all(data.pitch .≈ 0)
-        # Just some coarse tests.
-        @test mean(data.omega) ≈ 8.126818181818182
-        @test mean(data.axial_loading) ≈ 1632.1274949494953
-        @test mean(data.circum_loading) ≈ -217.45748949494939
+        @safetestset "non-constant time step" begin
+            include("openfast_time_derivatives_nonconstant_time_step.jl")
+        end
+        
+        @safetestset "no time diff" begin
+            include("openfast_time_derivatives_nonconstant_time_step_no_diff.jl")
+        end
     end
 
 end

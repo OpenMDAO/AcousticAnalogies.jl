@@ -5,6 +5,7 @@ function doit()
     IN_CI = get(ENV, "CI", nothing)=="true"
 
     makedocs(sitename="AcousticAnalogies.jl", modules=[AcousticAnalogies], doctest=false,
+             root=@__DIR__,
              format=Documenter.HTML(prettyurls=IN_CI),
              pages=["Introduction"=>"index.md",
                     "Guided Example"=>"guided_example.md",
