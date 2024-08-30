@@ -31,7 +31,7 @@ Next, we set the user-defined inputs:
 * blade spanwise grid in m and the corresponding chord, also in m. The two arrays are specified in the AeroDyn15 blade input file
 * Observer location in the global coordinate frame (located at the rotor center, x points downwind, z points vertically up, and y points sideways). In this case we picked the IEC-prescribed location (turbine height on the ground) by specifying the hub height of 110 m.
 * Air density and speed of sound
-* Path to the OpenFAST .out file. The file must contain these channels: Time (always available), Wind1VelX from InflowWind, RotSpeed from ElastoDyn, Nodal outputs Fxl and Fyl from AeroDyn15. the file is available in the repo under test/gen_test_data/openfast_data
+* Path to the OpenFAST .out file. The file must contain these channels: Time (always available), Wind1VelX from InflowWind, RotSpeed from ElastoDyn, Nodal outputs Fxl and Fyl from AeroDyn15. the file is available in the repo under `test/gen_test_data/openfast_data`.
 
 ```@example first_example
 # num_blades = 3
@@ -63,23 +63,25 @@ cs_area = cs_area_over_chord_squared .* Chord.^2
 nothing # hide
 ```
 
-Next, we'll use the [`read_openfast_file`](@ref) function to read the OpenFAST output file.
-This will read the data in the file, but also do a bit of processing necessary for an acoustic prediction. 
+Next, we'll use the [`read_openfast_file`](@ref) function to read the OpenFAST output file:
+
+```@example first_example
+# Read the data from the file and create an `OpenFASTData` object, a simple struct with fields like `time`, `omega`, `axial_loading`, etc.
+data = AcousticAnalogies.read_openfast_file(file_path, RSpn, cs_area; average_freestream_vel=true, average_omega=true)
+nothing # hide
+```
+
+That will read the data in the file, but also do a bit of processing necessary for an acoustic prediction. 
 Specifically, it will...
 
-  * interpolate the cross-sectional area and loading from the blade element interfaces to the cell centers
-  * use second-order finite differences to differentiate the loading with respect to time.
+  * interpolate the cross-sectional area and loading from the blade element interfaces to the cell centers,
+  * use second-order finite differences to differentiate the loading with respect to time,
   * average the freestream velocity and RPM (if `average_freestream_vel` or `average_omega` keyword arguments are `true`)
 
 The [`read_openfast_file` doc string](@ref read_openfast_file) has more information.
 
 The output of `read_openfast_file` is a `OpenFASTData` `struct` that has fields like `time`, `omega`, `axial_loading`, etc. that are read from the output file, and also fields like `radii_mid`, `circum_loading_mid_dot` that are created after the output file is read.
 Check out the [`OpenFASTData` doc string](@ref OpenFASTData) for a list of all the fields.
-
-```@example first_example
-# Read the data from the file and create an `OpenFASTData` object, a simple struct with fields like `time`, `omega`, `axial_loading`, etc.
-data = AcousticAnalogies.read_openfast_file(file_path, RSpn, cs_area; average_freestream_vel=true, average_omega=true)
-```
 
 We can get the averaged rotation rate value from the `OpenFASTData` `struct` this way:
 
@@ -211,7 +213,7 @@ nothing # hide
 Now, the next step is to turn the OpenFAST data into source elements.
 This step is pretty easy, since there is a function called [`f1a_source_elements_openfast`](@ref f1a_source_elements_openfast) that takes the `OpenFASTData` `struct` and a few other parameters and will create the source elements for us.
 But first we need to think about the coordinate system we'd like our source elements to be in.
-Eventually, we want the turbine blades to be rotating about the positive x axis, with the freestream velocity pointing in the positive x axis.
+Eventually, we want the turbine blades to be rotating about the positive x axis, with the freestream velocity pointing in the positive x axis direction.
 But there are two things we need to account for to make that happen:
 
   * To do a proper noise prediction, AcousticAnalogies.jl needs the source elements' motion to be defined in a reference frame relative to the ambient fluid, not the ground.
@@ -219,12 +221,12 @@ But there are two things we need to account for to make that happen:
     So instead of having blade elements that are only rotating about a fixed hub position relative to the ground in a freestream pointed in the positive x direction, we will have the blade elements translate in the *negative* x direction as they rotate, with no freestream velocity.
   * The `f1a_source_elements_openfast` routine puts the source elements in the Standard AcousticAnalogies.jl Reference Frame™, where the source elements 
 
-    * begin with the hub (rotation center) at `x = 0` at source time `t = 0`
-    * rotate about either the positive x or negative x axis (depending on the value of the `positive_x_rotation` argument).
-    * translate in the positive x direction,
+    * begin with the hub (rotation center) at coordinate system origin at source time `t = 0`,
+    * rotate about either the positive x or negative x axis (depending on the value of the `positive_x_rotation` argument),
+    * translate in the positive x direction.
 
 So, to make all this work, we'll initially have the source elements translate in the positive x direction (as required by `f1a_source_elements_openfast`) and rotate about the *negative* x axis.
-Then we'll rotate the source elements 180° about the y axis, which will mean they will be translating in the negative x axis, rotating about the positive y axis, just like what we intend.
+Then we'll rotate the source elements 180° about the y axis, which will mean they will be translating in the negative x axis, rotating about the positive x axis, just like what we intend.
 
 So, here's the first step: create the source elements from the `OpenFASTData` `struct`, where they'll be rotating about the negative x axis, translating along the positive x axis.
 
@@ -234,7 +236,7 @@ ses_before_roty = AcousticAnalogies.f1a_source_elements_openfast(data, rho, c0, 
 nothing # hide
 ```
 
-The `f1a_source_elements_openfast` returns an array of [`CompactF1ASourceElement`] `structs`.
+The `f1a_source_elements_openfast` returns an array of [`CompactF1ASourceElement`](@ref) `structs`.
 The array is of size `(num_times, num_radial, num_blades)`, where `ses[i, j, k]` refers to the source element of the `i`th time step, `j`th radial position, and `k`th blade:
 
 ```@example first_example
@@ -258,7 +260,7 @@ nothing # hide
 
 ## Defining the Observer
 The last thing we need before we can perform the noise prediction is an acoustic observer.
-The observer is just the computational equivalent of the microphone.
+The observer is just the computational equivalent of the microphone—a fictitious, possibly moving point in space that will "receive" the noise produced by each source element.
 In this case we picked the IEC-prescribed location (turbine height on the ground) by specifying the hub height of 110 m.
 So we need the observer to be 110 m below the hub.
 We'll also have the observer positioned downstream of the turbine rotation plane by a certain amount.
@@ -343,6 +345,8 @@ That's hard to see in the previous animation, but if we switch our perspective t
 
 ![LoadingY, Downstream](assets/openfast_example_with_obs-downstream_view-loading_y-0to6000-compressed.gif)
 
+Both the blade hub and the observer appear to be moving in the `y=0` plane.
+
 ## Noise Prediction
 Now we're finally ready to do a noise prediction!
 The relevant function for that is [`noise`](@ref), which takes in a source element and observer and returns an [`F1AOutput`](@ref) `struct`, representing the acoustic pressure experienced by the observer due to the source:
@@ -363,10 +367,10 @@ nothing # hide
 
 We now have a noise prediction for each of the individual source elements in `ses` at the acoustic observer obs—specifically, `apth[i, j, k]` represents the acoustic pressure for the `i` time step, `j` radial location, and `k` blade.
 What we ultimately want is the total noise prediction at `obs`—we want to add all the acoustic pressures for each time level in `apth` together. 
-But we can't add them directly, yet, since the observer times, the time at which each source's noise reaches the observer, are not all the same.
-What we need to do is first interpolate the acoustic pressure time history of each source onto a common observer time grid, and then add them up. 
+But we can't add them directly, yet, since the observer times—the time at which each source's noise reaches the observer—are not all the same.
+What we need to do is first interpolate the acoustic pressure time history of each source onto a common series of observer time levels, and then add them up. 
 We'll do this using the [`combine`](@ref) function.
-First, we need to decide on the length of the observer time grid and how many points it will contain.
+First, we need to decide on the length of the observer time series and how many points it will contain.
 If the motion and loading of the blades was steady, then one blade pass would be sufficient, but for this example that is not the case, so we'll use a longer observer time:
 
 ```@example first_example
