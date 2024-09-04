@@ -22,7 +22,7 @@ function doit()
                    ])
 
     if IN_CI
-        deploydocs(repo="github.com/OpenMDAO/AcousticAnalogies.jl.git", devbranch="main", push_preview=true)
+        deploydocs(repo="github.com/OpenMDAO/AcousticAnalogies.jl.git", devbranch="main")
     end
 
 end
