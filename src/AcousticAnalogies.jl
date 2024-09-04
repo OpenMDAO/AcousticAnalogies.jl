@@ -1,17 +1,19 @@
 module AcousticAnalogies
 
 using AcousticMetrics: AcousticMetrics
-# using BPM: BPM
 using CCBlade: CCBlade
+using CSV: CSV
+using DataFrames: DataFrames
 using FillArrays: Fill
-using FLOWMath: akima, linear, ksmax, norm_cs_safe, dot_cs_safe, atan_cs_safe, abs_cs_safe
+using FLOWMath: FLOWMath, akima, linear, ksmax, norm_cs_safe, dot_cs_safe, atan_cs_safe, abs_cs_safe
 using FlexiMaps: mapview
 using Format: format, FormatExpr
 using JuliennedArrays: JuliennedArrays
 using KinematicCoordinateTransformations: KinematicTransformation, SteadyRotXTransformation, ConstantVelocityTransformation, compose
 using LinearAlgebra: cross, norm, mul!
 using Meshes: Meshes
-using StaticArrays: @SVector
+using StaticArrays: @SVector, SVector
+using Statistics: mean
 using WriteVTK: WriteVTK
 
 include("utils.jl")
@@ -61,7 +63,13 @@ export f1a_source_elements_ccblade, tblte_source_elements_ccblade, lblvs_source_
 
 include("bpm_test_utils.jl")
 
+include("openfast_helpers.jl")
+export AbstractTimeDerivMethod, NoTimeDerivMethod, SecondOrderFiniteDiff, calculate_loading_dot!
+export AbstractRadialInterpMethod, FLOWLinearInterp, FLOWAkimaInterp, interpolate_to_cell_centers!
+export OpenFASTData, read_openfast_file, f1a_source_elements_openfast
+
 include("writevtk.jl")
+export to_paraview_collection
 
 include("deprecated.jl")
 

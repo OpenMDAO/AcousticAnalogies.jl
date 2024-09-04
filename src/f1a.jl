@@ -69,6 +69,51 @@ function CompactF1ASourceElement(ρ0, c0, r, θ, Δr, Λ, fn, fr, fc, τ)
 end
 
 """
+    CompactF1ASourceElement(ρ0, c0, r, θ, Δr, Λ, fn, fndot, fr, frdot, fc, fcdot, τ)
+
+Construct a source element to be used with the compact form of Farassat's formulation 1A, using position and loading data expressed in a cylindrical coordinate system.
+
+The `r` and `θ` arguments are used to define the radial and circumferential position of the source element in a cylindrical coordinate system.
+Likewise, the `fn`, `fr`, and `fc` arguments are used to define the normal, radial, and circumferential loading per unit span *on the fluid* (in a reference frame moving with the element) in the same cylindrical coordinate system.
+The `fndot`, `frdot`, and `fcdot` arguments are the time-derivative of the normal, radial, and circumferential loading per unit span, again *on the fluid* and in a reference frame moving with the element, in the cylindrical coordinate system.
+The cylindrical coordinate system is defined as follows:
+
+  * The normal axial direction is in the positive x axis
+  * The circumferential/azimuth angle `θ` is defined such that `θ = 0` means the radial direction is aligned with the positive y axis, and a positive `θ` indicates a right-handed rotation around the positive x axis.
+
+Note that, for a proper noise prediction, the source element needs to be transformed into the "global" frame, aka, the reference frame of the fluid.
+This can be done easily with the transformations provided by the `KinematicCoordinateTransformations` package, or manually by modifying the components of the source element struct.
+
+# Arguments
+- ρ0: Ambient air density (kg/m^3)
+- c0: Ambient speed of sound (m/s)
+- r: radial coordinate of the element in the blade-fixed coordinate system (m)
+- θ: angular offest of the element in the blade-fixed coordinate system (rad)
+- Δr: length of the element (m)
+- Λ: cross-sectional area of the element (m^2)
+- fn: normal load per unit span *on the fluid* (N/m)
+- fndot: time derivative of the normal load per unit span *on the fluid* (N/(m*s))
+- fr: radial load *on the fluid* (N/m)
+- frdot: time derivative of the radial load *on the fluid* (N/(m*s))
+- fc: circumferential load *on the fluid* (N/m)
+- fcdot: time derivative of the circumferential load *on the fluid* (N/(m*s))
+- τ: source time (s)
+"""
+function CompactF1ASourceElement(ρ0, c0, r, θ, Δr, Λ, fn, fndot, fr, frdot, fc, fcdot, τ)
+    s, c = sincos(θ)
+    y0dot = @SVector [0, r*c, r*s]
+    T = eltype(y0dot)
+    y1dot = @SVector zeros(T, 3)
+    y2dot = @SVector zeros(T, 3)
+    y3dot = @SVector zeros(T, 3)
+    f0dot = @SVector [fn, c*fr - s*fc, s*fr + c*fc]
+    f1dot = @SVector [fndot, c*frdot - s*fcdot, s*frdot + c*fcdot]
+    span_uvec = @SVector [0, c, s]
+
+    return CompactF1ASourceElement(ρ0, c0, Δr, Λ, y0dot, y1dot, y2dot, y3dot, f0dot, f1dot, τ, span_uvec)
+end
+
+"""
     (trans::KinematicTransformation)(se::CompactF1ASourceElement)
 
 Transform the position and forces of a source element according to the coordinate system transformation `trans`.
