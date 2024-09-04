@@ -23,6 +23,8 @@ WriteVTK = "64499a7a-5c06-52f2-abe2-ccb03c286192"
 [compat]
 AcousticMetrics = "0.7.0"
 CCBlade = "0.2.4"
+CSV = "0.10.14"
+DataFrames = "1.6.1"
 FLOWMath = "0.4.1"
 FillArrays = "1.11.0"
 FlexiMaps = "0.1.18"
