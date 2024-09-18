@@ -281,7 +281,7 @@ leg = Legend(fig[1, 1], [
          "Tip",
     ]; orientation=:horizontal, tellwidth=false, tellheight=true, nbanks=2)
 
-text!(ax1, 210, 62; text="markers: CCBlade.jl+BPM.jl\nlines: CCBlade.jl+AcousticAnalogies.jl")
+text!(ax1, 210, 62; text="markers: PAS+ROTONET+BARC\nlines: CCBlade.jl+AcousticAnalogies.jl")
 
 save("figure22b-spl-barc.png", fig)
 ```
@@ -598,7 +598,7 @@ leg = Legend(fig[1, 1], [
          "Tip",
     ]; orientation=:horizontal, tellwidth=false, tellheight=true, nbanks=2)
 
-text!(ax1, 210, 62; text="markers: CCBlade.jl+BPM.jl\nlines: CCBlade.jl+AcousticAnalogies.jl")
+text!(ax1, 210, 62; text="markers: PAS+ROTONET+BARC\nlines: CCBlade.jl+AcousticAnalogies.jl")
 
 save("figure23c-spl-barc.png", fig)
 ```
@@ -893,7 +893,7 @@ leg = Legend(fig[1, 1], [
          "Tip",
     ]; orientation=:horizontal, tellwidth=false, tellheight=true, nbanks=2)
 
-text!(ax1, 210, 44; text="markers: CCBlade.jl+BPM.jl\nlines: CCBlade.jl+AcousticAnalogies.jl")
+text!(ax1, 210, 44; text="markers: PAS+ROTONET+BARC\nlines: CCBlade.jl+AcousticAnalogies.jl")
 
 save("figure24b-spl-barc.png", fig)
 ```

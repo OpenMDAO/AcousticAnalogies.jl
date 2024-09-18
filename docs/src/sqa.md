@@ -443,8 +443,6 @@ save("anopp2_comparison.png", fig)
 
 The difference between the two codes' predictions is very small (less than 1% error).
 
-### Brooks, Pope & Marcolini Tests
-
 ## Signed Commits
 The AcousticAnalogies.jl GitHub repository requires all commits to the `main` branch to be signed.
 See the [GitHub docs on signing commits](https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification) for more information.
