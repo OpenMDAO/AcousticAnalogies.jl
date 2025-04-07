@@ -49,7 +49,7 @@ using Test
         obs = [obs1, obs2]
 
         name = "cf1a_with_observers"
-        pvd = AcousticAnalogies.to_paraview_collection(name, (ses,); observers=obs)
+        pvd = AcousticAnalogies.to_paraview_collection(name, (ses,); observers=obs, append=false, ascii=true)
 
         for i in 1:size(ses, 1)
             fname = format(FormatExpr("{}-block1-{:08d}.vtp"), name, i)
@@ -64,6 +64,8 @@ using Test
             @test sha_str == sha_str_check
 
             for j in 1:length(obs)
+                # This just isn't stable across versions of Meshes.jl.
+                # I suppose it has something to do with Delaunay triangulation.
                 fname = format(FormatExpr("{}-observer$(j)-{:08d}.vtu"), name, i)
                 sha_str = bytes2hex(open(sha1, fname))
                 sha_str_check = bytes2hex(open(sha1, joinpath(@__DIR__, "writevtk", fname)))
@@ -97,7 +99,7 @@ using Test
         obs = [obs1, obs2]
 
         name = "cf1a_mb_with_observers"
-        pvd = AcousticAnalogies.to_paraview_collection(name, ses_mb; observers=obs)
+        pvd = AcousticAnalogies.to_paraview_collection(name, ses_mb; observers=obs, append=false, ascii=true)
 
         for i in 1:size(ses, 1)
             for b in 1:length(ses_mb)
@@ -108,14 +110,11 @@ using Test
             end
 
             for j in 1:length(obs)
+                # This just isn't stable across versions of Meshes.jl.
+                # I suppose it has something to do with Delaunay triangulation.
                 fname = format(FormatExpr("{}-observer$(j)-{:08d}.vtu"), name, i)
                 sha_str = bytes2hex(open(sha1, fname))
                 sha_str_check = bytes2hex(open(sha1, joinpath(@__DIR__, "writevtk", fname)))
-                # @test sha_str == sha_str_check
-
-                # The observers for this case should be identical to the observers from the single-block case.
-                fname2 = format(FormatExpr("cf1a_with_observers-observer$(j)-{:08d}.vtu"), i)
-                sha_str_check = bytes2hex(open(sha1, joinpath(@__DIR__, "writevtk", fname2)))
                 # @test sha_str == sha_str_check
             end
 

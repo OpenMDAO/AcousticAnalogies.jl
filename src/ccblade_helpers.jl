@@ -1,38 +1,3 @@
-import FillArrays: getindex_value
-
-# Normal implementation is this from FillArrays.jl:
-#
-# @inline getindex_value(F::Fill) = F.value
-#
-# But that breaks with CCBlade.
-# Why?
-# Because, since a FillArrays.Fill <: AbstractArray, it calls this:
-#
-# function Base.getproperty(obj::AbstractVector{<:Section}, sym::Symbol)
-#     return getfield.(obj, sym)
-# end
-#
-# which eventually calls FillArrays.getindex_value again, leading to recursion and a stack overflow.
-#
-# This is type piracy :-(.
-# But it may also be type piracy to extend Base.getproperty in CCBlade.jl, since CCBlade.jl doesn't own Base.getproperty or AbstractVector.
-@inline getindex_value(F::Fill{<:Union{CCBlade.Section,CCBlade.OperatingPoint,CCBlade.Outputs}}) = getfield(F, :value)
-
-# Normal implementation is this from FillArrays.jl:
-#
-# @inline axes(F::Fill) = F.axes
-#
-# But that hits 
-#
-# function Base.getproperty(obj::AbstractVector{<:Section}, sym::Symbol)
-#     return getfield.(obj, sym)
-# end
-#
-# from CCBlade.
-# This is type piracy :-(.
-# But it may also be type piracy to extend Base.getproperty in CCBlade.jl, since CCBlade.jl doesn't own Base.getproperty or AbstractVector.
-@inline Base.axes(F::Fill{<:Union{CCBlade.Section,CCBlade.OperatingPoint,CCBlade.Outputs}}) = getfield(F, :axes)
-
 function _standard_ccblade_transform(rotor::CCBlade.Rotor, sections::AbstractVector{<:CCBlade.Section}, ops::AbstractVector{<:CCBlade.OperatingPoint}, period, num_src_times, positive_x_rotation)
     # Assume the rotor is traveling in the positive x direction, with the first
     # blade aligned with the positive y axis. Rotor hub is initially at the origin.
