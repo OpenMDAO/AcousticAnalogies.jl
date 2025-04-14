@@ -300,6 +300,14 @@ obs = StationaryAcousticObserver(x0)
 nothing # hide
 ```
 
+(Really, the observer should be moving with the same forward velocity as the blades themeselves, and so the observer should be constructed using a constant-velocity acoustic observer like this
+
+```@example first_example
+obs_const_vel = ConstVelocityAcousticObserver(t0, x0, v0_hub)
+```
+
+But we'll ignore that complication since the `v0_hub` velocity is so small for this example.)
+
 Now, in order to perform the F1A calculation, we need to know when each acoustic
 disturbance emitted by the source arrives at the observer. This is referred to an 
 advanced time calculation, and is done this way:
@@ -396,3 +404,27 @@ oaspl_from_nbs = AcousticMetrics.OASPL(nbs)
 (oaspl_from_apth, oaspl_from_nbs)
 ```
 The two approaches to calculate the OASPL give essentially the same result.
+
+We could also find the spectrum of, say, mean-squared pressure and use that to find the sound pressure level (SPL):
+
+```@example first_example
+# Get the spectrum of the mean-squared pressure, and then the frequency associated with it:
+nbs = AcousticMetrics.MSPSpectrumAmplitude(apth_total)
+freq = AcousticMetrics.frequency(nbs)
+# Find the blade passing frequency, for plotting in the frequency in units of cycles per blade passes.
+bpf = omega / (2*pi) * num_blades
+# Find the sound pressure level from the spectrum of mean-square pressure.
+pref = 20e-6  # usual reference pressure in Pa
+spl = @. 10 * log10(nbs/pref^2)
+
+# Plot
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig, xlabel="frequency, blade passes", ylabel="SPL, dB")
+scatter!(ax1, freq./bpf, spl)
+ax1.xticks = 0:15
+xlims!(ax1, 0, 15)
+ylims!(ax1, 20, 85)
+save("first_example-spl.png", fig)
+nothing # hide
+```
+![](first_example-spl.png)
