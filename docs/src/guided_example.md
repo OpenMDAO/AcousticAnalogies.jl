@@ -419,7 +419,7 @@ spl = @. 10 * log10(nbs/pref^2)
 
 # Plot
 fig = Figure()
-ax1 = fig[1, 1] = Axis(fig, xlabel="frequency, blade passes", ylabel="SPL, dB")
+ax1 = fig[1, 1] = Axis(fig, xlabel="frequency, cycles per blade pass", ylabel="SPL, dB")
 scatter!(ax1, freq./bpf, spl)
 ax1.xticks = 0:15
 xlims!(ax1, 0, 15)
