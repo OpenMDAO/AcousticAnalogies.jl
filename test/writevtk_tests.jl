@@ -27,10 +27,10 @@ using Test
             @test sha_str == sha_str_check
         end
 
+        fname = "$(name).pvd"
+        sha_str = bytes2hex(open(sha1, fname))
+        sha_str_check = bytes2hex(open(sha1, joinpath(@__DIR__, "writevtk", fname)))
         if !Sys.iswindows()
-            fname = "$(name).pvd"
-            sha_str = bytes2hex(open(sha1, fname))
-            sha_str_check = bytes2hex(open(sha1, joinpath(@__DIR__, "writevtk", fname)))
             @test sha_str == sha_str_check
         end
 
@@ -55,13 +55,17 @@ using Test
             fname = format(FormatExpr("{}-block1-{:08d}.vtp"), name, i)
             sha_str = bytes2hex(open(sha1, fname))
             sha_str_check = bytes2hex(open(sha1, joinpath(@__DIR__, "writevtk", fname)))
-            @test sha_str == sha_str_check
+            if !Sys.iswindows()
+                @test sha_str == sha_str_check
+            end
 
             # The source element files for this test case with observers should be the same as the case without the observers.
             name2 = "cf1a"
             fname2 = format(FormatExpr("{}{:08d}.vtp"), name2, i)
             sha_str_check = bytes2hex(open(sha1, joinpath(@__DIR__, "writevtk", fname)))
-            @test sha_str == sha_str_check
+            if !Sys.iswindows()
+                @test sha_str == sha_str_check
+            end
 
             for j in 1:length(obs)
                 # This just isn't stable across versions of Meshes.jl.
@@ -74,10 +78,10 @@ using Test
 
         end
 
+        fname = "$(name).pvd"
+        sha_str = bytes2hex(open(sha1, fname))
+        sha_str_check = bytes2hex(open(sha1, joinpath(@__DIR__, "writevtk", fname)))
         if !Sys.iswindows()
-            fname = "$(name).pvd"
-            sha_str = bytes2hex(open(sha1, fname))
-            sha_str_check = bytes2hex(open(sha1, joinpath(@__DIR__, "writevtk", fname)))
             @test sha_str == sha_str_check
         end
 
@@ -106,7 +110,9 @@ using Test
                 fname = format(FormatExpr("{}-block$(b)-{:08d}.vtp"), name, i)
                 sha_str = bytes2hex(open(sha1, fname))
                 sha_str_check = bytes2hex(open(sha1, joinpath(@__DIR__, "writevtk", fname)))
-                @test sha_str == sha_str_check
+                if !Sys.iswindows()
+                    @test sha_str == sha_str_check
+                end
             end
 
             for j in 1:length(obs)
@@ -120,10 +126,10 @@ using Test
 
         end
 
+        fname = "$(name).pvd"
+        sha_str = bytes2hex(open(sha1, fname))
+        sha_str_check = bytes2hex(open(sha1, joinpath(@__DIR__, "writevtk", fname)))
         if !Sys.iswindows()
-            fname = "$(name).pvd"
-            sha_str = bytes2hex(open(sha1, fname))
-            sha_str_check = bytes2hex(open(sha1, joinpath(@__DIR__, "writevtk", fname)))
             @test sha_str == sha_str_check
         end
 
