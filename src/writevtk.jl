@@ -12,11 +12,13 @@ function endpoints(se::AbstractCompactSourceElement)
 end
 
 """
-    to_vtp(name::AbstractString, ses::AbstractArray{<:AbstractCompactSourceElement})
+    to_vtp(name::AbstractString, ses::AbstractArray{<:AbstractCompactSourceElement}; kwargs...)
 
 Construct and return a VTK polygonal (.vtp) data file object for an array of `AbstractCompactSourceElement` with name `name.vtp` (i.e., the `name` argument should not contain a file extension).
+
+`kwargs` are passed to `WriteVTK.vtk_grid`.
 """
-function to_vtp(name, ses::AbstractArray{<:AbstractCompactSourceElement})
+function to_vtp(name, ses::AbstractArray{<:AbstractCompactSourceElement}; kwargs...)
     # This will be an array of the same size as ses, with each entry a
     # length-two tuple of the endpoints.
     points_all = AcousticAnalogies.endpoints.(ses)
@@ -51,7 +53,7 @@ function to_vtp(name, ses::AbstractArray{<:AbstractCompactSourceElement})
     # Now create the array of VTK lines.
     lines = [WriteVTK.MeshCell(WriteVTK.PolyData.Lines(), line) for line in eachcol(line_ids)]
 
-    vtkfile = WriteVTK.vtk_grid(name, points, lines)
+    vtkfile = WriteVTK.vtk_grid(name, points, lines; kwargs...)
 
     _write_data_to_vtk!(vtkfile, ses)
 
@@ -97,7 +99,7 @@ function _write_data_to_vtk!(vtkfile, ses::AbstractArray{<:Union{TEBVSSourceElem
     vtkfile["ChordUnitVector", WriteVTK.VTKCellData()] = hcat(mapview(:chord_uvec, ses)...)
 end
 
-function to_vtu(name, obs::AbstractAcousticObserver, t; sphere_radius=1.0, n=10)
+function to_vtu(name, obs::AbstractAcousticObserver, t; sphere_radius=1.0, n=10, kwargs...)
     # Get the current position of the observer.
     x = obs(t)
 
@@ -120,13 +122,13 @@ function to_vtu(name, obs::AbstractAcousticObserver, t; sphere_radius=1.0, n=10)
     cells = [WriteVTK.MeshCell(WriteVTK.VTKCellTypes.VTK_TRIANGLE, Meshes.indices(c)) for c in connec]
 
     # Now we can finally create a VTK file.
-    vtkfile = WriteVTK.vtk_grid(name, points, cells)
+    vtkfile = WriteVTK.vtk_grid(name, points, cells; kwargs...)
 
     return vtkfile
 end
 
 r"""
-to_paraview_collection(name::AbstractString, ses::NTuple{N, AbstractArray{<:AbstractCompactSourceElement}}; time_axes::NTuple{N, Int64}=ntuple(i->1, N), block_names=["block$(b)" for b in 1:N], observers=(), observer_names=nothing, observer_radii=nothing)
+to_paraview_collection(name::AbstractString, ses::NTuple{N, AbstractArray{<:AbstractCompactSourceElement}}; time_axes::NTuple{N, Int64}=ntuple(i->1, N), block_names=["block$(b)" for b in 1:N], observers=(), observer_names=nothing, observer_radii=nothing, kwargs...)
 
 
 Construct and write out a ParaView collection data file (`.pvd`) object for a tuple of arrays of `CompactF1ASourceElement`s with name `name.pvd` (i.e., the `name` argument should not contain a file extension).
@@ -138,11 +140,13 @@ Construct and write out a ParaView collection data file (`.pvd`) object for a tu
 `observer_names` can either be an iterable of Strings that will be used to name each VTK observer file, or `nothing`, in which case each observer will be named `observer<int>`.
 `observer_radii` can either be an iterable of Float64 representing the radius of each observer sphere, or `nothing`, in which case a suitible radius will be calculated.
 
+`kwargs` will eventually be passed to `WriteVTK.vtk_grid`.
+
 One VTK PolyData (`.vtp`) file will be written for each valid index along `time_axis` for each array in the `ses` tuple.
 
 Returns a list of filenames written out by [WriteVTK.jl](https://github.com/jipolanco/WriteVTK.jl).
 """
-function to_paraview_collection(name, ses::NTuple{N, AbstractArray{<:AbstractCompactSourceElement}}; time_axes::NTuple{N, Int64}=ntuple(i->1, N), block_names=["block$(b)" for b in 1:N], observers=(), observer_names=nothing, observer_radii=nothing) where {N}
+function to_paraview_collection(name, ses::NTuple{N, AbstractArray{<:AbstractCompactSourceElement}}; time_axes::NTuple{N, Int64}=ntuple(i->1, N), block_names=["block$(b)" for b in 1:N], observers=(), observer_names=nothing, observer_radii=nothing, kwargs...) where {N}
 
     # Check that the size of each array in the `ses` is the the same along the time axis.
     # This will get the length of each array in `ses` along the time axis.
@@ -256,7 +260,7 @@ function to_paraview_collection(name, ses::NTuple{N, AbstractArray{<:AbstractCom
 
                     # Now create a VTK file for the source elements we've selected.
                     namei = format(FormatExpr("{}-{}-{:08d}"), name, block_names[i], tidx)
-                    vtkfile = to_vtp(namei, sesiv)
+                    vtkfile = to_vtp(namei, sesiv; kwargs...)
 
                     # And add it to the multiblock file.
                     WriteVTK.multiblock_add_block(vtm, vtkfile)
@@ -265,7 +269,7 @@ function to_paraview_collection(name, ses::NTuple{N, AbstractArray{<:AbstractCom
                 for (obs, obs_name, obs_radius) in zip(observers, obs_names, obs_radii)
                     # Now also need to write out the observers.
                     namei = format(FormatExpr("{}-{}-{:08d}"), name, obs_name, tidx)
-                    vtkfile = to_vtu(namei, obs, t; sphere_radius=obs_radius)
+                    vtkfile = to_vtu(namei, obs, t; sphere_radius=obs_radius, kwargs...)
 
                     WriteVTK.multiblock_add_block(vtm, vtkfile)
                 end
